@@ -1,0 +1,584 @@
+<!-- LEGACY/FROZEN PAGE: Reference-only page. Do NOT add new features here. Active product-management mainline owner: products-categories.html -->
+<!-- 
+  后台管理 - 商品管理（新版）
+  支持：增删改查、图片上传、分类筛选
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>商品管理 - 织麦电竞后台</title>
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .upload-area {
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius);
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: var(--card-bg);
+    }
+    .upload-area:hover {
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.05);
+    }
+    .upload-area.has-image {
+      padding: 0;
+      border: none;
+    }
+    .upload-area img {
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: var(--radius);
+    }
+    .upload-placeholder {
+      color: var(--text-muted);
+    }
+    .upload-placeholder i {
+      font-size: 48px;
+      margin-bottom: 12px;
+      display: block;
+    }
+    .image-preview {
+      position: relative;
+      display: inline-block;
+    }
+    .image-preview .remove-btn {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #ef4444;
+      color: white;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .product-image {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .status-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+    .status-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: var(--primary);
+    }
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <!-- 侧边栏由 sidebar.js 加载 -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 顶部导航 -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="sidebar-toggle" id="sidebarToggle">
+            <i class="fa fa-bars"></i>
+          </button>
+          <span class="page-title">商品管理</span>
+        </div>
+        <div class="header-right">
+          <button class="btn btn-primary" onclick="openProductModal()">
+            <i class="fa fa-plus"></i> 添加商品
+          </button>
+        </div>
+      </header>
+
+      <!-- 页面内容 -->
+      <div class="page-content">
+        <!-- 筛选栏 -->
+        <div class="filter-bar">
+          <div class="filter-group">
+            <select class="form-select" id="gameFilter" onchange="loadProducts()">
+              <option value="">全部游戏</option>
+              <option value="delta">三角洲行动</option>
+              <option value="valorant">无畏契约</option>
+            </select>
+            <select class="form-select" id="categoryFilter" onchange="loadProducts()">
+              <option value="">全部分类</option>
+            </select>
+            <select class="form-select" id="statusFilter" onchange="loadProducts()">
+              <option value="">全部状态</option>
+              <option value="active">上架中</option>
+              <option value="inactive">已下架</option>
+            </select>
+          </div>
+          <div class="search-box">
+            <i class="fa fa-search"></i>
+            <input type="text" id="searchInput" placeholder="搜索商品名称..." onkeyup="searchProducts()">
+          </div>
+        </div>
+
+        <!-- 商品列表 -->
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th width="60">图片</th>
+                <th>商品名称</th>
+                <th>分类</th>
+                <th>价格</th>
+                <th>库存</th>
+                <th>销量</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="productTableBody">
+              <!-- 动态加载 -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 分页 -->
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 商品编辑弹窗 -->
+  <div class="modal" id="productModal">
+    <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">添加商品</h3>
+        <button class="modal-close" onclick="closeProductModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="productForm">
+          <input type="hidden" id="productId">
+          
+          <!-- 图片上传 -->
+          <div class="form-group">
+            <label class="form-label">商品图片</label>
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('imageInput').click()">
+              <div class="upload-placeholder" id="uploadPlaceholder">
+                <i class="fa fa-cloud-upload-alt"></i>
+                <p>点击上传图片</p>
+                <small>支持 JPG、PNG 格式，最大 2MB</small>
+              </div>
+              <div class="image-preview" id="imagePreview" style="display: none;">
+                <img src="" alt="预览" id="previewImg">
+                <button type="button" class="remove-btn" onclick="removeImage(event)">
+                  <i class="fa fa-times"></i>
+                </button>
+              </div>
+            </div>
+            <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+            <input type="hidden" id="imageUrl">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">商品名称 <span style="color: #ef4444;">*</span></label>
+              <input type="text" class="form-input" id="productName" required placeholder="请输入商品名称">
+            </div>
+            <div class="form-group">
+              <label class="form-label">所属游戏 <span style="color: #ef4444;">*</span></label>
+              <select class="form-select" id="productGame" required>
+                <option value="">请选择</option>
+                <option value="delta">三角洲行动</option>
+                <option value="valorant">无畏契约</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">商品分类 <span style="color: #ef4444;">*</span></label>
+              <select class="form-select" id="productCategory" required>
+                <option value="">请选择</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">价格 <span style="color: #ef4444;">*</span></label>
+              <input type="number" class="form-input" id="productPrice" required placeholder="请输入价格" min="0" step="0.01">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">库存</label>
+              <input type="number" class="form-input" id="productStock" placeholder="请输入库存" min="0" value="999">
+            </div>
+            <div class="form-group">
+              <label class="form-label">排序</label>
+              <input type="number" class="form-input" id="productSort" placeholder="数字越小越靠前" min="0" value="0">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">商品简介</label>
+            <input type="text" class="form-input" id="productDesc" placeholder="简短描述商品特点">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">详细描述</label>
+            <textarea class="form-textarea" id="productDetail" rows="4" placeholder="请输入商品详细描述，支持换行"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">上架状态</label>
+            <label class="status-switch">
+              <input type="checkbox" id="productStatus" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeProductModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveProduct()" id="saveBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/sidebar.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    if (typeof ensureAdminAuth === 'function' && !ensureAdminAuth()) {
+      throw new Error('管理员未登录');
+    }
+
+    // 初始变量
+    const CATEGORY_STORAGE_KEY = 'zhimai_categories';
+    const PRODUCT_STORAGE_KEY = 'zhimai_products';
+    let currentPage = 1;
+    let pageSize = 10;
+    let categories = [];
+    let products = [];
+
+    // 页面加载
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadCategories();
+      await loadProducts();
+    });
+
+    // 加载分类列表
+    async function loadCategories() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(CATEGORY_STORAGE_KEY) || '[]');
+        categories = Array.isArray(parsed) ? parsed : [];
+        
+        const categorySelects = document.querySelectorAll('#categoryFilter, #productCategory');
+        categorySelects.forEach(select => {
+          const currentValue = select.value;
+          select.innerHTML = '<option value="">' + (select.id === 'categoryFilter' ? '全部分类' : '请选择') + '</option>';
+          categories.forEach(cat => {
+            select.innerHTML += `<option value="${cat._id}">${cat.name}</option>`;
+          });
+          select.value = currentValue;
+        });
+      } catch (err) {
+        categories = [];
+        console.error('加载分类失败:', err);
+      }
+    }
+
+    // 加载商品列表
+    async function loadProducts() {
+      try {
+        const game = document.getElementById('gameFilter').value;
+        const category = document.getElementById('categoryFilter').value;
+        const status = document.getElementById('statusFilter').value;
+        
+        const parsed = JSON.parse(localStorage.getItem(PRODUCT_STORAGE_KEY) || '[]');
+        products = Array.isArray(parsed) ? parsed : [];
+        
+        let filtered = products;
+        if (game) filtered = filtered.filter(p => p.game === game);
+        if (category) filtered = filtered.filter(p => p.category === category);
+        if (status) filtered = filtered.filter(p => p.status === status);
+        
+        const total = filtered.length;
+        const start = (currentPage - 1) * pageSize;
+        const pageList = filtered.slice(start, start + pageSize);
+        
+        renderProductTable(pageList);
+        renderPagination(total);
+      } catch (err) {
+        console.error('加载商品失败:', err);
+        showToast('加载商品失败: ' + err.message, 'error');
+      }
+    }
+
+    // 渲染商品表格
+    function renderProductTable(list) {
+      const tbody = document.getElementById('productTableBody');
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;">暂无商品数据</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = list.map(p => `
+        <tr>
+          <td>
+            <img src="${p.image || 'https://via.placeholder.com/60'}" class="product-image" alt="${p.name}">
+          </td>
+          <td>
+            <div style="font-weight: 500;">${p.name}</div>
+            <small style="color: var(--text-muted);">${p.desc || ''}</small>
+          </td>
+          <td>${getCategoryName(p.category)}</td>
+          <td>¥${p.price}</td>
+          <td>${p.stock || '-'}</td>
+          <td>${p.sales || 0}</td>
+          <td>
+            <span class="status-badge ${p.status === 'active' ? 'active' : 'inactive'}">
+              ${p.status === 'active' ? '上架中' : '已下架'}
+            </span>
+          </td>
+          <td>
+            <div class="category-actions">
+              <button class="btn-edit" onclick="editProduct('${p._id}')" title="编辑">
+                <i class="fa fa-edit"></i>
+              </button>
+              <button class="btn-delete" onclick="deleteProduct('${p._id}')" title="删除">
+                <i class="fa fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // 获取分类名称
+    function getCategoryName(categoryId) {
+      const cat = categories.find(c => c._id === categoryId);
+      return cat ? cat.name : categoryId;
+    }
+
+    // 渲染分页
+    function renderPagination(total) {
+      const totalPages = Math.ceil(total / pageSize);
+      const pagination = document.getElementById('pagination');
+      
+      let html = '';
+      for (let i = 1; i <= totalPages; i++) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+      }
+      pagination.innerHTML = html;
+    }
+
+    // 跳转页面
+    function goToPage(page) {
+      currentPage = page;
+      loadProducts();
+    }
+
+    // 搜索商品
+    function searchProducts() {
+      const keyword = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = products.filter(p => p.name.toLowerCase().includes(keyword));
+      renderProductTable(filtered);
+    }
+
+    // 打开商品弹窗
+    function openProductModal() {
+      document.getElementById('productForm').reset();
+      document.getElementById('productId').value = '';
+      document.getElementById('modalTitle').textContent = '添加商品';
+      document.getElementById('imageUrl').value = '';
+      document.getElementById('uploadPlaceholder').style.display = 'block';
+      document.getElementById('imagePreview').style.display = 'none';
+      document.getElementById('uploadArea').classList.remove('has-image');
+      document.getElementById('productModal').classList.add('show');
+    }
+
+    // 关闭商品弹窗
+    function closeProductModal() {
+      document.getElementById('productModal').classList.remove('show');
+    }
+
+    // 处理图片上传
+    async function handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      if (file.size > 2 * 1024 * 1024) {
+        showToast('图片大小不能超过 2MB', 'error');
+        event.target.value = '';
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result || '';
+        document.getElementById('imageUrl').value = dataUrl;
+        document.getElementById('previewImg').src = dataUrl;
+        document.getElementById('uploadPlaceholder').style.display = 'none';
+        document.getElementById('imagePreview').style.display = 'block';
+        document.getElementById('uploadArea').classList.add('has-image');
+        showToast('图片已加载为本地预览', 'success');
+      };
+      reader.onerror = () => {
+        showToast('图片读取失败', 'error');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // 移除图片
+    function removeImage(e) {
+      e.stopPropagation();
+      document.getElementById('imageUrl').value = '';
+      document.getElementById('uploadPlaceholder').style.display = 'block';
+      document.getElementById('imagePreview').style.display = 'none';
+      document.getElementById('uploadArea').classList.remove('has-image');
+      document.getElementById('imageInput').value = '';
+    }
+
+    // 保存商品
+    async function saveProduct() {
+      const productId = document.getElementById('productId').value;
+      const data = {
+        name: document.getElementById('productName').value,
+        game: document.getElementById('productGame').value,
+        category: document.getElementById('productCategory').value,
+        price: parseFloat(document.getElementById('productPrice').value),
+        stock: parseInt(document.getElementById('productStock').value, 10) || 0,
+        sort: parseInt(document.getElementById('productSort').value, 10) || 0,
+        desc: document.getElementById('productDesc').value,
+        detail: document.getElementById('productDetail').value,
+        image: document.getElementById('imageUrl').value,
+        status: document.getElementById('productStatus').checked ? 'active' : 'inactive'
+      };
+      
+      if (!data.name || !data.game || !data.category || !data.price) {
+        showToast('请填写必填项', 'error');
+        return;
+      }
+      
+      try {
+        document.getElementById('saveBtn').disabled = true;
+        document.getElementById('saveBtn').textContent = '保存中...';
+        
+        if (productId) {
+          const index = products.findIndex(p => p._id === productId);
+          if (index === -1) throw new Error('商品不存在');
+          products[index] = { ...products[index], ...data };
+          showToast('商品更新成功', 'success');
+        } else {
+          data._id = 'prod_' + Date.now();
+          data.createdAt = new Date().toISOString();
+          data.sales = Number(data.sales || 0);
+          products.push(data);
+          showToast('商品创建成功', 'success');
+        }
+        
+        localStorage.setItem(PRODUCT_STORAGE_KEY, JSON.stringify(products));
+        closeProductModal();
+        loadProducts();
+      } catch (err) {
+        showToast('保存失败: ' + err.message, 'error');
+      } finally {
+        document.getElementById('saveBtn').disabled = false;
+        document.getElementById('saveBtn').textContent = '保存';
+      }
+    }
+
+    // 编辑商品
+    async function editProduct(productId) {
+      const p = products.find(item => item._id === productId);
+      if (!p) {
+        showToast('商品不存在', 'error');
+        return;
+      }
+      
+      document.getElementById('productId').value = productId;
+      document.getElementById('productName').value = p.name || '';
+      document.getElementById('productGame').value = p.game || '';
+      document.getElementById('productCategory').value = p.category || '';
+      document.getElementById('productPrice').value = p.price || '';
+      document.getElementById('productStock').value = p.stock || 0;
+      document.getElementById('productSort').value = p.sort || 0;
+      document.getElementById('productDesc').value = p.desc || '';
+      document.getElementById('productDetail').value = p.detail || '';
+      document.getElementById('productStatus').checked = p.status === 'active';
+      
+      if (p.image) {
+        document.getElementById('imageUrl').value = p.image;
+        document.getElementById('previewImg').src = p.image;
+        document.getElementById('uploadPlaceholder').style.display = 'none';
+        document.getElementById('imagePreview').style.display = 'block';
+        document.getElementById('uploadArea').classList.add('has-image');
+      } else {
+        document.getElementById('imageUrl').value = '';
+        document.getElementById('uploadPlaceholder').style.display = 'block';
+        document.getElementById('imagePreview').style.display = 'none';
+        document.getElementById('uploadArea').classList.remove('has-image');
+      }
+      
+      document.getElementById('modalTitle').textContent = '编辑商品';
+      document.getElementById('productModal').classList.add('show');
+    }
+
+    // 删除商品
+    async function deleteProduct(productId) {
+      if (!confirm('确定要删除该商品吗？')) return;
+      
+      try {
+        products = products.filter(p => p._id !== productId);
+        localStorage.setItem(PRODUCT_STORAGE_KEY, JSON.stringify(products));
+        showToast('商品已删除', 'success');
+        loadProducts();
+      } catch (err) {
+        showToast('删除失败: ' + err.message, 'error');
+      }
+    }
+
+    // 显示提示
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast show ${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+  </script>
+</body>
+</html>

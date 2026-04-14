@@ -1,0 +1,784 @@
+<!-- 
+  文件名: coupons.html
+  页面名称: 优惠券中心
+  功能说明: 展示可领取的优惠券和已领取的优惠券列表
+  用户可领取优惠券，下单时可使用优惠券抵扣
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>优惠券中心 - 织麦电竞</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- 腾讯云 CloudBase SDK -->
+  <style>
+    .coupons-page {
+      padding-top: 100px;
+      min-height: 100vh;
+      background: var(--bg-dark);
+    }
+    .coupons-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+    
+    /* 优惠券Banner */
+    .coupons-banner {
+      background: linear-gradient(135deg, rgba(108, 99, 255, 0.2), rgba(0, 212, 255, 0.1));
+      border-radius: 20px;
+      padding: 48px;
+      margin-bottom: 48px;
+      text-align: center;
+      border: 1px solid rgba(108, 99, 255, 0.2);
+    }
+    .coupons-banner h1 {
+      font-size: 36px;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+    .coupons-banner p {
+      color: var(--text-gray);
+      font-size: 16px;
+    }
+    
+    /* 我的优惠券统计 */
+    .my-coupons-stats {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      flex: 1;
+      background: rgba(255,255,255,0.03);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .stat-card .number {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+    .stat-card .label {
+      color: var(--text-gray);
+      font-size: 14px;
+    }
+    
+    /* 优惠券列表 */
+    .coupons-section {
+      margin-bottom: 48px;
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .section-title {
+      font-size: 24px;
+      color: #fff;
+    }
+    .coupons-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    
+    /* 优惠券卡片 */
+    .coupon-card {
+      background: rgba(255,255,255,0.03);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.05);
+      transition: all 0.3s;
+    }
+    .coupon-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(108, 99, 255, 0.3);
+    }
+    .coupon-header {
+      background: linear-gradient(135deg, rgba(108, 99, 255, 0.2), rgba(0, 212, 255, 0.1));
+      padding: 32px 24px;
+      text-align: center;
+      position: relative;
+    }
+    .coupon-header::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 0;
+      right: 0;
+      height: 20px;
+      background: radial-gradient(circle at 10px 10px, transparent 10px, rgba(255,255,255,0.03) 10px);
+      background-size: 20px 20px;
+      background-position: 0 0;
+    }
+    .coupon-value {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+    .coupon-value span {
+      font-size: 24px;
+    }
+    .coupon-type {
+      font-size: 14px;
+      color: var(--text-gray);
+    }
+    .coupon-body {
+      padding: 24px;
+    }
+    .coupon-name {
+      font-size: 18px;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+    .coupon-desc {
+      font-size: 14px;
+      color: var(--text-gray);
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+    .coupon-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-gray);
+      margin-bottom: 16px;
+    }
+    .coupon-progress {
+      margin-bottom: 16px;
+    }
+    .progress-bar {
+      height: 6px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+    .progress-text {
+      font-size: 12px;
+      color: var(--text-gray);
+      margin-top: 8px;
+      text-align: right;
+    }
+    .coupon-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .coupon-btn.primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .coupon-btn.primary:hover {
+      background: var(--primary-dark);
+    }
+    .coupon-btn:disabled {
+      background: rgba(255,255,255,0.1);
+      color: var(--text-gray);
+      cursor: not-allowed;
+    }
+    .coupon-btn.success {
+      background: #52c41a;
+      color: #fff;
+    }
+    
+    /* 我的优惠券列表 */
+    .my-coupon-item {
+      display: flex;
+      background: rgba(255,255,255,0.03);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.05);
+      margin-bottom: 16px;
+    }
+    .my-coupon-item.expired {
+      filter: grayscale(0.92);
+      opacity: 0.72;
+      border-color: rgba(255,255,255,0.08);
+    }
+    .my-coupon-left {
+      width: 160px;
+      background: linear-gradient(135deg, rgba(108, 99, 255, 0.2), rgba(0, 212, 255, 0.1));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+    }
+    .my-coupon-left::after {
+      content: '';
+      position: absolute;
+      right: -8px;
+      top: 0;
+      bottom: 0;
+      width: 16px;
+      background: radial-gradient(circle at 0 50%, transparent 8px, rgba(255,255,255,0.03) 8px);
+      background-size: 16px 16px;
+    }
+    .my-coupon-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .my-coupon-type {
+      font-size: 12px;
+      color: var(--text-gray);
+      margin-top: 4px;
+    }
+    .my-coupon-right {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .my-coupon-info h3 {
+      font-size: 16px;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .my-coupon-info p {
+      font-size: 13px;
+      color: var(--text-gray);
+      margin-bottom: 4px;
+    }
+    .my-coupon-status {
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 13px;
+    }
+    .my-coupon-status.unused {
+      background: rgba(82, 196, 26, 0.1);
+      color: #52c41a;
+    }
+    .my-coupon-status.used {
+      background: rgba(245, 158, 11, 0.16);
+      color: #f59e0b;
+    }
+    .my-coupon-status.expired {
+      background: rgba(148, 163, 184, 0.2);
+      color: #cbd5e1;
+    }
+    
+    @media (max-width: 768px) {
+      .coupons-grid {
+        grid-template-columns: 1fr;
+      }
+      .my-coupon-item {
+        flex-direction: column;
+      }
+      .my-coupon-left {
+        width: 100%;
+        padding: 16px;
+      }
+      .my-coupon-left::after {
+        display: none;
+      }
+      .my-coupon-right {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+      .my-coupons-stats {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 导航栏 -->
+<header class="navbar" id="navbar">
+  <div class="nav-inner container">
+    <a href="index.html" class="logo">
+      <span class="logo-icon">⚡</span>
+      <span class="logo-text">织麦<em>电竞</em></span>
+    </a>
+    <nav class="nav-links" id="navLinks">
+      <a href="index.html#home" class="nav-item">首页</a>
+      <a href="services.html" class="nav-item">产品服务</a>
+      <a href="profile.html" class="nav-item">个人中心</a>
+    </nav>
+    <a href="auth.html" class="btn-nav" id="navAuthBtn">登录 / 注册</a>
+    <button class="btn-back" id="backBtn" onclick="goBack()" title="返回上一页">
+      <i class="fa fa-arrow-left"></i>
+    </button>
+  </div>
+</header>
+
+<!-- 优惠券页面 -->
+<main class="coupons-page">
+  <div class="coupons-container">
+    <!-- Banner -->
+    <div class="coupons-banner">
+      <h1><i class="fa fa-ticket-alt"></i> 优惠券中心</h1>
+      <p>领取优惠券，享受更多优惠</p>
+    </div>
+
+    <!-- 我的优惠券统计 -->
+    <div class="my-coupons-stats" id="statsSection" style="display: none;">
+      <div class="stat-card">
+        <div class="number" id="statTotal">0</div>
+        <div class="label">优惠券总数</div>
+      </div>
+      <div class="stat-card">
+        <div class="number" id="statUnused">0</div>
+        <div class="label">未使用</div>
+      </div>
+      <div class="stat-card">
+        <div class="number" id="statUsed">0</div>
+        <div class="label">已使用</div>
+      </div>
+    </div>
+
+    <!-- 可领取优惠券 -->
+    <div class="coupons-section">
+      <div class="section-header">
+        <h2 class="section-title"><i class="fa fa-gift"></i> 可领取优惠券</h2>
+      </div>
+      <div class="coupons-grid" id="availableCoupons">
+        <!-- 动态加载 -->
+      </div>
+    </div>
+
+    <!-- 我的优惠券 -->
+    <div class="coupons-section" id="myCouponsSection" style="display: none;">
+      <div class="section-header">
+        <h2 class="section-title"><i class="fa fa-ticket-alt"></i> 我的优惠券</h2>
+      </div>
+      <div id="myCouponsList">
+        <!-- 动态加载 -->
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- 底部 -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <p>&copy; 2026 织麦电竞. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="js/data.js"></script>
+<script src="js/main.js"></script>
+<script>
+let appCurrentUser = null;
+const CLAIMABLE_TEST_COUPON_ID = 'TEST_CLAIM_001';
+const TEST_CLAIM_COUPON = {
+  id: 'TEST_CLAIM_001',
+  name: 'Test Claim Coupon',
+  type: 'fixed',
+  value: 15,
+  minOrder: 99,
+  endDate: '2026-12-31',
+  status: 1,
+  total: 9999,
+  used: 0,
+  desc: 'Test coupon for claim flow'
+};
+
+function logCouponsDebug(label, payload) {
+  const safePayload = typeof payload === 'string' ? payload : JSON.stringify(payload, null, 2);
+  console.log(`[Coupons Debug] ${label}: ${safePayload}`);
+}
+
+function getStoredCouponPool() {
+  try {
+    const storedCoupons = JSON.parse(localStorage.getItem('zhimai_coupons') || '[]');
+    return Array.isArray(storedCoupons) ? storedCoupons : [];
+  } catch (error) {
+    console.warn('[Coupons Debug] Failed to parse stored coupon pool', error);
+    return [];
+  }
+}
+
+function saveStoredCouponPool(coupons) {
+  localStorage.setItem('zhimai_coupons', JSON.stringify(coupons));
+}
+
+function ensureTestCouponInPool(coupons) {
+  const safeCoupons = Array.isArray(coupons) ? coupons : [];
+  if (safeCoupons.some(coupon => coupon && coupon.id === CLAIMABLE_TEST_COUPON_ID)) {
+    return { coupons: safeCoupons, injected: false };
+  }
+
+  return {
+    coupons: [...safeCoupons, { ...TEST_CLAIM_COUPON }],
+    injected: true
+  };
+}
+
+async function getRuntimeCouponPool() {
+  let coupons = [];
+  let source = 'localStorage';
+
+  if (typeof dataManager !== 'undefined' && dataManager && typeof dataManager.getCoupons === 'function') {
+    try {
+      coupons = await dataManager.getCoupons();
+      source = 'dataManager';
+    } catch (error) {
+      console.warn('[Coupons Debug] dataManager.getCoupons failed, falling back to localStorage', error);
+    }
+  } else {
+    console.warn('[Coupons Debug] dataManager unavailable, using local fallback');
+  }
+
+  if (!Array.isArray(coupons) || coupons.length === 0) {
+    coupons = getStoredCouponPool();
+    source = 'localStorage';
+  }
+
+  const ensured = ensureTestCouponInPool(coupons);
+  if (ensured.injected || source === 'localStorage') {
+    saveStoredCouponPool(ensured.coupons);
+  }
+
+  logCouponsDebug('Global coupon pool', ensured.coupons.map(coupon => ({
+    id: coupon.id,
+    name: coupon.name,
+    status: coupon.status,
+    endDate: coupon.endDate,
+    used: coupon.used,
+    total: coupon.total
+  })));
+
+  return ensured.coupons;
+}
+
+function claimCouponLocally(userId, couponId) {
+  const coupons = ensureTestCouponInPool(getStoredCouponPool()).coupons;
+  const coupon = coupons.find(item => item.id === couponId);
+
+  if (!coupon || (coupon.status !== 1 && coupon.status !== 'active')) {
+    return { success: false, msg: '优惠券不存在' };
+  }
+
+  if (Number(coupon.used || 0) >= Number(coupon.total || 0)) {
+    return { success: false, msg: '优惠券已领完' };
+  }
+
+  const userCoupons = JSON.parse(localStorage.getItem('zhimai_user_coupons') || '[]');
+  const hasClaimed = userCoupons.some(item => item.userId === userId && (item.couponId === couponId || item.id === couponId));
+  if (hasClaimed) {
+    return { success: false, msg: '您已领取过该优惠券' };
+  }
+
+  userCoupons.push({
+    id: 'UC' + Date.now(),
+    userId,
+    couponId,
+    name: coupon.name,
+    type: coupon.type,
+    value: coupon.value,
+    minOrder: coupon.minOrder,
+    status: 'unused',
+    claimedAt: new Date().toISOString(),
+    expireAt: coupon.endDate,
+    desc: coupon.desc
+  });
+
+  coupon.used = Number(coupon.used || 0) + 1;
+
+  localStorage.setItem('zhimai_user_coupons', JSON.stringify(userCoupons));
+  saveStoredCouponPool(coupons);
+
+  return { success: true, msg: '领取成功' };
+}
+
+function getOwnedCoupons(userId) {
+  return JSON.parse(localStorage.getItem('zhimai_user_coupons') || '[]')
+    .filter(coupon => coupon.userId === userId);
+}
+
+function getOwnedCouponIds(userId) {
+  return new Set(
+    getOwnedCoupons(userId)
+      .map(coupon => coupon.couponId || coupon.id)
+      .filter(Boolean)
+  );
+}
+
+function escapeHTMLText(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function encodeCouponActionId(couponId) {
+  return encodeURIComponent(String(couponId == null ? '' : couponId));
+}
+
+function decodeCouponActionId(rawId) {
+  const text = String(rawId == null ? '' : rawId);
+  try {
+    return decodeURIComponent(text);
+  } catch (error) {
+    return text;
+  }
+}
+
+function rememberCurrentPageForLogin() {
+  const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  sessionStorage.setItem('redirect_after_login', currentPath || 'coupons.html');
+}
+
+async function checkLogin() {
+  appCurrentUser = JSON.parse(localStorage.getItem('zhimai_user') || sessionStorage.getItem('zhimai_user') || 'null');
+
+  if (appCurrentUser) {
+    document.getElementById('statsSection').style.display = 'flex';
+    document.getElementById('myCouponsSection').style.display = 'block';
+    loadMyCoupons();
+  }
+
+  await loadAvailableCoupons();
+}
+
+async function loadAvailableCoupons() {
+  const container = document.getElementById('availableCoupons');
+  logCouponsDebug('Available container found', Boolean(container));
+
+  if (!container) {
+    return;
+  }
+
+  const coupons = await getRuntimeCouponPool();
+  const ownedCouponIds = appCurrentUser ? getOwnedCouponIds(appCurrentUser.id) : new Set();
+  logCouponsDebug('Current user claimed coupon ids', Array.from(ownedCouponIds));
+  const availableCoupons = coupons.filter(coupon => coupon.status === 1 || coupon.status === 'active');
+  logCouponsDebug('Filtered available coupon list', availableCoupons.map(coupon => ({
+    id: coupon.id,
+    status: coupon.status,
+    endDate: coupon.endDate
+  })));
+
+  if (availableCoupons.length === 0) {
+    container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 48px; color: var(--text-gray);">暂无可用优惠券</div>';
+    return;
+  }
+
+  container.innerHTML = availableCoupons.map(coupon => {
+    const rawCouponId = String(coupon.id == null ? '' : coupon.id);
+    const isClaimed = ownedCouponIds.has(coupon.id) || ownedCouponIds.has(rawCouponId);
+    const isExhausted = Number(coupon.used || 0) >= Number(coupon.total || 0);
+    const safeCouponValue = escapeHTMLText(coupon.value);
+    const safeCouponName = escapeHTMLText(coupon.name || '');
+    const safeCouponDesc = escapeHTMLText(coupon.desc || '优惠券可在下单时抵扣使用');
+    const safeCouponEndDate = escapeHTMLText(coupon.endDate || '');
+    const safeCouponMinOrder = escapeHTMLText(coupon.minOrder);
+    const safeActionCouponId = escapeHTMLText(encodeCouponActionId(rawCouponId));
+    const valueText = coupon.type === 'percent' ? `${safeCouponValue}<span>% OFF</span>` : `<span>¥</span>${safeCouponValue}`;
+    const actionText = isClaimed
+      ? '<i class="fa fa-check"></i> 已领取'
+      : isExhausted
+        ? '已领完'
+        : coupon.id === CLAIMABLE_TEST_COUPON_ID
+          ? '领取测试券'
+          : '立即领取';
+
+    return `
+      <div class="coupon-card">
+        <div class="coupon-header">
+          <div class="coupon-value">${valueText}</div>
+          <div class="coupon-type">${coupon.type === 'percent' ? '折扣券' : '满减券'}</div>
+        </div>
+        <div class="coupon-body">
+          <h3 class="coupon-name">${safeCouponName}</h3>
+          <p class="coupon-desc">${safeCouponDesc}</p>
+          <div class="coupon-meta">
+            <span><i class="fa fa-calendar"></i> 至 ${safeCouponEndDate}</span>
+            <span>满¥${safeCouponMinOrder}可用</span>
+          </div>
+          <button class="coupon-btn ${isClaimed ? 'success' : isExhausted ? '' : 'primary'}"
+                  ${isClaimed || isExhausted || !appCurrentUser ? 'disabled' : ''}
+                  onclick="claimCoupon('${safeActionCouponId}')">
+            ${actionText}
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function loadMyCoupons() {
+  if (!appCurrentUser) return;
+
+  const userCoupons = getOwnedCoupons(appCurrentUser.id);
+  const now = Date.now();
+  const parseExpireTime = (expireAt) => {
+    const text = String(expireAt || '').trim();
+    if (!text) return NaN;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+      return new Date(`${text}T23:59:59`).getTime();
+    }
+    return new Date(text).getTime();
+  };
+  const isExpiredCoupon = (coupon) => {
+    const expireTime = parseExpireTime(coupon.expireAt);
+    return Number.isFinite(expireTime) && expireTime < now;
+  };
+  const unused = userCoupons.filter(coupon => coupon.status !== 'used' && !isExpiredCoupon(coupon)).length;
+  const used = userCoupons.filter(coupon => coupon.status === 'used').length;
+
+  document.getElementById('statTotal').textContent = userCoupons.length;
+  document.getElementById('statUnused').textContent = unused;
+  document.getElementById('statUsed').textContent = used;
+
+  const container = document.getElementById('myCouponsList');
+
+  if (userCoupons.length === 0) {
+    container.innerHTML = '<div style="text-align: center; padding: 48px; color: var(--text-gray);">您还没有优惠券</div>';
+    return;
+  }
+
+  container.innerHTML = userCoupons.map(coupon => {
+    const safeCouponValue = escapeHTMLText(coupon.value);
+    const safeCouponName = escapeHTMLText(coupon.name || '');
+    const fallbackDesc = `满¥${String(coupon.minOrder == null ? '' : coupon.minOrder)}可用`;
+    const safeCouponDesc = escapeHTMLText(coupon.desc || fallbackDesc);
+    const safeCouponExpireAt = escapeHTMLText(coupon.expireAt || '');
+    const valueText = coupon.type === 'percent' ? `${safeCouponValue}% OFF` : `¥${safeCouponValue}`;
+    const isUsed = coupon.status === 'used';
+    const isExpired = !isUsed && isExpiredCoupon(coupon);
+    const statusClass = isUsed ? 'used' : (isExpired ? 'expired' : 'unused');
+    const statusText = isUsed ? '已使用' : (isExpired ? '已失效' : '未使用');
+
+    return `
+      <div class="my-coupon-item ${isExpired ? 'expired' : ''}">
+        <div class="my-coupon-left">
+          <div class="my-coupon-value">${valueText}</div>
+          <div class="my-coupon-type">${coupon.type === 'percent' ? '折扣券' : '满减券'}</div>
+        </div>
+        <div class="my-coupon-right">
+          <div class="my-coupon-info">
+            <h3>${safeCouponName}</h3>
+            <p>${safeCouponDesc}</p>
+            <p><i class="fa fa-calendar"></i> 有效期至 ${safeCouponExpireAt}</p>
+          </div>
+          <span class="my-coupon-status ${statusClass}">
+            ${statusText}
+          </span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function claimCoupon(couponId) {
+  if (!appCurrentUser) {
+    showToast('请先登录', 'error');
+    rememberCurrentPageForLogin();
+    setTimeout(() => window.location.href = 'auth.html', 1000);
+    return;
+  }
+
+  const normalizedCouponId = decodeCouponActionId(couponId);
+  try {
+    const result = typeof dataManager !== 'undefined' && dataManager && typeof dataManager.claimCoupon === 'function'
+      ? await dataManager.claimCoupon(appCurrentUser.id, normalizedCouponId)
+      : claimCouponLocally(appCurrentUser.id, normalizedCouponId);
+
+    if (result.success) {
+      showToast('领取成功', 'success');
+      await loadAvailableCoupons();
+      loadMyCoupons();
+    } else {
+      showToast(result.msg || '领取失败', 'error');
+    }
+  } catch (error) {
+    console.error('[Coupons] Claim failed', error);
+    showToast('领取失败，请稍后重试', 'error');
+  }
+}
+
+function showToast(message, type = 'success') {
+  const safeType = type === 'success' ? 'success' : 'error';
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${safeType}`;
+  const icon = document.createElement('i');
+  icon.className = `fa fa-${safeType === 'success' ? 'check-circle' : 'exclamation-circle'}`;
+  toast.appendChild(icon);
+  toast.appendChild(document.createTextNode(` ${String(message == null ? '' : message)}`));
+  toast.style.cssText = `
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: ${safeType === 'success' ? '#52c41a' : '#ff4d4f'};
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    z-index: 9999;
+    animation: fadeInDown 0.3s ease;
+  `;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.animation = 'fadeOutUp 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 2000);
+}
+
+function goBack() {
+  window.location.href = 'profile.html?tab=coupons';
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await checkLogin();
+  updateNavUserInfo();
+});
+</script>
+
+<script>
+// 移动端「我的」未登录时跳登录页
+const currentUser = JSON.parse(localStorage.getItem('zhimai_user') || sessionStorage.getItem('zhimai_user') || 'null');
+const mobileProfileLink = document.getElementById('mobileProfileLink');
+if (mobileProfileLink && !currentUser) {
+  mobileProfileLink.href = 'auth.html';
+  mobileProfileLink.addEventListener('click', rememberCurrentPageForLogin);
+}
+</script>
+
+<!-- 手机端底部导航 -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-list">
+    <a href="index.html" class="mobile-nav-item">
+      <i class="fa fa-home"></i>
+      <span>首页</span>
+    </a>
+    <a href="services.html" class="mobile-nav-item">
+      <i class="fa fa-cart-shopping"></i>
+      <span>下单</span>
+    </a>
+    <a href="profile.html" class="mobile-nav-item active" id="mobileProfileLink">
+      <i class="fa fa-user"></i>
+      <span>我的</span>
+    </a>
+  </div>
+</nav>
+
+</body>
+</html>

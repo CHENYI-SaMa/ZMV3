@@ -1,0 +1,737 @@
+<!-- 
+  文件名: index.html
+  页面名称: 首页
+  功能说明: 网站主页，包含 Hero 横幅、服务介绍、关于我们、合作加入、用户评价、联系我们等模块
+  入口页面，用户访问网站首先看到的页面
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>织麦电竞 · 三角洲行动专业服务平台</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <!-- 使用 CDN 图标库 -->
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- 腾讯云 CloudBase SDK -->
+  <style>
+    .footer-service-items {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--block-gap, 10px);
+      align-items: start;
+    }
+
+    .footer-service-items a,
+    .footer-service-items span {
+      display: block;
+      width: 100%;
+      white-space: normal;
+      line-height: 1.5;
+    }
+
+    .footer-service-items span {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ========== 导航栏 ========== -->
+<header class="navbar" id="navbar">
+  <div class="nav-inner container">
+    <a href="#home" class="logo">
+      <span class="logo-icon">⚡</span>
+      <span class="logo-text">织麦<em>电竞</em></span>
+    </a>
+    <nav class="nav-links" id="navLinks">
+      <a href="#home" class="nav-item active">首页</a>
+      <a href="#about" class="nav-item">关于我们</a>
+      <a href="#services" class="nav-item">产品服务</a>
+      <a href="#join" class="nav-item">合作加入</a>
+      <a href="#contact" class="nav-item">联系我们</a>
+    </nav>
+    <a href="auth.html" class="btn-nav">登录 / 注册</a>
+  </div>
+</header>
+
+<!-- ========== 首页 Hero ========== -->
+<section class="hero" id="home">
+  <div class="hero-bg">
+    <div class="hero-particles" id="particles"></div>
+    <div class="hero-glow glow-1"></div>
+    <div class="hero-glow glow-2"></div>
+  </div>
+  <div class="container hero-content">
+    <div class="hero-badge"><span class="badge-dot"></span>三角洲行动专业服务平台</div>
+    <h1 class="hero-title">
+      三角洲行动<br />
+      <span class="gradient-text">专业代练服务</span>
+    </h1>
+    <p class="hero-desc">织麦电竞，专注腾讯三角洲行动代练服务。<br />哈弗币代肝、3x3任务、日常任务，安全高效，值得信赖。</p>
+    <div class="hero-btns">
+      <a href="auth.html" class="btn btn-outline" id="memberRegisterBtn">注册成为会员</a>
+      <a href="services.html?game=delta" class="btn btn-primary">立即下单 <i class="fa fa-arrow-right"></i></a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <span class="stat-num" data-target="10000">0</span><span class="stat-unit">+</span>
+        <span class="stat-label">服务订单</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-num" data-target="99">0</span><span class="stat-unit">%</span>
+        <span class="stat-label">好评率</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-num" data-target="50">0</span><span class="stat-unit">+</span>
+        <span class="stat-label">专业打手</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-num" data-target="24">0</span><span class="stat-unit">h</span>
+        <span class="stat-label">在线服务</span>
+      </div>
+    </div>
+  </div>
+  <div class="hero-scroll">
+    <span>向下滚动</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- ========== 服务亮点 Banner ========== -->
+<section class="features-banner">
+  <div class="container features-grid">
+    <div class="feature-card">
+      <i class="fa fa-shield-halved"></i>
+      <div>
+        <h4>安全保障</h4>
+        <p>腾讯官方认证，账号安全有保障</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <i class="fa fa-bolt"></i>
+      <div>
+        <h4>极速响应</h4>
+        <p>7×24小时客服，分钟级匹配打手</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <i class="fa fa-star"></i>
+      <div>
+        <h4>精英团队</h4>
+        <p>50+ 专业三角洲行动打手</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <i class="fa fa-rotate-left"></i>
+      <div>
+        <h4>售后无忧</h4>
+        <p>完善的售后机制，问题全程跟进</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 关于我们 ========== -->
+<section class="about" id="about">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">ABOUT US</span>
+      <h2 class="section-title">关于织麦电竞</h2>
+      <p class="section-sub">专注《三角洲行动》代练服务，流程清晰，交付稳定。</p>
+    </div>
+    <div class="about-grid">
+      <div class="about-visual">
+        <div class="about-card-main">
+          <div class="about-icon-wrap"><i class="fa fa-crosshairs"></i></div>
+          <h3>专注三角洲行动</h3>
+          <p>围绕常规代肝、任务代做与进度提升，提供更省心的服务体验。</p>
+        </div>
+        <div class="about-float-card fc-1">
+          <i class="fa fa-trophy"></i>
+          <span>专业代练平台</span>
+        </div>
+        <div class="about-float-card fc-2">
+          <i class="fa fa-users"></i>
+          <span>多类任务支持</span>
+        </div>
+        <div class="about-circle-deco"></div>
+      </div>
+      <div class="about-info">
+        <h3 class="about-heading">我们是谁</h3>
+        <p class="about-text">
+          织麦电竞聚焦《三角洲行动》代练服务，覆盖货币代肝、任务代做和日常清理等常见需求。
+        </p>
+        <p class="about-text">
+          我们坚持安全、专业、高效的服务标准，让玩家更快完成目标，减少重复投入。
+        </p>
+        <div class="about-values">
+          <div class="value-item">
+            <div class="value-icon"><i class="fa fa-eye"></i></div>
+            <div>
+              <h5>我们的愿景</h5>
+              <p>成为三角洲行动玩家信赖的代练服务平台</p>
+            </div>
+          </div>
+          <div class="value-item">
+            <div class="value-icon"><i class="fa fa-heart"></i></div>
+            <div>
+              <h5>我们的使命</h5>
+              <p>让每位玩家更轻松地享受游戏过程</p>
+            </div>
+          </div>
+        </div>
+        <a href="services.html?game=delta" class="btn btn-primary">查看我们的服务<i class="fa fa-arrow-right"></i></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 产品服务 ========== -->
+<section class="services" id="services">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">SERVICES</span>
+      <h2 class="section-title">三角洲行动服务</h2>
+      <p class="section-sub">专业代练服务，满足您的一切需求</p>
+    </div>
+
+    <!-- 服务展示 -->
+    <div class="service-showcase service-showcase-full">
+      <div class="showcase-text">
+        <div class="service-badge"><i class="fa fa-crosshairs"></i> 三角洲行动代练</div>
+        <h3>专业 · 高效 · 安全的服务</h3>
+        <p>精英打手团队严格认证，专注三角洲行动全品类代练。从哈弗币代肝到3x3任务攻坚，每一单都有实时进度追踪与账号安全保障。</p>
+        <ul class="service-list service-list-grid">
+          <li><i class="fa fa-check-circle"></i> 50+ 认证专业打手，技术可靠</li>
+          <li><i class="fa fa-check-circle"></i> 实时进度可查，账号动态透明</li>
+          <li><i class="fa fa-check-circle"></i> 支持哈弗币、3x3、任务等多种服务</li>
+          <li><i class="fa fa-check-circle"></i> 腾讯官方认证，账号安全保障</li>
+          <li><i class="fa fa-check-circle"></i> 隐私保护，不泄露个人信息</li>
+          <li><i class="fa fa-check-circle"></i> 7×24小时客服，分钟级响应</li>
+        </ul>
+        <a href="services.html?game=delta" class="btn btn-primary">立即下单 <i class="fa fa-arrow-right"></i></a>
+      </div>
+    </div>
+
+    <!-- 横向流程条 -->
+    <div class="flow-bar">
+      <div class="flow-bar-step">
+        <div class="fb-num">01</div>
+        <div class="fb-info">
+          <span class="fb-title">提交需求</span>
+          <span class="fb-desc">选择服务类型</span>
+        </div>
+      </div>
+      <div class="flow-bar-arrow"><i class="fa fa-chevron-right"></i></div>
+      <div class="flow-bar-step">
+        <div class="fb-num">02</div>
+        <div class="fb-info">
+          <span class="fb-title">匹配打手</span>
+          <span class="fb-desc">智能匹配最优打手</span>
+        </div>
+      </div>
+      <div class="flow-bar-arrow"><i class="fa fa-chevron-right"></i></div>
+      <div class="flow-bar-step">
+        <div class="fb-num">03</div>
+        <div class="fb-info">
+          <span class="fb-title">开始服务</span>
+          <span class="fb-desc">实时查看进度</span>
+        </div>
+      </div>
+      <div class="flow-bar-arrow"><i class="fa fa-chevron-right"></i></div>
+      <div class="flow-bar-step">
+        <div class="fb-num">04</div>
+        <div class="fb-info">
+          <span class="fb-title">完成交付</span>
+          <span class="fb-desc">确认后完成结算</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 热门商品列表 -->
+    <div class="home-products-section" style="margin-top: 60px;">
+      <div class="section-header" style="margin-bottom: 30px;">
+        <h3 style="font-size: 1.5rem; color: var(--text-primary);">🔥 热门服务推荐</h3>
+        <p style="color: var(--text-secondary); margin-top: 8px;">精选优质代练服务，快速下单</p>
+      </div>
+      <div class="home-products-grid" id="homeProductsGrid">
+        <div class="loading-state" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+          <i class="fa fa-spinner fa-spin" style="font-size: 1.5rem; margin-bottom: 12px; display: block;"></i>
+          <p>正在加载服务列表...</p>
+        </div>
+      </div>
+      <div style="text-align: center; margin-top: 30px;">
+        <a href="services.html" class="btn btn-outline">查看全部服务 <i class="fa fa-arrow-right"></i></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 合作加入 ========== -->
+<section class="join" id="join">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">JOIN US</span>
+      <h2 class="section-title">合作加入</h2>
+      <p class="section-sub">无论你是三角洲行动高手还是想了解自己账号价值的玩家，织麦电竞都欢迎你的加入</p>
+    </div>
+    <div class="join-grid">
+      <div class="join-card join-card-featured">
+        <div class="join-badge">热门合作</div>
+        <div class="join-icon"><i class="fa fa-gamepad"></i></div>
+        <h3>成为打手</h3>
+        <p>你是三角洲行动高手？加入我们的打手团队，利用闲暇时间赚取收入，灵活接单，收益即时到账。</p>
+        <ul class="join-list">
+          <li><i class="fa fa-check-circle"></i> 自由接单，时间灵活</li>
+          <li><i class="fa fa-check-circle"></i> 平台保障，收益安全</li>
+          <li><i class="fa fa-check-circle"></i> 专属打手等级体系</li>
+          <li><i class="fa fa-check-circle"></i> 优质单源，持续稳定</li>
+        </ul>
+        <a href="#contact" class="btn btn-primary">立即申请 <i class="fa fa-arrow-right"></i></a>
+      </div>
+      <div class="join-card join-card-featured">
+        <div class="join-badge">热门合作</div>
+        <div class="join-icon"><i class="fa fa-calculator"></i></div>
+        <h3>账号出租价值评估</h3>
+        <p>想了解你的三角洲行动账号值多少钱？免费专业评估，基于市场行情与账号资产，给出合理估价参考。</p>
+        <ul class="join-list">
+          <li><i class="fa fa-check-circle"></i> 完全免费，一键评估</li>
+          <li><i class="fa fa-check-circle"></i> 市场行情实时参考</li>
+          <li><i class="fa fa-check-circle"></i> 资产明细全面分析</li>
+          <li><i class="fa fa-check-circle"></i> 专业估价报告</li>
+        </ul>
+        <a href="#contact" class="btn btn-primary">免费评估 <i class="fa fa-arrow-right"></i></a>
+      </div>
+      <div class="join-card join-card-featured">
+        <div class="join-badge">热门合作</div>
+        <div class="join-icon"><i class="fa fa-store"></i></div>
+        <h3>账号代售</h3>
+        <p>有优质三角洲行动账号想要出售？平台提供安全托管与担保交易，帮你快速找到买家，安全变现。</p>
+        <ul class="join-list">
+          <li><i class="fa fa-check-circle"></i> 安全托管，风险可控</li>
+          <li><i class="fa fa-check-circle"></i> 担保交易，资金安全</li>
+          <li><i class="fa fa-check-circle"></i> 精准匹配潜在买家</li>
+          <li><i class="fa fa-check-circle"></i> 快速成交，即时到账</li>
+        </ul>
+        <a href="#contact" class="btn btn-primary">我要代售 <i class="fa fa-arrow-right"></i></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 用户评价 ========== -->
+<section class="testimonials">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">REVIEWS</span>
+      <h2 class="section-title">用户怎么说</h2>
+      <p class="section-sub">来自三角洲行动玩家的真实好评，是我们最大的动力</p>
+    </div>
+    <div class="reviews-grid">
+      <div class="review-card">
+        <div class="review-stars"><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></div>
+        <p class="review-text">"哈弗币代肝效率很高，一天就刷了几百万，打手很专业，全程直播让我放心，强烈推荐！"</p>
+        <div class="review-author">
+          <div class="author-avatar av-1">小</div>
+          <div>
+            <strong>小鹿同学</strong>
+            <span>哈弗币代练用户</span>
+          </div>
+        </div>
+      </div>
+      <div class="review-card featured">
+        <div class="review-stars"><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></div>
+        <p class="review-text">"3x3任务代做太省心了，自己打总是过不去，找他们两天就全做完了，价格也公道，以后还会来！"</p>
+        <div class="review-author">
+          <div class="author-avatar av-2">凉</div>
+          <div>
+            <strong>凉夏不凉</strong>
+            <span>3x3任务代练用户</span>
+          </div>
+        </div>
+      </div>
+      <div class="review-card">
+        <div class="review-stars"><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star-half-stroke"></i></div>
+        <p class="review-text">"平台做得很专业，打手技术过硬，客服响应也很快。日常任务清理找他们准没错，是我见过最靠谱的代练平台。"</p>
+        <div class="review-author">
+          <div class="author-avatar av-3">星</div>
+          <div>
+            <strong>星河漫游者</strong>
+            <span>日常任务代练用户</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 联系我们 ========== -->
+<section class="contact" id="contact">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">CONTACT</span>
+      <h2 class="section-title">联系我们</h2>
+      <p class="section-sub">有任何三角洲行动代练需求，随时与我们取得联系</p>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-info">
+        <h3>让我们为您服务</h3>
+        <p class="contact-desc">我们的专业团队随时待命，为您提供最优质的三角洲行动代练服务体验。无论是哈弗币代肝还是3x3任务，我们都能快速响应。</p>
+        <div class="contact-items">
+          <div class="contact-item">
+            <div class="ci-icon"><i class="fa fa-clock"></i></div>
+            <div>
+              <h5>服务时间</h5>
+              <p>每天 09:00 – 24:00（节假日不休）</p>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="ci-icon"><i class="fa fa-comment-dots"></i></div>
+            <div>
+              <h5>在线客服</h5>
+              <p>平台内置客服，响应时间 &lt; 5 分钟</p>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="ci-icon"><i class="fa fa-envelope"></i></div>
+            <div>
+              <h5>商务合作</h5>
+              <p>business@zhimaiesports.com</p>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="ci-icon"><i class="fa fa-map-marker-alt"></i></div>
+            <div>
+              <h5>服务范围</h5>
+              <p>腾讯三角洲行动全服</p>
+            </div>
+          </div>
+        </div>
+        <div class="social-links">
+          <a href="#" class="social-btn" title="微信"><i class="fa-brands fa-weixin"></i></a>
+          <a href="#" class="social-btn" title="QQ"><i class="fa-brands fa-qq"></i></a>
+          <a href="#" class="social-btn" title="抖音"><i class="fa-brands fa-tiktok"></i></a>
+          <a href="#" class="social-btn" title="KOOK"><span class="kook-icon">K</span></a>
+        </div>
+      </div>
+      <div class="contact-form-wrap">
+        <form class="contact-form" id="contactForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="name">您的姓名</label>
+              <input type="text" id="name" placeholder="请输入姓名" required />
+            </div>
+            <div class="form-group">
+              <label for="phone">联系电话</label>
+              <input type="tel" id="phone" placeholder="请输入手机号" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="wechat">微信号</label>
+              <input type="text" id="wechat" placeholder="请输入微信号" required />
+            </div>
+            <div class="form-group">
+              <label for="email">邮箱</label>
+              <input type="email" id="email" placeholder="请输入邮箱" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="service">咨询服务</label>
+            <select id="service" required>
+              <option value="">请选择服务类型</option>
+              <option value="hafo">哈弗币代肝</option>
+              <option value="3x3">3x3任务代做</option>
+              <option value="task">日常任务清理</option>
+              <option value="other">其他咨询</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="message">留言内容</label>
+            <textarea id="message" rows="5" placeholder="请描述您的需求，我们会尽快与您联系…" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full">
+            <i class="fa fa-paper-plane"></i> 提交留言
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 页脚 ========== -->
+<footer class="footer">
+  <div class="footer-top">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a href="#home" class="logo">
+          <span class="logo-icon">⚡</span>
+          <span class="logo-text">织麦<em>电竞</em></span>
+        </a>
+        <p>三角洲行动专业代练服务平台，为每一位玩家提供安全、快速、高品质的代练服务。</p>
+        <div class="social-links">
+          <a href="#" class="social-btn" title="微信"><i class="fa-brands fa-weixin"></i></a>
+          <a href="#" class="social-btn" title="QQ"><i class="fa-brands fa-qq"></i></a>
+          <a href="#" class="social-btn" title="抖音"><i class="fa-brands fa-tiktok"></i></a>
+          <a href="#" class="social-btn" title="KOOK"><span class="kook-icon">K</span></a>
+        </div>
+      </div>
+      <div class="footer-links">
+        <h5>快速导航</h5>
+        <a href="#home">首页</a>
+        <a href="#about">关于我们</a>
+        <a href="#services">产品服务</a>
+        <a href="#contact">联系我们</a>
+      </div>
+      <div class="footer-links">
+        <h5>服务项目</h5>
+        <div id="footerServiceItems" class="footer-service-items">
+          <span>加载服务项目...</span>
+        </div>
+      </div>
+      <div class="footer-links">
+        <h5>帮助支持</h5>
+        <a href="#">常见问题</a>
+        <a href="#">用户协议</a>
+        <a href="#">隐私政策</a>
+        <a href="#">投诉建议</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="container">
+      <p>© 2026 织麦电竞 · 版权所有 | 三角洲行动专业代练服务平台</p>
+    </div>
+  </div>
+</footer>
+
+<!-- 手机端底部导航 -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-list">
+    <a href="index.html" class="mobile-nav-item active">
+      <i class="fa fa-home"></i>
+      <span>首页</span>
+    </a>
+    <a href="services.html" class="mobile-nav-item">
+      <i class="fa fa-cart-shopping"></i>
+      <span>下单</span>
+    </a>
+    <a href="profile.html" class="mobile-nav-item" id="mobileProfileLink">
+      <i class="fa fa-user"></i>
+      <span>我的</span>
+    </a>
+  </div>
+</nav>
+
+<!-- 页面滑动过渡层 -->
+<div class="page-slide-transition" id="pageSlideTransition">
+  <div class="slide-panel slide-panel-left"></div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/main.js"></script>
+<script>
+const pageSlideTransition = document.getElementById('pageSlideTransition');
+const footerServiceItems = document.getElementById('footerServiceItems');
+const supportedServiceGames = new Set(['delta', 'valorant']);
+
+function bindServiceShortcutLinks(scope = document) {
+  const serviceLinks = scope.querySelectorAll('a[href^="services.html?game="]');
+
+  serviceLinks.forEach(link => {
+    if (link.dataset.transitionBound === 'true') {
+      return;
+    }
+
+    link.dataset.transitionBound = 'true';
+    link.addEventListener('click', (e) => {
+      const targetHref = link.getAttribute('href');
+      if (!targetHref) {
+        return;
+      }
+
+      e.preventDefault();
+      pageSlideTransition.classList.add('active');
+      setTimeout(() => {
+        window.location.href = targetHref;
+      }, 500);
+    });
+  });
+}
+
+function getIndexProductSource() {
+  if (typeof dataManager !== 'undefined' && dataManager && typeof dataManager.getActiveProducts === 'function') {
+    return dataManager.getActiveProducts();
+  }
+
+  try {
+    const storedProducts = JSON.parse(localStorage.getItem('zhimai_products') || '[]');
+    return Promise.resolve(
+      Array.isArray(storedProducts)
+        ? storedProducts.filter(product => product && (product.status === 1 || product.status === '1' || product.status === 'active'))
+        : []
+    );
+  } catch (error) {
+    return Promise.resolve([]);
+  }
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+async function loadFooterServiceItems() {
+  if (!footerServiceItems) {
+    return;
+  }
+
+  try {
+    const products = await getIndexProductSource();
+    const seenGames = new Set();
+    const serviceGames = products
+      .filter(product => product && product.game && product.gameName && supportedServiceGames.has(product.game))
+      .filter(product => {
+        if (seenGames.has(product.game)) {
+          return false;
+        }
+
+        seenGames.add(product.game);
+        return true;
+      })
+      .map(product => ({
+        game: product.game,
+        gameName: product.gameName
+      }));
+
+    if (serviceGames.length === 0) {
+      footerServiceItems.innerHTML = '<span>暂无可用服务入口</span>';
+      return;
+    }
+
+    footerServiceItems.innerHTML = serviceGames
+      .map(item => `<a href="services.html?game=${encodeURIComponent(String(item.game || ''))}">${escapeHtml(item.gameName)}</a>`)
+      .join('');
+
+    bindServiceShortcutLinks(footerServiceItems);
+  } catch (error) {
+    footerServiceItems.innerHTML = '<span>服务入口加载失败</span>';
+  }
+}
+
+function getIndexCurrentUser() {
+  return JSON.parse(localStorage.getItem('zhimai_user') || sessionStorage.getItem('zhimai_user') || 'null');
+}
+
+// 检查登录状态，更新导航栏
+const currentUser = getIndexCurrentUser();
+const navAuthBtn = document.querySelector('.btn-nav');
+const memberRegisterBtn = document.getElementById('memberRegisterBtn');
+const mobileProfileLink = document.getElementById('mobileProfileLink');
+
+if (memberRegisterBtn) {
+  memberRegisterBtn.href = currentUser ? 'profile.html' : 'auth.html';
+  memberRegisterBtn.addEventListener('click', (event) => {
+    event.preventDefault();
+    const activeUser = getIndexCurrentUser();
+    window.location.href = activeUser ? 'profile.html' : 'auth.html';
+  });
+}
+
+// 已登录：显示用户头像，未登录：显示登录/注册按钮
+if (currentUser && navAuthBtn) {
+  // 已登录：显示用户头像（使用安全节点构建，避免模板注入）
+  const username = String(currentUser.username || '').trim() || '用户';
+  const navUserLink = document.createElement('a');
+  navUserLink.href = 'profile.html';
+  navUserLink.className = 'nav-user';
+  navUserLink.title = username;
+
+  const avatar = document.createElement('div');
+  avatar.className = 'nav-avatar';
+  avatar.textContent = username.charAt(0).toUpperCase();
+  navUserLink.appendChild(avatar);
+
+  navAuthBtn.replaceWith(navUserLink);
+}
+
+// 移动端「我的」未登录时跳登录页
+if (mobileProfileLink && !currentUser) {
+  mobileProfileLink.href = 'auth.html';
+}
+
+// 首页加载热门商品
+async function loadHomeProducts() {
+  const container = document.getElementById('homeProductsGrid');
+  if (!container || typeof dataManager === 'undefined') return;
+  
+  try {
+    const products = await dataManager.getActiveProducts();
+    const deltaProducts = products.filter(p => p.game === 'delta');
+    
+    if (deltaProducts.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state" style="text-align: center; padding: 40px; color: var(--text-secondary); grid-column: 1 / -1;">
+          <i class="fa fa-box-open" style="font-size: 2rem; margin-bottom: 12px; display: block; opacity: 0.5;"></i>
+          <p>暂无商品数据</p>
+        </div>
+      `;
+      return;
+    }
+    
+    // 取前6个热门商品（按排序字段升序，数字越小越靠前）
+    const hotProducts = deltaProducts.sort((a, b) => (Number(a.sort) || 0) - (Number(b.sort) || 0)).slice(0, 6);
+    
+    container.innerHTML = hotProducts.map(p => {
+      const safeCategory = escapeHtml(p.category);
+      const safeBadge = escapeHtml(p.badge || (p.sales > 100 ? '热门' : '推荐'));
+      const safeName = escapeHtml(p.name);
+      const safeDesc = escapeHtml((p.desc || '').substring(0, 40));
+      const safePrice = escapeHtml(p.price);
+      const safePriceUnit = escapeHtml(p.priceUnit || '');
+      const safeSales = escapeHtml(p.sales);
+      const safeId = encodeURIComponent(String(p.id ?? ''));
+      return `
+      <div class="home-product-card" data-type="${safeCategory}">
+        <div class="home-product-badge">${safeBadge}</div>
+        <div class="home-product-content">
+          <h4 class="home-product-title">${safeName}</h4>
+          <p class="home-product-desc">${safeDesc}...</p>
+          <div class="home-product-meta">
+            <span class="home-product-price">¥${safePrice}${safePriceUnit}</span>
+            <span class="home-product-sales">已售 ${safeSales}</span>
+          </div>
+        </div>
+        <a href="product-detail.html?id=${safeId}" class="home-product-btn">查看详情</a>
+      </div>
+    `;
+    }).join('');
+  } catch (error) {
+    console.error('[首页] 加载商品失败:', error);
+    container.innerHTML = `
+      <div class="empty-state" style="text-align: center; padding: 40px; color: var(--text-secondary); grid-column: 1 / -1;">
+        <i class="fa fa-exclamation-circle" style="font-size: 2rem; margin-bottom: 12px; display: block; opacity: 0.5;"></i>
+        <p>加载商品失败，请刷新重试</p>
+      </div>
+    `;
+  }
+}
+
+// 页面加载完成后执行
+document.addEventListener('DOMContentLoaded', async () => {
+  bindServiceShortcutLinks();
+  await loadFooterServiceItems();
+  await loadHomeProducts();
+});
+</script>
+</body>
+</html>

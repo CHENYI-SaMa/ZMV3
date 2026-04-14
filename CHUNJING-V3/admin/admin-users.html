@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理员管理 - 织麦电竞后台</title>
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <div class="admin-container">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <header class="top-header">
+        <div class="header-left">
+          <button class="sidebar-toggle" id="sidebarToggle"><i class="fa fa-bars"></i></button>
+          <span class="page-title">管理员管理</span>
+        </div>
+        <div class="header-right">
+          <div class="header-actions">
+            <div class="user-dropdown" id="userDropdown">
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin" alt="avatar" class="user-avatar">
+              <div class="header-user-info"><span class="user-name" id="adminName">管理员</span><span class="header-user-role">超管</span></div>
+              <i class="fa fa-chevron-down" style="font-size:12px;color:var(--text-muted);"></i>
+              <div class="dropdown-menu" id="dropdownMenu">
+                <a href="#"><i class="fa fa-user"></i> 个人中心</a>
+                <div style="border-top:1px solid var(--border-color);margin:8px 0;"></div>
+                <a href="#" id="logoutBtn"><i class="fa fa-sign-out-alt"></i> 退出登录</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="content-wrapper">
+        <div class="filter-bar">
+          <div class="filter-left">
+            <input type="text" class="filter-input" id="filterSearch" placeholder="搜索管理员">
+            <button class="btn btn-primary" onclick="applyFilter()"><i class="fa fa-search"></i> 搜索</button>
+          </div>
+          <div class="filter-right">
+            <button class="btn btn-primary" onclick="openAddModal()">
+              <i class="fa fa-plus"></i> 添加管理员
+            </button>
+          </div>
+        </div>
+
+        <div class="data-card">
+          <div class="table-header">
+            <span class="table-title">管理员列表</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>头像</th>
+                  <th>用户名</th>
+                  <th>角色</th>
+                  <th>权限</th>
+                  <th>最后登录</th>
+                  <th>状态</th>
+                  <th width="120">操作</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 添加管理员弹窗 -->
+  <div class="modal" id="addModal">
+    <div class="modal-overlay" onclick="closeModal('addModal')"></div>
+    <div class="modal-content" style="max-width:480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">添加管理员</h3>
+        <button class="modal-close" onclick="closeModal('addModal')"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">用户名 *</label>
+          <input type="text" class="form-input" id="newUsername" placeholder="登录用户名">
+        </div>
+        <div class="form-group">
+          <label class="form-label">密码 *</label>
+          <input type="password" class="form-input" id="newPassword" placeholder="至少8位">
+        </div>
+        <div class="form-group">
+          <label class="form-label">角色</label>
+          <select class="form-input" id="newRole">
+            <option value="admin">超级管理员</option>
+            <option value="operator">运营</option>
+            <option value="customer_service">客服</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('addModal')">取消</button>
+        <button class="btn btn-primary" onclick="addAdmin()">添加</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    if (localStorage.getItem('zhimai_admin_logged_in') !== 'true') window.location.href = 'login.html';
+    document.getElementById('logoutBtn').addEventListener('click', e => {
+      e.preventDefault();
+      localStorage.removeItem('zhimai_admin_logged_in');
+      window.location.href = 'login.html';
+    });
+    document.getElementById('userDropdown').addEventListener('click', e => {
+      e.stopPropagation();
+      document.getElementById('dropdownMenu').classList.toggle('show');
+    });
+    document.addEventListener('click', () => document.getElementById('dropdownMenu').classList.remove('show'));
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    });
+
+    const ROLE_MAP = { admin: '超级管理员', operator: '运营', customer_service: '客服' };
+
+    function createSecureRandomHex(bytes = 16) {
+      if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.getRandomValues === 'function') {
+        const randomBytes = new Uint8Array(Math.max(1, Number(bytes) || 16));
+        window.crypto.getRandomValues(randomBytes);
+        return Array.from(randomBytes, (item) => item.toString(16).padStart(2, '0')).join('');
+      }
+
+      return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+    }
+
+    function createPasswordSalt() {
+      return createSecureRandomHex(16);
+    }
+
+    function derivePasswordHash(password, salt) {
+      const text = `${String(password || '')}::${String(salt || '')}`;
+      let h1 = 0xdeadbeef ^ text.length;
+      let h2 = 0x41c6ce57 ^ text.length;
+      let h3 = 0xc0decafe ^ text.length;
+      let h4 = 0x9e3779b9 ^ text.length;
+
+      for (let i = 0; i < text.length; i++) {
+        const code = text.charCodeAt(i);
+        h1 = Math.imul(h1 ^ code, 2654435761);
+        h2 = Math.imul(h2 ^ code, 1597334677);
+        h3 = Math.imul(h3 ^ code, 2246822507);
+        h4 = Math.imul(h4 ^ code, 3266489909);
+      }
+
+      h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+      h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h3 ^ (h3 >>> 13), 3266489909);
+      h3 = Math.imul(h3 ^ (h3 >>> 16), 2246822507) ^ Math.imul(h4 ^ (h4 >>> 13), 3266489909);
+      h4 = Math.imul(h4 ^ (h4 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+
+      return [h1, h2, h3, h4]
+        .map((item) => (`00000000${(item >>> 0).toString(16)}`).slice(-8))
+        .join('');
+    }
+
+    function getAdmins() {
+      const saved = localStorage.getItem('zhimai_admin_users');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+          return [];
+        }
+      }
+      localStorage.setItem('zhimai_admin_users', JSON.stringify([]));
+      return [];
+    }
+
+    function saveAdmins(admins) {
+      localStorage.setItem('zhimai_admin_users', JSON.stringify(admins));
+    }
+
+    let admins = [], filteredAdmins = [];
+
+    function loadAdmins() {
+      admins = getAdmins();
+      applyFilter();
+    }
+
+    function applyFilter() {
+      const search = document.getElementById('filterSearch').value.trim().toLowerCase();
+      filteredAdmins = admins.filter(a => !search || a.username.toLowerCase().includes(search));
+      renderTable();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      if (!filteredAdmins.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:48px;color:var(--text-muted);">暂无管理员</td></tr>';
+        return;
+      }
+      tbody.innerHTML = filteredAdmins.map(a => `
+        <tr>
+          <td><img src="${a.avatar}" style="width:36px;height:36px;border-radius:50%;"></td>
+          <td><strong>${a.username}</strong></td>
+          <td>
+            <span style="background:rgba(99,102,241,0.1);color:var(--primary-light);padding:2px 8px;border-radius:4px;font-size:12px;">
+              ${ROLE_MAP[a.role] || a.role}
+            </span>
+          </td>
+          <td>${a.role === 'admin' ? '<span style="color:var(--warning);">全部权限</span>' : '有限权限'}</td>
+          <td style="color:var(--text-secondary);font-size:12px;">${a.lastLogin ? new Date(a.lastLogin).toLocaleString('zh-CN') : '从未登录'}</td>
+          <td><span class="status-badge ${a.status === 1 ? 'completed' : 'cancelled'}">${a.status === 1 ? '正常' : '禁用'}</span></td>
+          <td>
+            ${a.role !== 'admin' ? `
+              <button class="btn-icon ${a.status === 1 ? 'danger' : 'btn-success'}" onclick="toggleAdmin(${a.id})" title="${a.status === 1 ? '禁用' : '启用'}">
+                <i class="fa fa-${a.status === 1 ? 'ban' : 'check'}"></i>
+              </button>
+              <button class="btn-icon danger" onclick="deleteAdmin(${a.id})" title="删除">
+                <i class="fa fa-trash"></i>
+              </button>
+            ` : '<span style="color:var(--text-muted);font-size:12px;">超管</span>'}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openAddModal() {
+      document.getElementById('newUsername').value = '';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('newRole').value = 'operator';
+      document.getElementById('addModal').classList.add('show');
+    }
+
+    function addAdmin() {
+      const username = document.getElementById('newUsername').value.trim();
+      const password = document.getElementById('newPassword').value;
+      const role = document.getElementById('newRole').value;
+      if (!username) { showToast('请输入用户名', 'warning'); return; }
+      if (password.length < 8) { showToast('密码至少8位', 'warning'); return; }
+      if (admins.find(a => a.username === username)) { showToast('用户名已存在', 'warning'); return; }
+      const passwordSalt = createPasswordSalt();
+      const newAdmin = {
+        id: Date.now(),
+        username,
+        password: '',
+        passwordHash: derivePasswordHash(password, passwordSalt),
+        passwordSalt,
+        role,
+        status: 1,
+        lastLogin: null,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`
+      };
+      admins.push(newAdmin);
+      saveAdmins(admins);
+      showToast('管理员已添加', 'success');
+      closeModal('addModal');
+      loadAdmins();
+    }
+
+    function toggleAdmin(id) {
+      const idx = admins.findIndex(a => a.id === id);
+      if (idx !== -1) {
+        admins[idx].status = admins[idx].status === 1 ? 0 : 1;
+        saveAdmins(admins);
+        showToast(admins[idx].status === 1 ? '已启用' : '已禁用', 'success');
+        loadAdmins();
+      }
+    }
+
+    function deleteAdmin(id) {
+      if (!confirm('确认删除该管理员？')) return;
+      admins = admins.filter(a => a.id !== id);
+      saveAdmins(admins);
+      showToast('已删除', 'success');
+      loadAdmins();
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+    function showToast(msg, type = 'info') {
+      const existing = document.querySelector('.zm-toast');
+      if (existing) existing.remove();
+      const colors = { success: '#10b981', warning: '#f59e0b', error: '#ef4444', info: '#3b82f6' };
+      const toast = document.createElement('div');
+      toast.style.cssText = `position:fixed;top:20px;right:20px;background:${colors[type]};color:#fff;padding:12px 20px;border-radius:8px;z-index:9999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.3);`;
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    loadAdmins();
+  </script>
+</body>
+</html>

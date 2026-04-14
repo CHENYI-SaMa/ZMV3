@@ -1,0 +1,578 @@
+<!-- LEGACY/FROZEN PAGE: Reference-only page. Do NOT add new features here. Active product-management mainline owner: products-categories.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>添加商品 - 织麦电竞后台</title>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <style>
+    .form-section {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title i {
+      color: var(--primary);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .form-group {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .form-label .required {
+      color: #ef4444;
+      margin-left: 4px;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      font-size: 14px;
+      background: var(--card-bg);
+      color: var(--text-primary);
+      transition: var(--transition);
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .image-upload {
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius);
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .image-upload:hover {
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.05);
+    }
+
+    .image-upload i {
+      font-size: 48px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .image-upload p {
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .image-upload .upload-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .price-input-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .price-input-group .form-input {
+      flex: 1;
+    }
+
+    .price-input-group .separator {
+      color: var(--text-muted);
+    }
+
+    .sku-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .sku-table th,
+    .sku-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .sku-table th {
+      font-weight: 500;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .sku-table input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--card-bg);
+      color: var(--text-primary);
+    }
+
+    .btn-add-sku {
+      padding: 8px 16px;
+      background: rgba(16, 185, 129, 0.1);
+      color: #10b981;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-add-sku:hover {
+      background: #10b981;
+      color: #fff;
+    }
+
+    .btn-remove-sku {
+      padding: 6px 10px;
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .btn-remove-sku:hover {
+      background: #ef4444;
+      color: #fff;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 24px;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      position: sticky;
+      bottom: 24px;
+    }
+
+    .radio-group,
+    .checkbox-group {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .radio-item,
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 8px 12px;
+      border-radius: 6px;
+      transition: var(--transition);
+    }
+
+    .radio-item:hover,
+    .checkbox-item:hover {
+      background: rgba(99, 102, 241, 0.05);
+    }
+
+    .radio-item input,
+    .checkbox-item input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+    }
+
+    .tag-input {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 8px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      min-height: 48px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--primary);
+      border-radius: 20px;
+      font-size: 13px;
+    }
+
+    .tag .remove {
+      cursor: pointer;
+      opacity: 0.7;
+    }
+
+    .tag .remove:hover {
+      opacity: 1;
+    }
+
+    .tag-input input {
+      border: none;
+      outline: none;
+      flex: 1;
+      min-width: 100px;
+      background: transparent;
+      color: var(--text-primary);
+    }
+
+    @media (max-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 顶部导航 -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="menu-toggle" id="menuToggle">
+            <i class="fa fa-bars"></i>
+          </button>
+          <h1 class="page-title">添加商品</h1>
+        </div>
+        <div class="header-right">
+          <div class="user-dropdown" id="userDropdown">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin" alt="avatar" class="user-avatar">
+            <div class="header-user-info"><span>管理员</span><span class="header-user-role">超管</span></div>
+            <i class="fa fa-chevron-down" style="font-size: 12px; color: var(--text-muted);"></i>
+            <div class="dropdown-menu" id="dropdownMenu">
+              <a href="#"><i class="fa fa-user"></i> 个人中心</a>
+              <a href="#" id="logoutBtn"><i class="fa fa-sign-out-alt"></i> 退出登录</a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- 页面内容 -->
+      <div class="content-wrapper" style="padding: 0;">
+        <div class="page-content">
+        <form id="productForm">
+          <!-- 基本信息 -->
+          <div class="form-section">
+            <h3 class="section-title"><i class="fa fa-info-circle"></i> 基本信息</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">商品名称 <span class="required">*</span></label>
+                <input type="text" class="form-input" placeholder="请输入商品名称" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">商品分类 <span class="required">*</span></label>
+                <select class="form-select" required>
+                  <option value="">请选择分类</option>
+                  <option value="rank">段位代练</option>
+                  <option value="boost">代打服务</option>
+                  <option value="play">陪玩服务</option>
+                  <option value="account">游戏账号</option>
+                </select>
+              </div>
+              <div class="form-group full-width">
+                <label class="form-label">商品简介</label>
+                <textarea class="form-textarea" placeholder="请输入商品简介，将显示在商品列表中..."></textarea>
+              </div>
+              <div class="form-group full-width">
+                <label class="form-label">商品详情</label>
+                <textarea class="form-textarea" rows="6" placeholder="请输入商品详细信息，支持HTML..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- 商品图片 -->
+          <div class="form-section">
+            <h3 class="section-title"><i class="fa fa-image"></i> 商品图片</h3>
+            <div class="image-upload">
+              <i class="fa fa-cloud-upload-alt"></i>
+              <p>点击或拖拽上传图片</p>
+              <p class="upload-hint">支持 JPG、PNG 格式，单张不超过 5MB，建议尺寸 800x800</p>
+            </div>
+          </div>
+
+          <!-- 价格库存 -->
+          <div class="form-section">
+            <h3 class="section-title"><i class="fa fa-yen-sign"></i> 价格库存</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">原价 <span class="required">*</span></label>
+                <div class="price-input-group">
+                  <span style="color: var(--text-muted);">¥</span>
+                  <input type="number" class="form-input" placeholder="0.00" step="0.01" required>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">现价 <span class="required">*</span></label>
+                <div class="price-input-group">
+                  <span style="color: var(--text-muted);">¥</span>
+                  <input type="number" class="form-input" placeholder="0.00" step="0.01" required>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">库存 <span class="required">*</span></label>
+                <input type="number" class="form-input" placeholder="请输入库存数量" min="0" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">库存预警</label>
+                <input type="number" class="form-input" placeholder="低于此数量将提醒补货" min="0">
+              </div>
+            </div>
+          </div>
+
+          <!-- 商品规格 -->
+          <div class="form-section">
+            <h3 class="section-title"><i class="fa fa-list"></i> 商品规格</h3>
+            <table class="sku-table">
+              <thead>
+                <tr>
+                  <th style="width: 30%;">规格名称</th>
+                  <th style="width: 25%;">价格</th>
+                  <th style="width: 25%;">库存</th>
+                  <th style="width: 20%;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="skuTableBody">
+                <tr>
+                  <td><input type="text" placeholder="如：青铜→白银"></td>
+                  <td><input type="number" placeholder="0.00" step="0.01"></td>
+                  <td><input type="number" placeholder="0" min="0"></td>
+                  <td><button type="button" class="btn-remove-sku" onclick="removeSkuRow(this)"><i class="fa fa-trash"></i></button></td>
+                </tr>
+              </tbody>
+            </table>
+            <div style="margin-top: 16px;">
+              <button type="button" class="btn-add-sku" onclick="addSkuRow()">
+                <i class="fa fa-plus"></i> 添加规格
+              </button>
+            </div>
+          </div>
+
+          <!-- 商品属性 -->
+          <div class="form-section">
+            <h3 class="section-title"><i class="fa fa-tags"></i> 商品属性</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">商品标签</label>
+                <div class="tag-input">
+                  <span class="tag">热销 <i class="fa fa-times remove"></i></span>
+                  <span class="tag">新品 <i class="fa fa-times remove"></i></span>
+                  <input type="text" placeholder="输入标签按回车添加">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">上架状态</label>
+                <div class="radio-group">
+                  <label class="radio-item">
+                    <input type="radio" name="status" value="on" checked>
+                    <span>立即上架</span>
+                  </label>
+                  <label class="radio-item">
+                    <input type="radio" name="status" value="off">
+                    <span>放入仓库</span>
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">推荐设置</label>
+                <div class="checkbox-group">
+                  <label class="checkbox-item">
+                    <input type="checkbox">
+                    <span>首页推荐</span>
+                  </label>
+                  <label class="checkbox-item">
+                    <input type="checkbox">
+                    <span>热门商品</span>
+                  </label>
+                  <label class="checkbox-item">
+                    <input type="checkbox">
+                    <span>新品推荐</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 物流设置 -->
+          <div class="form-section">
+            <h3 class="section-title"><i class="fa fa-truck"></i> 物流设置</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">物流方式</label>
+                <div class="radio-group">
+                  <label class="radio-item">
+                    <input type="radio" name="shipping" value="virtual" checked>
+                    <span>虚拟商品（自动发货）</span>
+                  </label>
+                  <label class="radio-item">
+                    <input type="radio" name="shipping" value="physical">
+                    <span>实物商品</span>
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">运费设置</label>
+                <div class="radio-group">
+                  <label class="radio-item">
+                    <input type="radio" name="freight" value="free" checked>
+                    <span>包邮</span>
+                  </label>
+                  <label class="radio-item">
+                    <input type="radio" name="freight" value="fixed">
+                    <span>固定运费</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 提交按钮 -->
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="history.back()">取消</button>
+            <button type="button" class="btn btn-primary" onclick="saveProduct()">
+              <i class="fa fa-save"></i> 保存商品
+            </button>
+          </div>
+        </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    // 检查登录状态
+    if (localStorage.getItem('zhimai_admin_logged_in') !== 'true') {
+      window.location.href = 'login.html';
+    }
+
+    // 退出登录
+    document.getElementById('logoutBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      localStorage.removeItem('zhimai_admin_logged_in');
+      localStorage.removeItem('zhimai_admin_user');
+      window.location.href = 'login.html';
+    });
+
+    // 下拉菜单
+    document.getElementById('userDropdown').addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.getElementById('dropdownMenu').classList.toggle('show');
+    });
+
+    document.addEventListener('click', function() {
+      document.getElementById('dropdownMenu').classList.remove('show');
+    });
+
+    // 添加规格行
+    function addSkuRow() {
+      const tbody = document.getElementById('skuTableBody');
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><input type="text" placeholder="如：青铜→白银"></td>
+        <td><input type="number" placeholder="0.00" step="0.01"></td>
+        <td><input type="number" placeholder="0" min="0"></td>
+        <td><button type="button" class="btn-remove-sku" onclick="removeSkuRow(this)"><i class="fa fa-trash"></i></button></td>
+      `;
+      tbody.appendChild(row);
+    }
+
+    // 删除规格行
+    function removeSkuRow(btn) {
+      const tbody = document.getElementById('skuTableBody');
+      if (tbody.children.length > 1) {
+        btn.closest('tr').remove();
+      } else {
+        alert('至少保留一个规格');
+      }
+    }
+
+    // 保存商品
+    function saveProduct() {
+      alert('商品保存成功！');
+      window.location.href = 'products-categories.html';
+    }
+
+    // 侧边栏切换
+    document.getElementById('sidebarToggle').addEventListener('click', function() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    });
+
+    document.getElementById('menuToggle').addEventListener('click', function() {
+      document.getElementById('sidebar').classList.toggle('show');
+    });
+
+    // 子菜单切换
+    document.querySelectorAll('.nav-item.has-submenu > .nav-link').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const parent = this.parentElement;
+        parent.classList.toggle('open');
+      });
+    });
+
+    // 标签移除
+    document.querySelectorAll('.tag .remove').forEach(btn => {
+      btn.addEventListener('click', function() {
+        this.closest('.tag').remove();
+      });
+    });
+  </script>
+</body>
+</html>

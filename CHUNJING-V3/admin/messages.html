@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>用户留言 - 织麦电竞后台</title>
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-badge.unread {
+      background: rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
+    }
+
+    .status-badge.read {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+    }
+
+    .message-cell {
+      max-width: 340px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .type-grid {
+      display: grid;
+      grid-template-columns: 110px 1fr 130px 180px;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .type-grid-header {
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+
+    .type-row {
+      padding: 10px 0;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .type-row:first-child {
+      border-top: none;
+    }
+
+    .type-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .type-input,
+    .type-select {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      font-size: 13px;
+    }
+
+    .type-add-wrap {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .type-add-wrap input {
+      flex: 1;
+    }
+
+    .table-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 20px;
+      margin-bottom: 14px;
+    }
+
+    .detail-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+    }
+
+    .detail-item.full {
+      grid-column: 1 / -1;
+    }
+
+    .detail-item .label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .detail-item .value {
+      color: var(--text-primary);
+      font-size: 14px;
+      line-height: 1.5;
+      word-break: break-all;
+    }
+
+    .detail-message {
+      white-space: pre-wrap;
+      min-height: 120px;
+      max-height: 340px;
+      overflow: auto;
+    }
+
+    @media (max-width: 1200px) {
+      .type-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .type-grid-header {
+        display: none;
+      }
+
+      .type-row {
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 12px;
+        margin-bottom: 10px;
+      }
+
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main-content">
+      <header class="top-header">
+        <div class="header-left">
+          <button class="sidebar-toggle" id="sidebarToggle">
+            <i class="fa fa-bars"></i>
+          </button>
+          <span class="page-title">用户留言</span>
+        </div>
+        <div class="header-right">
+          <div class="header-actions">
+            <div class="user-dropdown" id="userDropdown">
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin" alt="avatar" class="user-avatar">
+              <div class="header-user-info">
+                <span class="user-name">管理员</span>
+                <span class="header-user-role">超管</span>
+              </div>
+              <i class="fa fa-chevron-down" style="font-size: 12px; color: var(--text-muted);"></i>
+              <div class="dropdown-menu" id="dropdownMenu">
+                <a href="#"><i class="fa fa-user"></i> 个人中心</a>
+                <a href="#" id="logoutBtn"><i class="fa fa-sign-out-alt"></i> 退出登录</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="content-wrapper">
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-icon primary"><i class="fa fa-inbox"></i></div>
+            <div class="stat-info">
+              <span class="stat-num" id="totalMessages">0</span>
+              <span class="stat-label">留言总数</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon warning"><i class="fa fa-envelope"></i></div>
+            <div class="stat-info">
+              <span class="stat-num" id="unreadMessages">0</span>
+              <span class="stat-label">未读留言</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon success"><i class="fa fa-check-circle"></i></div>
+            <div class="stat-info">
+              <span class="stat-num" id="readMessages">0</span>
+              <span class="stat-label">已读留言</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon info"><i class="fa fa-calendar-day"></i></div>
+            <div class="stat-info">
+              <span class="stat-num" id="todayMessages">0</span>
+              <span class="stat-label">今日新增</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <div class="filter-left">
+            <div class="filter-item">
+              <select class="filter-select" id="filterStatus">
+                <option value="">全部状态</option>
+                <option value="unread">未读</option>
+                <option value="read">已读</option>
+              </select>
+            </div>
+            <div class="filter-item">
+              <select class="filter-select" id="filterService">
+                <option value="">全部服务类型</option>
+              </select>
+            </div>
+            <div class="filter-item">
+              <input type="text" class="filter-input" id="keywordInput" placeholder="搜索姓名/电话/微信/邮箱">
+            </div>
+            <button class="btn btn-primary" id="searchMessagesBtn" onclick="applyFilter()"><i class="fa fa-search"></i> 搜索</button>
+            <button class="btn btn-outline" id="resetMessagesBtn" onclick="resetFilter()"><i class="fa fa-undo"></i> 重置</button>
+          </div>
+        </div>
+
+        <div class="data-card" style="margin-bottom: 20px;">
+          <div class="table-header" style="justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+            <span class="table-title">留言列表</span>
+            <div class="table-header-actions">
+              <button class="btn btn-outline" id="exportMessagesBtn" onclick="exportMessagesToExcel()">
+                <i class="fa fa-file-export"></i> 导出 Excel
+              </button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>提交时间</th>
+                  <th>姓名</th>
+                  <th>电话</th>
+                  <th>微信号</th>
+                  <th>邮箱</th>
+                  <th>咨询服务</th>
+                  <th>留言内容</th>
+                  <th>状态</th>
+                  <th width="200">操作</th>
+                </tr>
+              </thead>
+              <tbody id="messagesTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="data-card">
+          <div class="table-header" style="justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+            <span class="table-title">咨询服务类型管理</span>
+          </div>
+          <div style="padding: 16px 20px 20px;">
+            <div class="type-add-wrap">
+              <input type="text" class="type-input" id="newServiceTypeName" placeholder="输入新的服务类型名称，如：账号咨询">
+              <button class="btn btn-success" id="addServiceTypeBtn" onclick="addServiceType()"><i class="fa fa-plus"></i> 新增类型</button>
+              <button class="btn btn-primary" id="saveAllServiceTypesBtn" onclick="saveAllServiceTypes()"><i class="fa fa-save"></i> 保存并同步前台</button>
+            </div>
+
+            <div class="type-grid type-grid-header">
+              <span>排序</span>
+              <span>服务类型名称</span>
+              <span>状态</span>
+              <span>操作</span>
+            </div>
+            <div id="serviceTypesContainer"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal" id="messageDetailModal">
+    <div class="modal-overlay" id="messageDetailOverlay"></div>
+    <div class="modal-content" style="max-width: 760px; width: 92%;">
+      <div class="modal-header">
+        <h3 class="modal-title">留言详情</h3>
+        <button class="modal-close" id="messageDetailCloseBtn">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-grid">
+          <div class="detail-item"><span class="label">提交时间</span><div class="value" id="detailCreatedAt">--</div></div>
+          <div class="detail-item"><span class="label">状态</span><div class="value" id="detailStatus">--</div></div>
+          <div class="detail-item"><span class="label">姓名</span><div class="value" id="detailName">--</div></div>
+          <div class="detail-item"><span class="label">电话</span><div class="value" id="detailPhone">--</div></div>
+          <div class="detail-item"><span class="label">微信号</span><div class="value" id="detailWechat">--</div></div>
+          <div class="detail-item"><span class="label">邮箱</span><div class="value" id="detailEmail">--</div></div>
+          <div class="detail-item full"><span class="label">咨询服务</span><div class="value" id="detailService">--</div></div>
+          <div class="detail-item full">
+            <span class="label">留言内容</span>
+            <div class="value detail-message" id="detailMessage">--</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="messageDetailCloseFooterBtn">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    if (localStorage.getItem('zhimai_admin_logged_in') !== 'true') {
+      window.location.href = 'login.html';
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      localStorage.removeItem('zhimai_admin_logged_in');
+      localStorage.removeItem('zhimai_admin_user');
+      window.location.href = 'login.html';
+    });
+
+    document.getElementById('userDropdown').addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.getElementById('dropdownMenu').classList.toggle('show');
+    });
+
+    document.addEventListener('click', function() {
+      document.getElementById('dropdownMenu').classList.remove('show');
+    });
+
+    const MESSAGE_KEY = 'zhimai_contact_messages';
+    const SERVICE_TYPE_KEY = 'zhimai_contact_service_types';
+    const SERVICE_TYPE_SYNC_KEY = 'zhimai_contact_service_types_updated_at';
+    const DEFAULT_SERVICE_TYPES = ['哈弗币代肝', '3x3任务代做', '日常任务清理', '账号出租评估', '账号代售', '其他咨询'];
+
+    let allMessages = [];
+    let currentMessages = [];
+    let serviceTypes = [];
+
+    function readJSON(key, fallbackValue) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallbackValue;
+      } catch (error) {
+        return fallbackValue;
+      }
+    }
+
+    function hasStorageKey(key) {
+      try {
+        return localStorage.getItem(key) !== null;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function writeJSON(key, value) {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+        return true;
+      } catch (error) {
+        console.error('[messages] localStorage write failed:', error);
+        showToast('保存失败：浏览器本地存储不可写，请检查无痕模式或存储权限', 'error');
+        return false;
+      }
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<i class="fa fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'times-circle' : 'info-circle'}"></i> ${message}`;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    function normalizeServiceTypeList(rawList) {
+      const list = Array.isArray(rawList) ? rawList : [];
+      return list
+        .map((item, index) => {
+          if (typeof item === 'string') {
+            const name = String(item || '').trim();
+            if (!name) return null;
+            return { id: `CST_${index + 1}`, name, sort: index + 1, status: 1 };
+          }
+          if (!item || typeof item !== 'object') return null;
+          const name = String(item.name || '').trim();
+          if (!name) return null;
+          const sort = Number(item.sort);
+          return {
+            id: String(item.id || `CST_${index + 1}`),
+            name,
+            sort: Number.isFinite(sort) ? sort : (index + 1),
+            status: item.status === 0 ? 0 : 1
+          };
+        })
+        .filter(Boolean)
+        .sort((a, b) => {
+          if (a.sort !== b.sort) return a.sort - b.sort;
+          return String(a.name).localeCompare(String(b.name), 'zh-CN');
+        })
+        .map((item, index) => ({ ...item, sort: index + 1 }));
+    }
+
+    function collectServiceTypesFromGames() {
+      const games = readJSON('zhimai_games', []);
+      if (!Array.isArray(games)) return [];
+
+      const names = [];
+      games.forEach((game) => {
+        if (!game || typeof game !== 'object') return;
+
+        if (Array.isArray(game.serviceTypes)) {
+          game.serviceTypes.forEach((serviceType) => {
+            const text = String(serviceType || '').trim();
+            if (text) names.push(text);
+          });
+        }
+
+        const fallbackText = String(game.displayServiceText || game.serviceType || '').trim();
+        if (fallbackText) names.push(fallbackText);
+      });
+
+      return Array.from(new Set(names));
+    }
+
+    function ensureServiceTypes() {
+      if (hasStorageKey(SERVICE_TYPE_KEY)) {
+        const normalized = normalizeServiceTypeList(readJSON(SERVICE_TYPE_KEY, []));
+        writeJSON(SERVICE_TYPE_KEY, normalized);
+        return normalized;
+      }
+
+      const gameSeed = collectServiceTypesFromGames();
+      const seed = gameSeed.length > 0 ? gameSeed : DEFAULT_SERVICE_TYPES;
+      const defaults = normalizeServiceTypeList(seed);
+      writeJSON(SERVICE_TYPE_KEY, defaults);
+      return defaults;
+    }
+
+    function normalizeMessageList(rawList) {
+      const list = Array.isArray(rawList) ? rawList : [];
+      return list
+        .map((item, index) => {
+          if (!item || typeof item !== 'object') return null;
+          const createdAt = String(item.createdAt || item.created_time || '').trim();
+          const normalizedCreatedAt = createdAt || new Date().toISOString();
+          return {
+            id: String(item.id || `MSG_${index + 1}`),
+            name: String(item.name || '').trim(),
+            phone: String(item.phone || '').trim(),
+            wechat: String(item.wechat || item.wx || '').trim(),
+            email: String(item.email || '').trim(),
+            service: String(item.service || '').trim(),
+            message: String(item.message || item.content || '').trim(),
+            status: String(item.status || '').toLowerCase() === 'read' ? 'read' : 'unread',
+            createdAt: normalizedCreatedAt,
+            updatedAt: String(item.updatedAt || normalizedCreatedAt)
+          };
+        })
+        .filter(Boolean)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+
+    function formatDateTime(value) {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return '--';
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function escapeHTML(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function saveMessages() {
+      return writeJSON(MESSAGE_KEY, allMessages);
+    }
+
+    function getMessageStatusText(status) {
+      return String(status || '').toLowerCase() === 'read' ? '已读' : '未读';
+    }
+
+    function loadServiceTypeFilterOptions() {
+      const select = document.getElementById('filterService');
+      if (!select) return;
+
+      const activeTypes = serviceTypes.filter((item) => item.status === 1);
+      const currentValue = String(select.value || '').trim();
+
+      select.innerHTML = '<option value="">全部服务类型</option>';
+      activeTypes.forEach((item) => {
+        const option = document.createElement('option');
+        option.value = item.name;
+        option.textContent = item.name;
+        select.appendChild(option);
+      });
+
+      if (currentValue && activeTypes.some((item) => item.name === currentValue)) {
+        select.value = currentValue;
+      }
+    }
+
+    function updateStats() {
+      const total = allMessages.length;
+      const unread = allMessages.filter((item) => item.status === 'unread').length;
+      const read = allMessages.filter((item) => item.status === 'read').length;
+      const today = new Date().toISOString().slice(0, 10);
+      const todayCount = allMessages.filter((item) => String(item.createdAt || '').slice(0, 10) === today).length;
+
+      document.getElementById('totalMessages').textContent = total;
+      document.getElementById('unreadMessages').textContent = unread;
+      document.getElementById('readMessages').textContent = read;
+      document.getElementById('todayMessages').textContent = todayCount;
+    }
+
+    function renderMessagesTable() {
+      const tbody = document.getElementById('messagesTableBody');
+      if (!tbody) return;
+
+      if (currentMessages.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:48px; color:var(--text-muted);">暂无留言数据</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = currentMessages.map((item) => {
+        const statusClass = item.status === 'read' ? 'read' : 'unread';
+        const statusText = getMessageStatusText(item.status);
+        const actionText = statusClass === 'read' ? '标记未读' : '标记已读';
+        const safeName = escapeHTML(item.name || '--');
+        const safePhone = escapeHTML(item.phone || '--');
+        const safeWechat = escapeHTML(item.wechat || '--');
+        const safeEmail = escapeHTML(item.email || '--');
+        const safeService = escapeHTML(item.service || '--');
+        const safeMessage = escapeHTML(item.message || '--');
+        const safeMessageTitle = safeMessage;
+        const safeId = encodeURIComponent(String(item.id || ''));
+        return `
+          <tr>
+            <td>${formatDateTime(item.createdAt)}</td>
+            <td>${safeName}</td>
+            <td>${safePhone}</td>
+            <td>${safeWechat}</td>
+            <td>${safeEmail}</td>
+            <td>${safeService}</td>
+            <td class="message-cell" title="${safeMessageTitle}">${safeMessage}</td>
+            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+            <td>
+              <button class="btn-icon" data-action="view-message-detail" data-id="${safeId}" onclick="openMessageDetail(decodeURIComponent('${safeId}'))" title="查看详情">
+                <i class="fa fa-eye"></i>
+              </button>
+              <button class="btn-icon" data-action="toggle-message-status" data-id="${safeId}" onclick="toggleMessageStatus(decodeURIComponent('${safeId}'))" title="${actionText}">
+                <i class="fa fa-envelope-open"></i>
+              </button>
+              <button class="btn-icon danger" data-action="remove-message" data-id="${safeId}" onclick="removeMessage(decodeURIComponent('${safeId}'))" title="删除">
+                <i class="fa fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function applyFilter() {
+      const status = String(document.getElementById('filterStatus').value || '').trim();
+      const service = String(document.getElementById('filterService').value || '').trim();
+      const keyword = String(document.getElementById('keywordInput').value || '').trim().toLowerCase();
+
+      currentMessages = allMessages.filter((item) => {
+        if (status && item.status !== status) return false;
+        if (service && item.service !== service) return false;
+        if (keyword) {
+          const haystack = [item.name, item.phone, item.wechat, item.email, item.service, item.message]
+            .map((value) => String(value || '').toLowerCase())
+            .join(' ');
+          if (!haystack.includes(keyword)) return false;
+        }
+        return true;
+      });
+
+      renderMessagesTable();
+    }
+
+    function resetFilter() {
+      document.getElementById('filterStatus').value = '';
+      document.getElementById('filterService').value = '';
+      document.getElementById('keywordInput').value = '';
+      currentMessages = [...allMessages];
+      renderMessagesTable();
+    }
+
+    function loadMessages() {
+      allMessages = normalizeMessageList(readJSON(MESSAGE_KEY, []));
+      currentMessages = [...allMessages];
+      updateStats();
+      applyFilter();
+    }
+
+    function saveServiceTypes() {
+      serviceTypes = normalizeServiceTypeList(serviceTypes);
+      const saved = writeJSON(SERVICE_TYPE_KEY, serviceTypes);
+      if (!saved) return false;
+      try {
+        localStorage.setItem(SERVICE_TYPE_SYNC_KEY, new Date().toISOString());
+      } catch (error) {
+        console.warn('[messages] sync stamp write failed:', error);
+      }
+      loadServiceTypeFilterOptions();
+      return true;
+    }
+
+    function saveAllServiceTypes() {
+      const nextList = [];
+      const nameSet = new Set();
+      const pendingNameInput = document.getElementById('newServiceTypeName');
+      const pendingName = String((pendingNameInput && pendingNameInput.value) || '').trim();
+
+      for (let index = 0; index < serviceTypes.length; index += 1) {
+        const item = serviceTypes[index];
+        const nameInput = document.getElementById(`name_${item.id}`);
+        const sortInput = document.getElementById(`sort_${item.id}`);
+        const statusInput = document.getElementById(`status_${item.id}`);
+        const name = String((nameInput && nameInput.value) || '').trim();
+        const sort = Number((sortInput && sortInput.value) || (index + 1));
+        const status = Number((statusInput && statusInput.value) || 1) === 0 ? 0 : 1;
+
+        if (!name) {
+          showToast('服务类型名称不能为空', 'error');
+          return;
+        }
+        if (nameSet.has(name)) {
+          showToast(`服务类型名称重复：${name}`, 'error');
+          return;
+        }
+
+        nameSet.add(name);
+        nextList.push({
+          ...item,
+          name,
+          sort: Number.isFinite(sort) && sort > 0 ? Math.floor(sort) : (index + 1),
+          status
+        });
+      }
+
+      if (pendingName) {
+        if (nameSet.has(pendingName)) {
+          showToast(`服务类型名称重复：${pendingName}`, 'error');
+          return;
+        }
+        nextList.push({
+          id: `CST_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+          name: pendingName,
+          sort: nextList.length + 1,
+          status: 1
+        });
+        document.getElementById('newServiceTypeName').value = '';
+      }
+
+      serviceTypes = nextList;
+      if (!saveServiceTypes()) return;
+      renderServiceTypes();
+      showToast('服务类型已保存，并同步到前台咨询服务', 'success');
+    }
+
+    function renderServiceTypes() {
+      const container = document.getElementById('serviceTypesContainer');
+      if (!container) return;
+
+      if (!Array.isArray(serviceTypes) || serviceTypes.length === 0) {
+        container.innerHTML = '<div style="color:var(--text-muted); padding:12px 0;">暂无服务类型，请先新增</div>';
+        return;
+      }
+
+      container.innerHTML = serviceTypes.map((item) => `
+        <div class="type-row" data-id="${item.id}">
+          <div class="type-grid">
+            <input type="number" class="type-input" id="sort_${item.id}" value="${item.sort}" min="1">
+            <input type="text" class="type-input" id="name_${item.id}" value="${item.name}">
+            <select class="type-select" id="status_${item.id}">
+              <option value="1" ${item.status === 1 ? 'selected' : ''}>启用</option>
+              <option value="0" ${item.status === 0 ? 'selected' : ''}>停用</option>
+            </select>
+            <div class="type-actions">
+              <button class="btn btn-sm btn-primary" data-action="save-service-type-row" data-id="${encodeURIComponent(String(item.id))}" onclick="saveServiceTypeRow('${item.id}')">保存</button>
+              <button class="btn btn-sm btn-outline" data-action="remove-service-type" data-id="${encodeURIComponent(String(item.id))}" onclick="removeServiceType('${item.id}')">删除</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addServiceType() {
+      const input = document.getElementById('newServiceTypeName');
+      const name = String(input.value || '').trim();
+      if (!name) {
+        showToast('请输入服务类型名称', 'error');
+        return;
+      }
+      if (serviceTypes.some((item) => item.name === name)) {
+        showToast('该服务类型已存在', 'error');
+        return;
+      }
+
+      serviceTypes.push({
+        id: `CST_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+        name,
+        sort: serviceTypes.length + 1,
+        status: 1
+      });
+
+      if (!saveServiceTypes()) return;
+      renderServiceTypes();
+      input.value = '';
+      showToast('服务类型已新增', 'success');
+    }
+
+    function saveServiceTypeRow(id) {
+      const index = serviceTypes.findIndex((item) => item.id === id);
+      if (index === -1) return;
+
+      const nameInput = document.getElementById(`name_${id}`);
+      const sortInput = document.getElementById(`sort_${id}`);
+      const statusInput = document.getElementById(`status_${id}`);
+      const name = String((nameInput && nameInput.value) || '').trim();
+      const sort = Number((sortInput && sortInput.value) || 0);
+      const status = Number((statusInput && statusInput.value) || 1) === 0 ? 0 : 1;
+
+      if (!name) {
+        showToast('服务类型名称不能为空', 'error');
+        return;
+      }
+      if (serviceTypes.some((item, i) => i !== index && item.name === name)) {
+        showToast('服务类型名称重复，请修改', 'error');
+        return;
+      }
+
+      serviceTypes[index] = {
+        ...serviceTypes[index],
+        name,
+        sort: Number.isFinite(sort) && sort > 0 ? Math.floor(sort) : (index + 1),
+        status
+      };
+
+      if (!saveServiceTypes()) return;
+      renderServiceTypes();
+      showToast('服务类型已更新', 'success');
+    }
+
+    function removeServiceType(id) {
+      const target = serviceTypes.find((item) => item.id === id);
+      if (!target) return;
+      if (!confirm(`确定删除服务类型「${target.name}」吗？`)) return;
+
+      serviceTypes = serviceTypes.filter((item) => item.id !== id);
+      if (!saveServiceTypes()) return;
+      renderServiceTypes();
+      showToast('服务类型已删除', 'success');
+    }
+
+    function toggleMessageStatus(id) {
+      const index = allMessages.findIndex((item) => item.id === id);
+      if (index === -1) return;
+
+      allMessages[index].status = allMessages[index].status === 'read' ? 'unread' : 'read';
+      allMessages[index].updatedAt = new Date().toISOString();
+      if (!saveMessages()) return;
+      updateStats();
+      applyFilter();
+    }
+
+    function removeMessage(id) {
+      const target = allMessages.find((item) => item.id === id);
+      if (!target) return;
+      if (!confirm('确定删除该条留言吗？')) return;
+
+      allMessages = allMessages.filter((item) => item.id !== id);
+      if (!saveMessages()) return;
+      updateStats();
+      applyFilter();
+      showToast('留言已删除', 'success');
+    }
+
+    function setDetailValue(nodeId, value) {
+      const node = document.getElementById(nodeId);
+      if (!node) return;
+      const text = String(value || '').trim();
+      node.textContent = text || '--';
+    }
+
+    function openMessageDetail(id) {
+      const message = allMessages.find((item) => item.id === id);
+      if (!message) {
+        showToast('未找到留言详情', 'error');
+        return;
+      }
+
+      setDetailValue('detailCreatedAt', formatDateTime(message.createdAt));
+      setDetailValue('detailStatus', getMessageStatusText(message.status));
+      setDetailValue('detailName', message.name);
+      setDetailValue('detailPhone', message.phone);
+      setDetailValue('detailWechat', message.wechat);
+      setDetailValue('detailEmail', message.email);
+      setDetailValue('detailService', message.service);
+      setDetailValue('detailMessage', message.message);
+
+      const modal = document.getElementById('messageDetailModal');
+      if (!modal) return;
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMessageDetail() {
+      const modal = document.getElementById('messageDetailModal');
+      if (!modal) return;
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    function getExcelSafeCell(value) {
+      const text = String(value || '').replace(/\r?\n/g, ' ').trim();
+      if (/^[=+\-@]/.test(text)) return `'${text}`;
+      return text;
+    }
+
+    function buildMessageExcelContent(rows) {
+      const head = ['提交时间', '姓名', '电话', '微信号', '邮箱', '咨询服务', '留言内容', '状态'];
+      const bodyRows = rows.map((item) => ([
+        formatDateTime(item.createdAt),
+        getExcelSafeCell(item.name),
+        getExcelSafeCell(item.phone),
+        getExcelSafeCell(item.wechat),
+        getExcelSafeCell(item.email),
+        getExcelSafeCell(item.service),
+        getExcelSafeCell(item.message),
+        getExcelSafeCell(getMessageStatusText(item.status))
+      ]));
+
+      const trs = bodyRows.map((cells) => `<tr>${cells.map((cell) => `<td>${escapeHTML(cell)}</td>`).join('')}</tr>`).join('');
+      return `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="content-type" content="application/vnd.ms-excel; charset=UTF-8">
+</head>
+<body>
+  <table border="1">
+    <thead><tr>${head.map((title) => `<th>${escapeHTML(title)}</th>`).join('')}</tr></thead>
+    <tbody>${trs}</tbody>
+  </table>
+</body>
+</html>`;
+    }
+
+    function getExportFileName() {
+      const now = new Date();
+      const date = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      const time = `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+      return `用户留言_${date}_${time}.xls`;
+    }
+
+    function exportMessagesToExcel() {
+      const rows = Array.isArray(currentMessages) ? currentMessages : [];
+      if (rows.length === 0) {
+        showToast('当前筛选结果为空，暂无可导出数据', 'warning');
+        return;
+      }
+
+      const html = buildMessageExcelContent(rows);
+      const blob = new Blob(['\uFEFF', html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = getExportFileName();
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      showToast(`已导出 ${rows.length} 条留言`, 'success');
+    }
+
+    function bindMessageActions() {
+      const messagesTableBody = document.getElementById('messagesTableBody');
+      if (!messagesTableBody) return;
+
+      messagesTableBody.addEventListener('click', function(event) {
+        const btn = event.target.closest('button[data-action]');
+        if (!btn) return;
+
+        const action = String(btn.dataset.action || '').trim();
+        const encodedId = String(btn.dataset.id || '').trim();
+        const id = encodedId ? decodeURIComponent(encodedId) : '';
+        if (!id) return;
+
+        if (action === 'view-message-detail') {
+          openMessageDetail(id);
+          return;
+        }
+        if (action === 'toggle-message-status') {
+          toggleMessageStatus(id);
+          return;
+        }
+        if (action === 'remove-message') {
+          removeMessage(id);
+        }
+      });
+    }
+
+    function bindServiceTypeActions() {
+      const container = document.getElementById('serviceTypesContainer');
+      if (!container) return;
+
+      container.addEventListener('click', function(event) {
+        const btn = event.target.closest('button[data-action]');
+        if (!btn) return;
+
+        const action = String(btn.dataset.action || '').trim();
+        const encodedId = String(btn.dataset.id || '').trim();
+        const id = encodedId ? decodeURIComponent(encodedId) : '';
+        if (!id) return;
+
+        if (action === 'save-service-type-row') {
+          saveServiceTypeRow(id);
+          return;
+        }
+        if (action === 'remove-service-type') {
+          removeServiceType(id);
+        }
+      });
+    }
+
+    function bindIfExists(id, eventName, handler) {
+      const node = document.getElementById(id);
+      if (!node) return false;
+      node.addEventListener(eventName, handler);
+      return true;
+    }
+
+    function initMessagesPage() {
+      try {
+        if (typeof fillAdminName === 'function') {
+          fillAdminName('.user-name');
+        }
+
+        serviceTypes = ensureServiceTypes();
+        renderServiceTypes();
+        loadServiceTypeFilterOptions();
+        loadMessages();
+        bindIfExists('filterStatus', 'change', applyFilter);
+        bindIfExists('filterService', 'change', applyFilter);
+        bindIfExists('keywordInput', 'keydown', function(event) {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            applyFilter();
+          }
+        });
+        bindIfExists('newServiceTypeName', 'keydown', function(event) {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            addServiceType();
+          }
+        });
+        bindIfExists('messageDetailCloseBtn', 'click', closeMessageDetail);
+        bindIfExists('messageDetailCloseFooterBtn', 'click', closeMessageDetail);
+        bindIfExists('messageDetailOverlay', 'click', closeMessageDetail);
+        document.addEventListener('keydown', function(event) {
+          if (event.key === 'Escape') {
+            closeMessageDetail();
+          }
+        });
+      } catch (error) {
+        console.error('[messages] init failed:', error);
+        showToast('页面初始化失败，请刷新后重试', 'error');
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initMessagesPage);
+    } else {
+      initMessagesPage();
+    }
+  </script>
+</body>
+</html>

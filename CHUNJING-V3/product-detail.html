@@ -1,0 +1,500 @@
+<!-- 
+  文件名: product-detail.html
+  页面名称: 商品详情
+  功能说明: 展示单个商品的详细信息，包括图片、价格、描述、库存等
+  用户可在此页面选择数量并进入下单流程
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>商品详情 · 织麦电竞</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/order.css" />
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- 腾讯云 CloudBase SDK -->
+  <style>
+    .product-detail-page {
+      padding-top: 100px;
+      min-height: 100vh;
+      background: var(--bg-dark);
+    }
+    .product-detail-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      padding: 48px 0;
+    }
+    .product-image-section {
+      position: sticky;
+      top: 100px;
+    }
+    .product-main-image {
+      width: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .product-main-image img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .product-info-section {
+      color: #fff;
+    }
+    .product-category-tag {
+      display: inline-block;
+      padding: 6px 16px;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 20px;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+    .product-name {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      line-height: 1.3;
+    }
+    .product-meta {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 24px;
+      color: var(--text-gray);
+      font-size: 14px;
+    }
+    .product-meta span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .product-price-section {
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .product-price {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .product-price-unit {
+      font-size: 16px;
+      color: var(--text-gray);
+    }
+    .product-stock {
+      margin-top: 8px;
+      color: var(--text-gray);
+      font-size: 14px;
+    }
+    .product-desc {
+      margin-bottom: 32px;
+    }
+    .product-desc h3 {
+      font-size: 18px;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+    .product-desc p {
+      color: var(--text-gray);
+      line-height: 1.8;
+      white-space: pre-line;
+    }
+    .product-actions {
+      display: flex;
+      gap: 16px;
+    }
+    .product-actions .btn {
+      flex: 1;
+      padding: 16px 32px;
+      font-size: 16px;
+      justify-content: center;
+    }
+    .product-actions .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .product-actions .btn-outline {
+      border: 1px solid var(--primary);
+      color: var(--primary);
+    }
+    .product-actions .btn-outline:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+    .related-products {
+      margin-top: 64px;
+      padding-top: 48px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .related-products h2 {
+      font-size: 24px;
+      margin-bottom: 24px;
+      color: #fff;
+    }
+    .related-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .related-card {
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: transform 0.3s;
+      cursor: pointer;
+    }
+    .related-card:hover {
+      transform: translateY(-4px);
+    }
+    .related-card img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+    }
+    .related-info {
+      padding: 16px;
+    }
+    .related-name {
+      font-size: 14px;
+      color: #fff;
+      margin-bottom: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .related-price {
+      font-size: 16px;
+      color: var(--primary);
+      font-weight: 600;
+    }
+    @media (max-width: 768px) {
+      .product-detail-container {
+        grid-template-columns: 1fr;
+        gap: 32px;
+      }
+      .product-image-section {
+        position: static;
+      }
+      .product-name {
+        font-size: 24px;
+      }
+      .related-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 导航栏 -->
+<header class="navbar" id="navbar">
+  <div class="nav-inner container">
+    <a href="index.html" class="logo">
+      <span class="logo-icon">⚡</span>
+      <span class="logo-text">织麦<em>电竞</em></span>
+    </a>
+    <nav class="nav-links" id="navLinks">
+      <a href="index.html#home" class="nav-item">首页</a>
+      <a href="index.html#about" class="nav-item">关于我们</a>
+      <a href="index.html#services" class="nav-item">产品服务</a>
+      <a href="index.html#join" class="nav-item">合作加入</a>
+      <a href="index.html#contact" class="nav-item">联系我们</a>
+    </nav>
+    <a href="auth.html" class="btn-nav" id="navAuthBtn">登录 / 注册</a>
+  </div>
+</header>
+
+<!-- 商品详情页 -->
+<main class="product-detail-page">
+  <div class="container">
+    <div class="product-detail-container">
+      <!-- 左侧图片 -->
+      <div class="product-image-section">
+        <div class="product-main-image">
+          <img id="productImage" src="" alt="商品图片">
+        </div>
+      </div>
+      
+      <!-- 右侧信息 -->
+      <div class="product-info-section">
+        <span class="product-category-tag" id="productCategory">代练服务</span>
+        <h1 class="product-name" id="productName">商品名称</h1>
+        <div class="product-meta">
+          <span><i class="fa fa-gamepad"></i> <span id="productGame">三角洲行动</span></span>
+          <span><i class="fa fa-fire"></i> 销量 <span id="productSales">0</span></span>
+          <span><i class="fa fa-calendar"></i> <span id="productDate">2026-03-20</span></span>
+        </div>
+        
+        <div class="product-price-section">
+          <div class="product-price">
+            ¥<span id="productPrice">0.00</span><span class="product-price-unit" id="productPriceUnit"></span>
+          </div>
+          <div class="product-stock" id="productStockSection">库存: <span id="productStock">0</span> 件</div>
+        </div>
+        
+        <div class="product-desc">
+          <h3>商品详情</h3>
+          <p id="productDesc">商品描述加载中...</p>
+        </div>
+        
+        <div class="product-actions">
+          <a href="#" class="btn btn-primary" id="orderBtn">
+            <i class="fa fa-shopping-cart"></i> 立即下单
+          </a>
+          <a href="services.html" class="btn btn-outline" id="backToServicesBtn">
+            <i class="fa fa-arrow-left"></i> 返回列表
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 相关商品 -->
+    <div class="related-products">
+      <h2>相关推荐</h2>
+      <div class="related-grid" id="relatedProducts">
+        <!-- 动态加载 -->
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- 底部 -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <p>&copy; 2026 织麦电竞. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="js/data.js"></script>
+<script src="js/main.js"></script>
+<script>
+// 获取URL参数
+function getUrlParam(name) {
+  const params = new URLSearchParams(window.location.search);
+  return params.get(name);
+}
+
+function normalizeGameCode(rawValue) {
+  const value = String(rawValue || '').trim().toLowerCase();
+  return /^[a-z0-9_-]+$/.test(value) ? value : '';
+}
+
+function buildReturnState(product) {
+  const gameFromUrl = normalizeGameCode(getUrlParam('game'));
+  const focusFromUrl = String(getUrlParam('focusProduct') || '').trim();
+  const fallbackProductId = String(product?.id || '').trim();
+
+  return {
+    game: gameFromUrl || normalizeGameCode(product?.game),
+    focusProduct: focusFromUrl || fallbackProductId
+  };
+}
+
+function buildServicesReturnUrl(product) {
+  const state = buildReturnState(product);
+  const params = new URLSearchParams();
+  if (state.game) {
+    params.set('game', state.game);
+  }
+  if (state.focusProduct) {
+    params.set('focusProduct', state.focusProduct);
+  }
+  const query = params.toString();
+  return query ? `services.html?${query}` : 'services.html';
+}
+
+function syncProductNavigationLinks(product) {
+  const state = buildReturnState(product);
+  const backButton = document.getElementById('backToServicesBtn');
+  if (backButton) {
+    backButton.href = buildServicesReturnUrl(product);
+  }
+
+  const orderButton = document.getElementById('orderBtn');
+  if (!orderButton) return;
+  const params = new URLSearchParams();
+  params.set('product', String(product.id));
+  if (state.game) {
+    params.set('game', state.game);
+  }
+  if (state.focusProduct) {
+    params.set('focusProduct', state.focusProduct);
+  }
+  orderButton.href = `order.html?${params.toString()}`;
+}
+
+function updateMobileProfileLink() {
+  const currentUser = JSON.parse(localStorage.getItem('zhimai_user') || sessionStorage.getItem('zhimai_user') || 'null');
+  const mobileProfileLink = document.getElementById('mobileProfileLink');
+
+  if (mobileProfileLink && !currentUser) {
+    mobileProfileLink.href = 'auth.html';
+  }
+}
+
+function escapeHTML(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function sanitizeImageUrl(value, fallback = 'https://via.placeholder.com/240x160?text=IMG') {
+  const raw = String(value == null ? '' : value).trim();
+  if (!raw) return fallback;
+  if (/^(https?:\/\/|data:image\/|\.{0,2}\/|\/)/i.test(raw)) return raw;
+  return fallback;
+}
+
+function isActiveProductStatus(status) {
+  return status === 1 || status === '1' || status === 'active';
+}
+
+function resolveCategoryName(rawCategory, gameCode = '') {
+  const categoryValue = String(rawCategory || '').trim();
+  if (!categoryValue) return '其他服务';
+  if (!/^cat_/i.test(categoryValue)) return categoryValue;
+
+  try {
+    const categories = JSON.parse(localStorage.getItem('zhimai_categories') || '[]');
+    if (!Array.isArray(categories)) return categoryValue;
+
+    const byId = (item) => String(item?._id || item?.id || '').trim() === categoryValue;
+    const hasName = (item) => Boolean(String(item?.name || '').trim());
+
+    const sameGame = categories.find((item) => {
+      if (!byId(item) || !hasName(item)) return false;
+      if (!gameCode) return true;
+      const itemGame = String(item?.game || '').trim();
+      return !itemGame || itemGame === String(gameCode).trim();
+    });
+    if (sameGame) return String(sameGame.name).trim();
+
+    const anyMatch = categories.find((item) => byId(item) && hasName(item));
+    return anyMatch ? String(anyMatch.name).trim() : categoryValue;
+  } catch (error) {
+    return categoryValue;
+  }
+}
+
+// 加载商品详情
+async function loadProductDetail() {
+  const productId = getUrlParam('id');
+  
+  if (!productId) {
+    alert('商品ID不存在');
+    window.location.href = 'services.html';
+    return;
+  }
+  
+  const products = await dataManager.getProducts();
+  const product = products.find(p => p.id === parseInt(productId));
+  
+  if (!product || !isActiveProductStatus(product.status)) {
+    alert('商品不存在或已下架');
+    window.location.href = 'services.html';
+    return;
+  }
+  
+  // 填充商品信息
+  document.getElementById('productImage').src = product.image;
+  document.getElementById('productCategory').textContent = resolveCategoryName(product.category, product.game);
+  document.getElementById('productName').textContent = product.name;
+  document.getElementById('productGame').textContent = product.gameName;
+  document.getElementById('productSales').textContent = product.sales;
+  document.getElementById('productDate').textContent = product.createdAt;
+  document.getElementById('productPrice').textContent = product.price.toFixed(2);
+  document.getElementById('productPriceUnit').textContent = product.priceUnit || '';
+  
+  // 根据 showStock 设置显示/隐藏库存
+  const stockSection = document.getElementById('productStockSection');
+  if (product.showStock === false) {
+    stockSection.style.display = 'none';
+  } else {
+    stockSection.style.display = 'block';
+    document.getElementById('productStock').textContent = product.stock;
+  }
+  
+  document.getElementById('productDesc').textContent = product.detail || product.desc;
+  
+  // 设置返回与下单链接
+  syncProductNavigationLinks(product);
+  
+  // 加载相关商品
+  await loadRelatedProducts(product);
+}
+
+// 加载相关商品
+async function loadRelatedProducts(currentProduct) {
+  const allProducts = await dataManager.getActiveProducts();
+  const related = allProducts
+    .filter(p => p.id !== currentProduct.id && p.game === currentProduct.game)
+    .slice(0, 3);
+  
+  const container = document.getElementById('relatedProducts');
+  
+  if (related.length === 0) {
+    container.innerHTML = '<p style="color: var(--text-gray);">暂无相关商品</p>';
+    return;
+  }
+  
+  container.innerHTML = related.map(p => `
+    <div class="related-card" onclick="window.location.href='product-detail.html?id=${encodeURIComponent(String(p.id || ''))}'">
+      <img src="${sanitizeImageUrl(p.image)}" alt="${escapeHTML(p.name)}">
+      <div class="related-info">
+        <div class="related-name">${escapeHTML(p.name)}</div>
+        <div class="related-price">¥${Number(p.price || 0).toFixed(2)}${escapeHTML(p.priceUnit || '')}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// 页面加载时执行
+document.addEventListener('DOMContentLoaded', loadProductDetail);
+document.addEventListener('DOMContentLoaded', updateMobileProfileLink);
+
+// 更新导航栏登录状态
+const currentUser = JSON.parse(localStorage.getItem('zhimai_user') || sessionStorage.getItem('zhimai_user') || 'null');
+const navAuthBtn = document.getElementById('navAuthBtn');
+
+// 头像已隐藏，保持登录/注册按钮显示
+// if (currentUser && navAuthBtn) {
+//   navAuthBtn.outerHTML = `
+//     <a href="profile.html" class="nav-user">
+//       <div class="nav-avatar">${currentUser.username.charAt(0).toUpperCase()}</div>
+//     </a>
+//   `;
+// }
+
+// 移动端「我的」未登录时跳登录页
+</script>
+
+<!-- 手机端底部导航 -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-list">
+    <a href="index.html" class="mobile-nav-item">
+      <i class="fa fa-home"></i>
+      <span>首页</span>
+    </a>
+    <a href="services.html" class="mobile-nav-item active">
+      <i class="fa fa-cart-shopping"></i>
+      <span>下单</span>
+    </a>
+    <a href="profile.html" class="mobile-nav-item" id="mobileProfileLink">
+      <i class="fa fa-user"></i>
+      <span>我的</span>
+    </a>
+  </div>
+</nav>
+
+</body>
+</html>

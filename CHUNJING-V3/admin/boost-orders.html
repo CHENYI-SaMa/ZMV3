@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>代练订单 - 织麦电竞后台</title>
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .future-wrap {
+      max-width: 860px;
+      margin: 24px auto;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 36px 30px;
+      text-align: center;
+    }
+    .future-icon {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 16px;
+      border-radius: 50%;
+      background: rgba(99, 102, 241, 0.14);
+      color: var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+    }
+    .future-title {
+      margin: 0 0 12px;
+      font-size: 24px;
+      color: var(--text-primary);
+    }
+    .future-desc {
+      margin: 0 0 8px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    .future-note {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <header class="top-header">
+        <div class="header-left">
+          <button class="sidebar-toggle" id="sidebarToggle"><i class="fa fa-bars"></i></button>
+          <span class="page-title">代练订单</span>
+        </div>
+        <div class="header-right">
+          <div class="header-actions">
+            <div class="user-dropdown" id="userDropdown">
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin" alt="avatar" class="user-avatar">
+              <div class="header-user-info">
+                <span class="user-name" id="adminName">管理员</span>
+                <span class="header-user-role">超管</span>
+              </div>
+              <i class="fa fa-chevron-down" style="font-size:12px;color:var(--text-muted);"></i>
+              <div class="dropdown-menu" id="dropdownMenu">
+                <a href="#"><i class="fa fa-user"></i> 个人中心</a>
+                <div style="border-top:1px solid var(--border-color);margin:8px 0;"></div>
+                <a href="#" id="logoutBtn"><i class="fa fa-sign-out-alt"></i> 退出登录</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="content-wrapper">
+        <div class="future-wrap">
+          <div class="future-icon"><i class="fa fa-clipboard-list"></i></div>
+          <h2 class="future-title">代练订单系统暂未开发</h2>
+          <p class="future-desc">当前版本仅保留该管理入口，代打陪玩订单能力将在新系统上线。</p>
+          <p class="future-note">可继续使用主线商品与订单流程，不受影响。</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    (function () {
+      if (localStorage.getItem('zhimai_admin_logged_in') !== 'true') {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const adminInfo = JSON.parse(localStorage.getItem('zhimai_admin_user') || '{}');
+      if (adminInfo.username) {
+        document.getElementById('adminName').textContent = adminInfo.username;
+      }
+
+      const logoutBtn = document.getElementById('logoutBtn');
+      const userDropdown = document.getElementById('userDropdown');
+      const dropdownMenu = document.getElementById('dropdownMenu');
+      const sidebarToggle = document.getElementById('sidebarToggle');
+
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          localStorage.removeItem('zhimai_admin_logged_in');
+          localStorage.removeItem('zhimai_admin_user');
+          window.location.href = 'login.html';
+        });
+      }
+
+      if (userDropdown && dropdownMenu) {
+        userDropdown.addEventListener('click', function (e) {
+          e.stopPropagation();
+          dropdownMenu.classList.toggle('show');
+        });
+        document.addEventListener('click', function () {
+          dropdownMenu.classList.remove('show');
+        });
+      }
+
+      if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function () {
+          const sidebar = document.getElementById('sidebar');
+          if (sidebar) sidebar.classList.toggle('collapsed');
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,730 @@
+<!-- 
+  文件名: order-detail.html
+  页面名称: 订单详情
+  功能说明: 展示单个订单的完整信息，包括订单状态进度、商品信息、联系方式等
+  支持订单操作：支付、取消、确认完成
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>订单详情 - 织麦电竞</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- 腾讯云 CloudBase SDK -->
+  <style>
+    .order-detail-page {
+      padding-top: 100px;
+      min-height: 100vh;
+      background: var(--bg-dark);
+    }
+    .order-detail-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+    .page-header {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      color: var(--text-gray);
+      font-size: 14px;
+      text-decoration: none;
+      transition: color .2s ease, border-color .2s ease, background .2s ease, transform .2s ease;
+    }
+    .back-link:hover {
+      color: #fff;
+      border-color: rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      transform: translateX(-2px);
+    }
+    .back-link i {
+      font-size: 12px;
+    }
+    
+    /* 订单状态进度 */
+    .order-progress {
+      background: rgba(255,255,255,0.03);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .progress-steps {
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+    }
+    .progress-steps::before {
+      content: '';
+      position: absolute;
+      top: 20px;
+      left: 10%;
+      right: 10%;
+      height: 2px;
+      background: rgba(255,255,255,0.1);
+      z-index: 0;
+    }
+    .progress-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+    .step-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+      color: var(--text-gray);
+      font-size: 14px;
+    }
+    .progress-step.active .step-icon,
+    .progress-step.completed .step-icon {
+      background: var(--primary);
+      color: #fff;
+    }
+    .progress-step.completed .step-icon {
+      background: #52c41a;
+    }
+    .step-label {
+      font-size: 13px;
+      color: var(--text-gray);
+    }
+    .progress-step.active .step-label {
+      color: #fff;
+      font-weight: 500;
+    }
+    
+    /* 订单信息卡片 */
+    .detail-section {
+      background: rgba(255,255,255,0.03);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .detail-section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .detail-section-title i {
+      color: var(--primary);
+    }
+    
+    /* 商品信息 */
+    .product-detail {
+      display: flex;
+      gap: 20px;
+      padding: 20px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 12px;
+    }
+    .product-detail img {
+      width: 150px;
+      height: 110px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .product-detail-content {
+      flex: 1;
+    }
+    .product-detail-content h3 {
+      font-size: 18px;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+    .product-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .product-meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .product-meta-item .label {
+      font-size: 12px;
+      color: var(--text-gray);
+    }
+    .product-meta-item .value {
+      font-size: 14px;
+      color: #fff;
+    }
+    .product-meta-item .value.price {
+      color: var(--primary);
+      font-weight: 600;
+    }
+    
+    /* 信息列表 */
+    .info-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .info-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .info-item .label {
+      color: var(--text-gray);
+      font-size: 14px;
+    }
+    .info-item .value {
+      color: #fff;
+      font-size: 14px;
+    }
+    .info-item .value.highlight {
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .info-item .value.success {
+      color: #52c41a;
+    }
+    .info-item .value.warning {
+      color: #faad14;
+    }
+    
+    /* 价格汇总 */
+    .price-summary {
+      background: rgba(108, 99, 255, 0.05);
+      border: 1px solid rgba(108, 99, 255, 0.1);
+    }
+    .price-summary .info-item:last-child {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 2px solid rgba(255,255,255,0.1);
+    }
+    .price-summary .info-item:last-child .value {
+      font-size: 24px;
+      color: var(--primary);
+    }
+    
+    /* 操作按钮 */
+    .detail-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
+    .detail-actions .btn {
+      padding: 14px 32px;
+      font-size: 15px;
+    }
+    
+    /* 状态标签 */
+    .status-badge-large {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .status-badge-large.pending {
+      background: rgba(250, 173, 20, 0.1);
+      color: #faad14;
+    }
+    .status-badge-large.paid {
+      background: rgba(24, 144, 255, 0.1);
+      color: #1890ff;
+    }
+    .status-badge-large.processing {
+      background: rgba(108, 99, 255, 0.1);
+      color: var(--primary);
+    }
+    .status-badge-large.completed {
+      background: rgba(82, 196, 26, 0.1);
+      color: #52c41a;
+    }
+    .status-badge-large.cancelled {
+      background: rgba(255, 77, 79, 0.1);
+      color: #ff4d4f;
+    }
+    
+    @media (max-width: 768px) {
+      .progress-steps::before {
+        display: none;
+      }
+      .progress-step {
+        flex: 1;
+      }
+      .step-label {
+        font-size: 11px;
+        text-align: center;
+      }
+      .product-detail {
+        flex-direction: column;
+      }
+      .product-detail img {
+        width: 100%;
+        height: 180px;
+      }
+      .product-meta-grid {
+        grid-template-columns: 1fr;
+      }
+      .detail-actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 导航栏 -->
+<header class="navbar" id="navbar">
+  <div class="nav-inner container">
+    <a href="index.html" class="logo">
+      <span class="logo-icon">⚡</span>
+      <span class="logo-text">织麦<em>电竞</em></span>
+    </a>
+    <nav class="nav-links" id="navLinks">
+      <a href="index.html#home" class="nav-item">首页</a>
+      <a href="services.html" class="nav-item">产品服务</a>
+      <a href="profile.html?tab=orders" class="nav-item">我的订单</a>
+    </nav>
+    <a href="auth.html" class="btn-nav" id="navAuthBtn">登录 / 注册</a>
+  </div>
+</header>
+
+<!-- 订单详情页面 -->
+<main class="order-detail-page">
+  <div class="order-detail-container">
+    <div class="page-header">
+      <a href="profile.html?tab=orders" class="back-link"><i class="fa fa-arrow-left"></i> 返回订单列表</a>
+      <h1 class="page-title">订单详情</h1>
+    </div>
+
+    <!-- 订单状态进度 -->
+    <div class="order-progress">
+      <div class="progress-steps" id="progressSteps">
+        <div class="progress-step completed">
+          <div class="step-icon"><i class="fa fa-check"></i></div>
+          <span class="step-label">提交订单</span>
+        </div>
+        <div class="progress-step active">
+          <div class="step-icon"><i class="fa fa-credit-card"></i></div>
+          <span class="step-label">支付订单</span>
+        </div>
+        <div class="progress-step">
+          <div class="step-icon"><i class="fa fa-cog"></i></div>
+          <span class="step-label">服务中</span>
+        </div>
+        <div class="progress-step">
+          <div class="step-icon"><i class="fa fa-flag-checkered"></i></div>
+          <span class="step-label">完成</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 订单状态 -->
+    <div class="detail-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div>
+          <h2 style="font-size: 20px; color: #fff; margin-bottom: 8px;">订单号：<span id="orderId">--</span></h2>
+          <p style="color: var(--text-gray); font-size: 14px;">创建时间：<span id="orderTime">--</span></p>
+        </div>
+        <div class="status-badge-large pending" id="statusBadge">
+          <i class="fa fa-clock"></i>
+          <span id="statusText">待支付</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 商品信息 -->
+    <div class="detail-section">
+      <h3 class="detail-section-title"><i class="fa fa-box"></i> 商品信息</h3>
+      <div class="product-detail">
+        <img src="" alt="商品图片" id="productImage">
+        <div class="product-detail-content">
+          <h3 id="productName">--</h3>
+          <div class="product-meta-grid">
+            <div class="product-meta-item">
+              <span class="label">单价</span>
+              <span class="value price">¥<span id="productPrice">0</span></span>
+            </div>
+            <div class="product-meta-item">
+              <span class="label">数量</span>
+              <span class="value" id="productQuantity">1</span>
+            </div>
+            <div class="product-meta-item">
+              <span class="label">游戏账号</span>
+              <span class="value" id="gameAccount">--</span>
+            </div>
+            <div class="product-meta-item">
+              <span class="label">游戏服务器</span>
+              <span class="value" id="gameServer">--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 订单信息 -->
+    <div class="detail-section">
+      <h3 class="detail-section-title"><i class="fa fa-file-alt"></i> 订单信息</h3>
+      <div class="info-list">
+        <div class="info-item">
+          <span class="label">支付方式</span>
+          <span class="value" id="paymentMethod">--</span>
+        </div>
+        <div class="info-item">
+          <span class="label">支付时间</span>
+          <span class="value" id="payTime">--</span>
+        </div>
+        <div class="info-item">
+          <span class="label">联系电话</span>
+          <span class="value" id="contactPhone">--</span>
+        </div>
+        <div class="info-item" id="contactSocialItem" style="display: none;">
+          <span class="label">QQ/微信</span>
+          <span class="value" id="contactSocial">--</span>
+        </div>
+        <div class="info-item">
+          <span class="label">备注信息</span>
+          <span class="value" id="orderRemark">--</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 价格汇总 -->
+    <div class="detail-section price-summary">
+      <h3 class="detail-section-title"><i class="fa fa-calculator"></i> 价格明细</h3>
+      <div class="info-list">
+        <div class="info-item">
+          <span class="label">商品金额</span>
+          <span class="value">¥<span id="subtotal">0</span></span>
+        </div>
+        <div class="info-item">
+          <span class="label">优惠券抵扣</span>
+          <span class="value highlight">-¥<span id="discount">0</span></span>
+        </div>
+        <div class="info-item">
+          <span class="label">应付总额</span>
+          <span class="value highlight">¥<span id="totalAmount">0</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="detail-actions" id="detailActions">
+      <!-- 动态生成 -->
+    </div>
+  </div>
+</main>
+
+<!-- 底部 -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <p>&copy; 2026 织麦电竞. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="js/data.js"></script>
+<script src="js/main.js"></script>
+<script>
+let currentOrder = null;
+let currentUser = null;
+
+// 获取URL参数
+function getUrlParam(name) {
+  const params = new URLSearchParams(window.location.search);
+  return params.get(name);
+}
+
+function rememberCurrentPageForLogin() {
+  const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  sessionStorage.setItem('redirect_after_login', currentPath || 'order-detail.html');
+}
+
+function redirectToAuthWithContext() {
+  rememberCurrentPageForLogin();
+  window.location.href = 'auth.html';
+}
+
+// 检查登录状态
+function checkLogin() {
+  currentUser = JSON.parse(localStorage.getItem('zhimai_user') || sessionStorage.getItem('zhimai_user') || 'null');
+  
+  if (!currentUser) {
+    alert('请先登录');
+    redirectToAuthWithContext();
+    return false;
+  }
+  
+  // 更新导航栏 - 头像已隐藏
+  // const navUser = document.getElementById('navUser');
+  // if (navUser) {
+  //   navUser.querySelector('.nav-avatar').textContent = currentUser.username.charAt(0).toUpperCase();
+  // }
+  
+  return true;
+}
+
+// 加载订单详情
+function loadOrderDetail() {
+  const orderId = getUrlParam('id');
+  
+  if (!orderId) {
+    alert('订单不存在');
+    window.location.href = 'profile.html?tab=orders';
+    return;
+  }
+
+  currentOrder = dataManager.getOrderById(orderId);
+
+  if (!currentOrder) {
+    alert('订单不存在');
+    window.location.href = 'profile.html?tab=orders';
+    return;
+  }
+
+  // 检查权限（使用宽松比较，防止类型不一致）
+  if (currentOrder.userId != currentUser.id) {
+    console.log('权限检查失败:', {
+      orderUserId: currentOrder.userId,
+      currentUserId: currentUser.id,
+      orderId: currentOrder.id
+    });
+    alert('无权查看此订单');
+    window.location.href = 'profile.html?tab=orders';
+    return;
+  }
+  
+  // 填充基本信息
+  document.getElementById('orderId').textContent = currentOrder.id;
+  document.getElementById('orderTime').textContent = new Date(currentOrder.createdAt).toLocaleString('zh-CN');
+  document.getElementById('statusText').textContent = currentOrder.statusText;
+  
+  // 更新状态标签样式
+  const statusBadge = document.getElementById('statusBadge');
+  statusBadge.className = `status-badge-large ${currentOrder.status}`;
+  
+  // 更新进度条
+  updateProgress(currentOrder.status);
+  
+  // 填充商品信息
+  document.getElementById('productImage').src = currentOrder.productImage;
+  document.getElementById('productName').textContent = currentOrder.productName;
+  document.getElementById('productPrice').textContent = currentOrder.price.toFixed(2);
+  document.getElementById('productQuantity').textContent = currentOrder.quantity;
+  document.getElementById('gameAccount').textContent = currentOrder.gameAccount || '--';
+  document.getElementById('gameServer').textContent = currentOrder.gameServer || '--';
+  
+  // 填充订单信息
+  const paymentMethodMap = { wechat: '微信支付', alipay: '支付宝', balance: '余额支付' };
+  document.getElementById('paymentMethod').textContent = paymentMethodMap[currentOrder.paymentMethod] || '--';
+  document.getElementById('payTime').textContent = currentOrder.status === 'pending' ? '待支付' : new Date(currentOrder.updatedAt).toLocaleString('zh-CN');
+  document.getElementById('contactPhone').textContent = currentOrder.contactPhone || '--';
+  if (currentOrder.contactSocial) {
+    document.getElementById('contactSocial').textContent = currentOrder.contactSocial;
+    document.getElementById('contactSocialItem').style.display = 'flex';
+  }
+  document.getElementById('orderRemark').textContent = currentOrder.remark || '无';
+  
+  // 填充价格
+  document.getElementById('subtotal').textContent = currentOrder.subtotal.toFixed(2);
+  document.getElementById('discount').textContent = (currentOrder.discount || 0).toFixed(2);
+  document.getElementById('totalAmount').textContent = currentOrder.totalAmount.toFixed(2);
+  
+  // 生成操作按钮
+  generateActions();
+}
+
+// 更新进度条
+function updateProgress(status) {
+  const steps = document.querySelectorAll('.progress-step');
+  const statusMap = {
+    'pending': 1,
+    'paid': 2,
+    'processing': 2,
+    'completed': 3,
+    'cancelled': -1
+  };
+  
+  const currentStep = statusMap[status] || 0;
+  
+  steps.forEach((step, index) => {
+    step.classList.remove('active', 'completed');
+    if (index < currentStep) {
+      step.classList.add('completed');
+    } else if (index === currentStep) {
+      step.classList.add('active');
+    }
+  });
+  
+  if (status === 'cancelled') {
+    document.querySelector('.order-progress').style.display = 'none';
+  }
+}
+
+// 生成操作按钮
+function generateActions() {
+  const container = document.getElementById('detailActions');
+  let html = '';
+  
+  switch(currentOrder.status) {
+    case 'pending':
+      html = `
+        <button class="btn btn-primary" onclick="payOrder()">
+          <i class="fa fa-credit-card"></i> 立即支付
+        </button>
+        <button class="btn btn-outline" onclick="cancelOrder()">
+          <i class="fa fa-times"></i> 取消订单
+        </button>
+      `;
+      break;
+    case 'paid':
+    case 'processing':
+      html = `
+        <button class="btn btn-outline" onclick="contactService()">
+          <i class="fa fa-headset"></i> 联系客服
+        </button>
+      `;
+      break;
+    case 'completed':
+      html = `
+        <button class="btn btn-primary" onclick="buyAgain()">
+          <i class="fa fa-redo"></i> 再次购买
+        </button>
+        <button class="btn btn-outline" onclick="writeReview()">
+          <i class="fa fa-star"></i> 评价订单
+        </button>
+      `;
+      break;
+    case 'cancelled':
+      html = `
+        <button class="btn btn-primary" onclick="buyAgain()">
+          <i class="fa fa-redo"></i> 重新下单
+        </button>
+      `;
+      break;
+  }
+  
+  container.innerHTML = html;
+}
+
+// 支付订单
+function payOrder() {
+  window.location.href = `payment.html?order=${currentOrder.id}`;
+}
+
+// 取消订单
+function cancelOrder() {
+  if (confirm('确定要取消该订单吗？')) {
+    dataManager.cancelOrder(currentOrder.id, '用户取消');
+    showToast('订单已取消', 'success');
+    setTimeout(() => location.reload(), 1000);
+  }
+}
+
+// 再次购买
+function buyAgain() {
+  window.location.href = `order.html?product=${currentOrder.productId}`;
+}
+
+// 联系客服
+function contactService() {
+  showToast('客服功能即将上线', 'info');
+}
+
+// 评价订单
+function writeReview() {
+  showToast('评价功能即将上线', 'info');
+}
+
+// Toast提示
+function showToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `<i class="fa fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i> ${message}`;
+  toast.style.cssText = `
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: ${type === 'success' ? '#52c41a' : '#1890ff'};
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    z-index: 9999;
+    animation: fadeInDown 0.3s ease;
+  `;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.animation = 'fadeOutUp 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 2000);
+}
+
+// 页面加载
+document.addEventListener('DOMContentLoaded', () => {
+  updateNavUserInfo(); // 更新导航栏用户头像
+  if (checkLogin()) {
+    loadOrderDetail();
+  }
+});
+</script>
+
+<script>
+// 移动端「我的」未登录时跳登录页
+const mobileProfileLink = document.getElementById('mobileProfileLink');
+if (mobileProfileLink && !currentUser) {
+  mobileProfileLink.href = 'auth.html';
+  mobileProfileLink.addEventListener('click', rememberCurrentPageForLogin);
+}
+</script>
+
+<!-- 手机端底部导航 -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-list">
+    <a href="index.html" class="mobile-nav-item">
+      <i class="fa fa-home"></i>
+      <span>首页</span>
+    </a>
+    <a href="services.html" class="mobile-nav-item">
+      <i class="fa fa-cart-shopping"></i>
+      <span>下单</span>
+    </a>
+    <a href="profile.html" class="mobile-nav-item active" id="mobileProfileLink">
+      <i class="fa fa-user"></i>
+      <span>我的</span>
+    </a>
+  </div>
+</nav>
+
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!-- 
+  文件名: support.html
+  页面名称: 客服中心
+  功能说明: 客服支持页面，提供在线客服入口、常见问题解答、投诉建议表单
+  用户可提交问题反馈和查看处理进度
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <script>
+    window.location.replace('index.html');
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>客服中心 - 织麦电竞</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/games.css" />
+  <link rel="stylesheet" href="css/auth.css" />
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- 腾讯云 CloudBase SDK -->
+</head>
+<body class="auth-page">
+
+<!-- 返回按钮 -->
+<a href="javascript:history.back()" class="auth-back">
+  <i class="fa fa-arrow-left"></i>
+</a>
+
+<!-- 页面内容 -->
+<div class="auth-container" style="max-width: 800px;">
+  <div class="auth-card" style="padding: 40px;">
+    <!-- 标题 -->
+    <div style="text-align: center; margin-bottom: 32px;">
+      <h2 style="font-size: 1.8rem; font-weight: 800;">
+        <i class="fa fa-headset" style="color: var(--primary); margin-right: 12px;"></i>客服中心
+      </h2>
+      <p style="color: var(--text-secondary); margin-top: 8px;">我们随时为您解答疑问</p>
+    </div>
+
+    <!-- 联系方式 -->
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 32px;">
+      <div style="background: var(--bg-dark); border-radius: 16px; padding: 28px; text-align: center; cursor: pointer; transition: var(--transition);" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div style="width: 64px; height: 64px; background: rgba(7,193,96,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+          <i class="fa fa-comments" style="font-size: 1.8rem; color: #07c160;"></i>
+        </div>
+        <h4 style="margin-bottom: 8px;">在线客服</h4>
+        <p style="color: var(--text-secondary); font-size: 0.85rem;">7×24小时在线</p>
+        <button class="btn btn-primary" style="margin-top: 16px; padding: 10px 24px; font-size: 0.9rem;" onclick="showToast('正在连接客服...', 'info')">立即咨询</button>
+      </div>
+      
+      <div style="background: var(--bg-dark); border-radius: 16px; padding: 28px; text-align: center; cursor: pointer; transition: var(--transition);" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div style="width: 64px; height: 64px; background: rgba(250,173,20,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+          <i class="fa fa-phone" style="font-size: 1.8rem; color: #faad14;"></i>
+        </div>
+        <h4 style="margin-bottom: 8px;">电话客服</h4>
+        <p style="color: var(--text-secondary); font-size: 0.85rem;">400-888-8888</p>
+        <button class="btn btn-primary" style="margin-top: 16px; padding: 10px 24px; font-size: 0.9rem;" onclick="showToast('拨打客服电话', 'info')">立即拨打</button>
+      </div>
+    </div>
+
+    <!-- 常见问题 -->
+    <div style="margin-bottom: 32px;">
+      <h4 style="margin-bottom: 20px;"><i class="fa fa-question-circle" style="margin-right: 8px; color: var(--primary);"></i>常见问题</h4>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="faq-item" style="background: var(--bg-dark); border-radius: 12px; overflow: hidden;">
+          <div style="padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleFaq(this)">
+            <span style="font-weight: 600;">如何下单？</span>
+            <i class="fa fa-chevron-down" style="color: var(--text-secondary); transition: transform 0.3s;"></i>
+          </div>
+          <div style="padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.3s;">
+            <p style="color: var(--text-secondary); padding-bottom: 18px;">进入「游戏」页面选择三角洲行动，然后选择您需要的服务类型，填写相关信息后提交订单即可。</p>
+          </div>
+        </div>
+        
+        <div class="faq-item" style="background: var(--bg-dark); border-radius: 12px; overflow: hidden;">
+          <div style="padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleFaq(this)">
+            <span style="font-weight: 600;">订单多久能完成？</span>
+            <i class="fa fa-chevron-down" style="color: var(--text-secondary); transition: transform 0.3s;"></i>
+          </div>
+          <div style="padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.3s;">
+            <p style="color: var(--text-secondary); padding-bottom: 18px;">根据服务类型不同，完成时间也不同。哈弗币代肝通常2-4小时，3x3任务约1-2天，具体时间以订单页面显示为准。</p>
+          </div>
+        </div>
+        
+        <div class="faq-item" style="background: var(--bg-dark); border-radius: 12px; overflow: hidden;">
+          <div style="padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleFaq(this)">
+            <span style="font-weight: 600;">如何保障账号安全？</span>
+            <i class="fa fa-chevron-down" style="color: var(--text-secondary); transition: transform 0.3s;"></i>
+          </div>
+          <div style="padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.3s;">
+            <p style="color: var(--text-secondary); padding-bottom: 18px;">我们所有打手都经过严格认证，采用纯手打方式，支持直播监督。同时我们承诺不泄露您的任何账号信息。</p>
+          </div>
+        </div>
+        
+        <div class="faq-item" style="background: var(--bg-dark); border-radius: 12px; overflow: hidden;">
+          <div style="padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleFaq(this)">
+            <span style="font-weight: 600;">如何申请退款？</span>
+            <i class="fa fa-chevron-down" style="color: var(--text-secondary); transition: transform 0.3s;"></i>
+          </div>
+          <div style="padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.3s;">
+            <p style="color: var(--text-secondary); padding-bottom: 18px;">如果订单未开始服务，您可以在订单详情页申请全额退款。如果服务已开始，根据完成进度按比例退款。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 意见反馈 -->
+    <div style="background: var(--bg-dark); border-radius: 16px; padding: 24px;">
+      <h4 style="margin-bottom: 16px;"><i class="fa fa-edit" style="margin-right: 8px; color: var(--primary);"></i>意见反馈</h4>
+      <textarea placeholder="请输入您的意见或建议..." style="width: 100%; min-height: 100px; padding: 14px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); resize: vertical; margin-bottom: 16px;"></textarea>
+      <button class="btn btn-primary" style="width: 100%; padding: 14px;" onclick="showToast('感谢您的反馈！', 'success')">提交反馈</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <i class="fa fa-info-circle"></i>
+  <span id="toastMsg">提示信息</span>
+</div>
+
+<script>
+function rememberCurrentPageForLogin() {
+  const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  sessionStorage.setItem('redirect_after_login', currentPath || 'support.html');
+}
+
+// 检查登录
+const currentUser = JSON.parse(localStorage.getItem('zhimai_user') || sessionStorage.getItem('zhimai_user') || 'null');
+if (!currentUser) {
+  rememberCurrentPageForLogin();
+  window.location.href = 'auth.html';
+}
+
+// Toast
+function showToast(msg, type = 'info') {
+  const toast = document.getElementById('toast');
+  const toastMsg = document.getElementById('toastMsg');
+  const icon = toast.querySelector('i');
+  toastMsg.textContent = msg;
+  icon.className = type === 'success' ? 'fa fa-check-circle' : type === 'error' ? 'fa fa-times-circle' : 'fa fa-info-circle';
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// FAQ展开/收起
+function toggleFaq(header) {
+  const content = header.nextElementSibling;
+  const icon = header.querySelector('.fa-chevron-down');
+  const isOpen = content.style.maxHeight && content.style.maxHeight !== '0px';
+  
+  // 关闭所有其他FAQ
+  document.querySelectorAll('.faq-item > div:last-child').forEach(c => {
+    c.style.maxHeight = '0px';
+  });
+  document.querySelectorAll('.faq-item .fa-chevron-down').forEach(i => {
+    i.style.transform = 'rotate(0deg)';
+  });
+  
+  // 切换当前
+  if (!isOpen) {
+    content.style.maxHeight = content.scrollHeight + 'px';
+    icon.style.transform = 'rotate(180deg)';
+  }
+}
+</script>
+
+<script>
+// 移动端「我的」未登录时跳登录页
+const mobileProfileLink = document.getElementById('mobileProfileLink');
+if (mobileProfileLink && !currentUser) {
+  mobileProfileLink.href = 'auth.html';
+  mobileProfileLink.addEventListener('click', rememberCurrentPageForLogin);
+}
+</script>
+
+<!-- 手机端底部导航 -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-list">
+    <a href="index.html" class="mobile-nav-item">
+      <i class="fa fa-home"></i>
+      <span>首页</span>
+    </a>
+    <a href="services.html" class="mobile-nav-item">
+      <i class="fa fa-cart-shopping"></i>
+      <span>下单</span>
+    </a>
+    <a href="profile.html" class="mobile-nav-item active" id="mobileProfileLink">
+      <i class="fa fa-user"></i>
+      <span>我的</span>
+    </a>
+  </div>
+</nav>
+
+</body>
+</html>

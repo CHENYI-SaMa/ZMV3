@@ -1,0 +1,248 @@
+<!-- 
+  文件名: settings.html
+  页面名称: 账号设置
+  功能说明: 用户账号设置页面，可修改个人资料、绑定手机/邮箱、修改密码等
+  包含通知设置、隐私设置等选项
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <script>
+    window.location.replace('profile.html?tab=settings');
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>账号设置 - 织麦电竞</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/games.css" />
+  <link rel="stylesheet" href="css/auth.css" />
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- 腾讯云 CloudBase SDK -->
+</head>
+<body class="auth-page">
+
+<!-- 返回按钮 -->
+<a href="javascript:history.back()" class="auth-back">
+  <i class="fa fa-arrow-left"></i>
+</a>
+
+<!-- 页面内容 -->
+<div class="auth-container" style="max-width: 800px;">
+  <div class="auth-card" style="padding: 40px;">
+    <!-- 标题 -->
+    <div style="text-align: center; margin-bottom: 32px;">
+      <h2 style="font-size: 1.8rem; font-weight: 800;">
+        <i class="fa fa-cog" style="color: var(--primary); margin-right: 12px;"></i>账号设置
+      </h2>
+      <p style="color: var(--text-secondary); margin-top: 8px;">管理您的账号信息和安全设置</p>
+    </div>
+
+    <!-- 头像设置 -->
+    <div style="text-align: center; margin-bottom: 40px;">
+      <div style="position: relative; display: inline-block;">
+        <div style="width: 100px; height: 100px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 700; color: #fff;" id="settingsAvatar">
+          用
+        </div>
+        <label style="position: absolute; bottom: 0; right: 0; width: 36px; height: 36px; background: var(--bg-card); border: 2px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+          <i class="fa fa-camera" style="font-size: 0.9rem; color: var(--text-secondary);"></i>
+          <input type="file" accept="image/*" style="display: none;" onchange="showToast('头像上传功能开发中', 'info')">
+        </label>
+      </div>
+      <p style="color: var(--text-secondary); margin-top: 12px; font-size: 0.9rem;">点击更换头像</p>
+    </div>
+
+    <!-- 设置列表 -->
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <!-- 昵称 -->
+      <div style="background: var(--bg-dark); border-radius: 12px; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <span style="color: var(--text-secondary);"><i class="fa fa-user" style="margin-right: 8px;"></i>昵称</span>
+          <button style="color: var(--primary); font-size: 0.85rem;" onclick="toggleEdit('nickname')">修改</button>
+        </div>
+        <p style="font-size: 1.1rem; font-weight: 600;" id="nicknameDisplay">用户昵称</p>
+        <div id="nicknameEdit" style="display: none; margin-top: 12px;">
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="nicknameInput" placeholder="请输入新昵称" style="flex: 1; padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary);">
+            <button class="btn btn-primary" style="padding: 12px 20px;" onclick="saveNickname()">保存</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 手机号 -->
+      <div style="background: var(--bg-dark); border-radius: 12px; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <span style="color: var(--text-secondary);"><i class="fa fa-phone" style="margin-right: 8px;"></i>手机号</span>
+          <span style="color: var(--success); font-size: 0.8rem;"><i class="fa fa-check-circle"></i> 已绑定</span>
+        </div>
+        <p style="font-size: 1.1rem; font-weight: 600;" id="phoneDisplay">138****8888</p>
+      </div>
+
+      <!-- 修改密码 -->
+      <div style="background: var(--bg-dark); border-radius: 12px; padding: 20px; cursor: pointer;" onclick="toggleEdit('password')">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="color: var(--text-secondary);"><i class="fa fa-lock" style="margin-right: 8px;"></i>修改密码</span>
+          <i class="fa fa-chevron-right" style="color: var(--text-secondary);"></i>
+        </div>
+      </div>
+      <div id="passwordEdit" style="display: none; background: var(--bg-dark); border-radius: 12px; padding: 20px;">
+        <input type="password" placeholder="当前密码" style="width: 100%; padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); margin-bottom: 12px;">
+        <input type="password" placeholder="新密码" style="width: 100%; padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); margin-bottom: 12px;">
+        <input type="password" placeholder="确认新密码" style="width: 100%; padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); margin-bottom: 16px;">
+        <button class="btn btn-primary" style="width: 100%; padding: 14px;" onclick="showToast('密码修改功能开发中', 'info')">确认修改</button>
+      </div>
+
+      <!-- 实名认证 -->
+      <div style="background: var(--bg-dark); border-radius: 12px; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="color: var(--text-secondary);"><i class="fa fa-id-card" style="margin-right: 8px;"></i>实名认证</span>
+          <span style="color: var(--success); font-size: 0.85rem;"><i class="fa fa-check-circle"></i> 已认证</span>
+        </div>
+      </div>
+
+      <!-- 通知设置 -->
+      <div style="background: var(--bg-dark); border-radius: 12px; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <span style="color: var(--text-secondary);"><i class="fa fa-bell" style="margin-right: 8px;"></i>消息通知</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <label style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+            <span>订单状态变更</span>
+            <input type="checkbox" checked style="width: 20px; height: 20px; accent-color: var(--primary);">
+          </label>
+          <label style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+            <span>优惠活动推送</span>
+            <input type="checkbox" checked style="width: 20px; height: 20px; accent-color: var(--primary);">
+          </label>
+          <label style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+            <span>系统公告</span>
+            <input type="checkbox" style="width: 20px; height: 20px; accent-color: var(--primary);">
+          </label>
+        </div>
+      </div>
+
+      <!-- 关于我们 -->
+      <div style="background: var(--bg-dark); border-radius: 12px; padding: 20px; cursor: pointer;" onclick="showToast('织麦电竞 v1.0.5', 'info')">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="color: var(--text-secondary);"><i class="fa fa-info-circle" style="margin-right: 8px;"></i>关于我们</span>
+          <span style="color: var(--text-secondary); font-size: 0.85rem;">v1.0.5 <i class="fa fa-chevron-right" style="margin-left: 4px;"></i></span>
+        </div>
+      </div>
+
+      <!-- 清除缓存 -->
+      <div style="background: var(--bg-dark); border-radius: 12px; padding: 20px; cursor: pointer;" onclick="clearCache()">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="color: var(--text-secondary);"><i class="fa fa-trash-alt" style="margin-right: 8px;"></i>清除缓存</span>
+          <i class="fa fa-chevron-right" style="color: var(--text-secondary);"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <i class="fa fa-info-circle"></i>
+  <span id="toastMsg">提示信息</span>
+</div>
+
+<script>
+function rememberCurrentPageForLogin() {
+  const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  sessionStorage.setItem('redirect_after_login', currentPath || 'settings.html');
+}
+
+// 检查登录
+const currentUser = JSON.parse(localStorage.getItem('zhimai_user') || sessionStorage.getItem('zhimai_user') || 'null');
+if (!currentUser) {
+  rememberCurrentPageForLogin();
+  window.location.href = 'auth.html';
+}
+
+// 显示用户信息
+if (currentUser) {
+  const displayName = currentUser.nickname || currentUser.username;
+  document.getElementById('nicknameDisplay').textContent = displayName;
+  document.getElementById('settingsAvatar').textContent = displayName.charAt(0).toUpperCase();
+  document.getElementById('phoneDisplay').textContent = currentUser.phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+  document.getElementById('nicknameInput').value = displayName;
+}
+
+// Toast
+function showToast(msg, type = 'info') {
+  const toast = document.getElementById('toast');
+  const toastMsg = document.getElementById('toastMsg');
+  const icon = toast.querySelector('i');
+  toastMsg.textContent = msg;
+  icon.className = type === 'success' ? 'fa fa-check-circle' : type === 'error' ? 'fa fa-times-circle' : 'fa fa-info-circle';
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// 切换编辑
+function toggleEdit(type) {
+  const editDiv = document.getElementById(type + 'Edit');
+  editDiv.style.display = editDiv.style.display === 'none' ? 'block' : 'none';
+}
+
+// 保存昵称
+function saveNickname() {
+  const newNickname = document.getElementById('nicknameInput').value.trim();
+  if (!newNickname) {
+    showToast('昵称不能为空', 'error');
+    return;
+  }
+  
+  // 更新本地存储
+  if (currentUser) {
+    currentUser.nickname = newNickname;
+    if (localStorage.getItem('zhimai_user')) {
+      localStorage.setItem('zhimai_user', JSON.stringify(currentUser));
+    } else {
+      sessionStorage.setItem('zhimai_user', JSON.stringify(currentUser));
+    }
+    
+    // 更新显示
+    document.getElementById('nicknameDisplay').textContent = newNickname;
+    document.getElementById('settingsAvatar').textContent = newNickname.charAt(0).toUpperCase();
+    toggleEdit('nickname');
+    showToast('昵称修改成功', 'success');
+  }
+}
+
+// 清除缓存
+function clearCache() {
+  if (confirm('确定要清除缓存吗？')) {
+    showToast('缓存已清除', 'success');
+  }
+}
+</script>
+
+<script>
+// 移动端「我的」未登录时跳登录页
+const mobileProfileLink = document.getElementById('mobileProfileLink');
+if (mobileProfileLink && !currentUser) {
+  mobileProfileLink.href = 'auth.html';
+  mobileProfileLink.addEventListener('click', rememberCurrentPageForLogin);
+}
+</script>
+
+<!-- 手机端底部导航 -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-list">
+    <a href="index.html" class="mobile-nav-item">
+      <i class="fa fa-home"></i>
+      <span>首页</span>
+    </a>
+    <a href="services.html" class="mobile-nav-item">
+      <i class="fa fa-cart-shopping"></i>
+      <span>下单</span>
+    </a>
+    <a href="profile.html" class="mobile-nav-item active" id="mobileProfileLink">
+      <i class="fa fa-user"></i>
+      <span>我的</span>
+    </a>
+  </div>
+</nav>
+
+</body>
+</html>

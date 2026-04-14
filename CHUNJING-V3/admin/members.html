@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>会员管理 - 织麦电竞后台</title>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <style>
+    .member-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-bottom: 14px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      min-height: 98px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .stat-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .stat-icon.blue { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; }
+    .stat-icon.green { background: linear-gradient(135deg, #10b981, #34d399); color: #fff; }
+    .stat-icon.orange { background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #fff; }
+    .stat-icon.red { background: linear-gradient(135deg, #ec4899, #f472b6); color: #fff; }
+
+    .stat-info h3 {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .stat-info p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .member-filters {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .member-table {
+      width: 100%;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .member-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .member-table th,
+    .member-table td {
+      padding: 16px 18px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    .member-table th {
+      background: rgba(99, 102, 241, 0.05);
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .member-table tr:hover {
+      background: rgba(99, 102, 241, 0.02);
+    }
+
+    .member-table th:first-child,
+    .member-table td:first-child {
+      width: 52px;
+      text-align: center;
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+
+    .member-table input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: var(--primary);
+      vertical-align: middle;
+    }
+
+    /* 会员页分页：独立于全局样式，避免被 space-between 拉开 */
+    .page-content .pagination {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 0 0;
+      border-top: none;
+      flex-wrap: wrap;
+    }
+
+    .page-content .pagination .page-btn {
+      min-width: 32px;
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--card-bg);
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .page-content .pagination .page-btn:hover {
+      border-color: var(--primary);
+      color: var(--text-primary);
+    }
+
+    .page-content .pagination .page-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .page-content .pagination .page-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .member-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .member-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .member-details {
+      flex: 1;
+    }
+
+    .member-name {
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .member-id {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+
+    .level-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .level-badge.vip1 { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+    .level-badge.vip2 { background: rgba(99, 102, 241, 0.15); color: #6366f1; }
+    .level-badge.vip3 { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .level-badge.vip4 { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+    .member-stats-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .member-stats-cell .value {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .member-stats-cell .label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-badge::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-badge.active {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+    }
+
+    .status-badge.active::before {
+      background: #10b981;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.18), 0 0 8px rgba(16, 185, 129, 0.45);
+    }
+
+    .status-badge.banned {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+    }
+
+    .status-badge.banned::before {
+      background: #ef4444;
+    }
+
+    .action-btns {
+      display: flex;
+      gap: 6px;
+    }
+
+    .action-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .action-btn.view { background: rgba(99, 102, 241, 0.1); color: var(--primary); }
+    .action-btn.view:hover { background: var(--primary); color: #fff; }
+    .action-btn.edit { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+    .action-btn.edit:hover { background: #f59e0b; color: #fff; }
+    .action-btn.ban { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    .action-btn.ban:hover { background: #ef4444; color: #fff; }
+
+    @media (max-width: 1200px) {
+      .member-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .member-table {
+        overflow-x: auto;
+      }
+
+      .member-table table {
+        min-width: 1000px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .member-stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <!-- 侧边-->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 顶部导航 -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="menu-toggle" id="menuToggle">
+            <i class="fa fa-bars"></i>
+          </button>
+          <h1 class="page-title">会员管理</h1>
+        </div>
+        <div class="header-right">
+          <div class="search-box">
+            <i class="fa fa-search"></i>
+            <input type="text" placeholder="搜索会员ID/昵称/手机号...">
+          </div>
+          <div class="user-dropdown" id="userDropdown">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin" alt="avatar" class="user-avatar">
+            <div class="header-user-info"><span>管理员</span><span class="header-user-role">超管</span></div>
+            <i class="fa fa-chevron-down" style="font-size: 12px; color: var(--text-muted);"></i>
+            <div class="dropdown-menu" id="dropdownMenu">
+              <a href="#"><i class="fa fa-user"></i> 个人中心</a>
+              <a href="#" id="logoutBtn"><i class="fa fa-sign-out-alt"></i> 退出登录</a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- 页面内容 -->
+        <div class="content-wrapper" style="padding: 18px 20px 24px;">
+        <div class="page-content">
+        <!-- 会员统计 -->
+        <div class="member-stats">
+          <div class="stat-card">
+            <div class="stat-icon blue">
+              <i class="fa fa-users"></i>
+            </div>
+            <div class="stat-info">
+              <h3>12,456</h3>
+              <p>会员总数</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">
+              <i class="fa fa-user-plus"></i>
+            </div>
+            <div class="stat-info">
+              <h3>+128</h3>
+              <p>今日新增</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon orange">
+              <i class="fa fa-crown"></i>
+            </div>
+            <div class="stat-info">
+              <h3>2,345</h3>
+              <p>VIP会员</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon red">
+              <i class="fa fa-ban"></i>
+            </div>
+            <div class="stat-info">
+              <h3>23</h3>
+              <p>已封禁</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 筛选条-->
+        <div class="member-filters">
+          <select class="filter-select" id="filterLevel">
+            <option value="">会员等级</option>
+            <option value="vip1">普通会员</option>
+            <option value="vip2">白银会员</option>
+            <option value="vip3">黄金会员</option>
+            <option value="vip4">钻石会员</option>
+          </select>
+          <select class="filter-select" id="filterStatus">
+            <option value="">会员状态</option>
+            <option value="active">正常</option>
+            <option value="banned">已封禁</option>
+          </select>
+          <select class="filter-select" id="filterTime">
+            <option value="">注册时间</option>
+            <option value="today">今日</option>
+            <option value="week">本周</option>
+            <option value="month">本月</option>
+          </select>
+          <input type="text" class="filter-input" id="filterKeyword" placeholder="搜索会员ID/昵称/手机号" style="width: 200px;" onkeypress="if(event.key==='Enter')applyFilter()">
+          <button class="btn btn-primary" style="padding: 8px 16px; font-size: 13px;" onclick="applyFilter()">
+            <i class="fa fa-filter"></i> 筛选
+          </button>
+          <button class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px;" onclick="exportMembers()">
+            <i class="fa fa-download"></i> 导出
+          </button>
+        </div>
+
+        <!-- 批量操作栏 -->
+        <div class="batch-actions" style="display: none; align-items: center; gap: 12px; padding: 12px 16px; background: rgba(99, 102, 241, 0.05); border-radius: 8px; margin-bottom: 16px;">
+          <span style="color: var(--text-secondary); font-size: 13px;">已选择 <strong id="selectedCount">0</strong> 项</span>
+          <div style="flex: 1;"></div>
+          <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="batchSendCoupon()">
+            <i class="fa fa-ticket-alt"></i> 发送优惠券
+          </button>
+          <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="batchChangeLevel()">
+            <i class="fa fa-crown"></i> 修改等级
+          </button>
+          <button class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;" onclick="batchBan()">
+            <i class="fa fa-ban"></i> 批量封禁
+          </button>
+          <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;" onclick="clearSelection()">
+            取消选择
+          </button>
+        </div>
+
+        <!-- 会员列表 -->
+        <div class="member-table">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 40px;"><input type="checkbox" id="selectAllMembers"></th>
+                <th>会员信息</th>
+                <th>会员等级</th>
+                <th>消费统计</th>
+                <th>订单</th>
+                <th>注册时间</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td>
+                  <div class="member-info">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user1" alt="" class="member-avatar">
+                    <div class="member-details">
+                      <div class="member-name">张三</div>
+                      <div class="member-id">ID: 100001</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="level-badge vip4"><i class="fa fa-crown"></i> 钻石会员</span></td>
+                <td>
+                  <div class="member-stats-cell">
+                    <span class="value">¥12,580</span>
+                    <span class="label">累计消费</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="member-stats-cell">
+                    <span class="value">45</span>
+                    <span class="label">完成订单</span>
+                  </div>
+                </td>
+                <td>2024-01-15 10:30</td>
+                <td><span class="status-badge active">正常</span></td>
+                <td>
+                  <div class="action-btns">
+                    <button class="action-btn view" title="查看"><i class="fa fa-eye"></i></button>
+                    <button class="action-btn edit" title="编辑"><i class="fa fa-edit"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td>
+                  <div class="member-info">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user2" alt="" class="member-avatar">
+                    <div class="member-details">
+                      <div class="member-name">李四</div>
+                      <div class="member-id">ID: 100002</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="level-badge vip3"><i class="fa fa-gem"></i> 黄金会员</span></td>
+                <td>
+                  <div class="member-stats-cell">
+                    <span class="value">¥6,320</span>
+                    <span class="label">累计消费</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="member-stats-cell">
+                    <span class="value">23</span>
+                    <span class="label">完成订单</span>
+                  </div>
+                </td>
+                <td>2024-02-20 14:15</td>
+                <td><span class="status-badge active">正常</span></td>
+                <td>
+                  <div class="action-btns">
+                    <button class="action-btn view" title="查看"><i class="fa fa-eye"></i></button>
+                    <button class="action-btn edit" title="编辑"><i class="fa fa-edit"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td>
+                  <div class="member-info">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user3" alt="" class="member-avatar">
+                    <div class="member-details">
+                      <div class="member-name">王五</div>
+                      <div class="member-id">ID: 100003</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="level-badge vip2"><i class="fa fa-star"></i> 白银会员</span></td>
+                <td>
+                  <div class="member-stats-cell">
+                    <span class="value">¥2,180</span>
+                    <span class="label">累计消费</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="member-stats-cell">
+                    <span class="value">8</span>
+                    <span class="label">完成订单</span>
+                  </div>
+                </td>
+                <td>2024-03-01 09:45</td>
+                <td><span class="status-badge active">正常</span></td>
+                <td>
+                  <div class="action-btns">
+                    <button class="action-btn view" title="查看"><i class="fa fa-eye"></i></button>
+                    <button class="action-btn edit" title="编辑"><i class="fa fa-edit"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td>
+                  <div class="member-info">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user4" alt="" class="member-avatar">
+                    <div class="member-details">
+                      <div class="member-name">赵六</div>
+                      <div class="member-id">ID: 100004</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="level-badge vip1"><i class="fa fa-user"></i> 普通会员</span></td>
+                <td>
+                  <div class="member-stats-cell">
+                    <span class="value">¥580</span>
+                    <span class="label">累计消费</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="member-stats-cell">
+                    <span class="value">2</span>
+                    <span class="label">完成订单</span>
+                  </div>
+                </td>
+                <td>2024-03-28 16:20</td>
+                  <td><span class="status-badge active">正常</span></td>
+                <td>
+                  <div class="action-btns">
+                    <button class="action-btn view" title="查看"><i class="fa fa-eye"></i></button>
+                    <button class="action-btn edit" title="编辑"><i class="fa fa-edit"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td>
+                  <div class="member-info">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user5" alt="" class="member-avatar">
+                    <div class="member-details">
+                      <div class="member-name">钱七</div>
+                      <div class="member-id">ID: 100005</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="level-badge vip3"><i class="fa fa-gem"></i> 黄金会员</span></td>
+                <td>
+                  <div class="member-stats-cell">
+                    <span class="value">¥8,960</span>
+                    <span class="label">累计消费</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="member-stats-cell">
+                    <span class="value">31</span>
+                    <span class="label">完成订单</span>
+                  </div>
+                </td>
+                <td>2024-01-28 11:00</td>
+                <td><span class="status-badge banned">已封禁</span></td>
+                <td>
+                  <div class="action-btns">
+                    <button class="action-btn view" title="查看"><i class="fa fa-eye"></i></button>
+                    <button class="action-btn edit" title="编辑"><i class="fa fa-edit"></i></button>
+                    <button class="action-btn ban" title="解封"><i class="fa fa-unlock"></i></button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 分页 -->
+        <div class="pagination">
+          <button class="page-btn" disabled><i class="fa fa-chevron-left"></i></button>
+          <button class="page-btn active">1</button>
+          <button class="page-btn">2</button>
+          <button class="page-btn">3</button>
+          <button class="page-btn">4</button>
+          <button class="page-btn">5</button>
+          <span class="page-btn" style="border: none; cursor: default;">...</span>
+          <button class="page-btn">125</button>
+          <button class="page-btn"><i class="fa fa-chevron-right"></i></button>
+        </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+    <script src="../js/data.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/admin.js"></script>
+    <script>
+    if (localStorage.getItem('zhimai_admin_logged_in') !== 'true') {
+      window.location.href = 'login.html';
+    }
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    const userDropdown = document.getElementById('userDropdown');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const menuToggle = document.getElementById('menuToggle');
+    const selectAllMembersCheckbox = document.getElementById('selectAllMembers');
+    const STORAGE_USERS = 'zhimai_users';
+    const STORAGE_ORDERS = 'zhimai_orders';
+
+    let currentPage = 1;
+    const pageSize = 10;
+    let totalPages = 1;
+    let selectedMembers = new Set();
+    let allMembers = [];
+    let currentPageMemberIds = [];
+
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        localStorage.removeItem('zhimai_admin_logged_in');
+        localStorage.removeItem('zhimai_admin_user');
+        window.location.href = 'login.html';
+      });
+    }
+
+    if (userDropdown && dropdownMenu) {
+      userDropdown.addEventListener('click', function(e) {
+        e.stopPropagation();
+        dropdownMenu.classList.toggle('show');
+      });
+      document.addEventListener('click', function() {
+        dropdownMenu.classList.remove('show');
+      });
+    }
+
+    if (sidebarToggle) {
+      sidebarToggle.addEventListener('click', function() {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) sidebar.classList.toggle('collapsed');
+      });
+    }
+
+    if (menuToggle) {
+      menuToggle.addEventListener('click', function() {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) sidebar.classList.toggle('show');
+      });
+    }
+
+    if (selectAllMembersCheckbox) {
+      selectAllMembersCheckbox.addEventListener('change', function() {
+        toggleSelectAll(this.checked);
+      });
+    }
+
+    function readArray(key) {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveUsers(users) {
+      localStorage.setItem(STORAGE_USERS, JSON.stringify(Array.isArray(users) ? users : []));
+    }
+
+    function toNumber(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function toSafeText(value, fallback = '') {
+      const text = String(value ?? '').trim();
+      return text || fallback;
+    }
+
+    function parseDate(value) {
+      if (!value) return null;
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function formatDate(value) {
+      const date = parseDate(value);
+      if (!date) return '-';
+      return date.toLocaleString('zh-CN', { hour12: false });
+    }
+
+    function normalizeStatus(value, user = null) {
+      const status = String(value || '').trim().toLowerCase();
+      if (['banned', 'ban', 'blocked', 'disabled', 'forbidden'].includes(status)) return 'banned';
+      if (['unverified', 'realname_pending', 'unverified_realname'].includes(status)) return 'active';
+      if (['active', 'enabled', 'normal', 'ok', 'verified'].includes(status)) return 'active';
+      // 业务规则：注册即激活，历史 inactive 兼容为 active。
+      if (['inactive', 'pending'].includes(status)) return 'active';
+
+      const candidateFlags = [
+        user?.realNameVerified,
+        user?.realnameVerified,
+        user?.isRealNameVerified,
+        user?.verified,
+        user?.isVerified
+      ].filter(flag => flag !== undefined && flag !== null && flag !== '');
+
+      if (candidateFlags.some(flag => flag === false || String(flag).toLowerCase() === 'false' || String(flag) === '0')) {
+        return 'active';
+      }
+
+      return 'active';
+    }
+
+    function normalizeLevel(value, spent) {
+      const level = String(value || '').toLowerCase();
+      if (['vip1', 'vip2', 'vip3', 'vip4'].includes(level)) return level;
+      if (spent >= 5000) return 'vip4';
+      if (spent >= 1000) return 'vip3';
+      if (spent >= 200) return 'vip2';
+      return 'vip1';
+    }
+
+    function readOrderOwner(order) {
+      const userId = toSafeText(order.userId || order.uid || order.memberId || order.buyerId || '');
+      const phone = toSafeText(order.userPhone || order.contactPhone || order.phone || order.mobile || '');
+      return { userId, phone };
+    }
+
+    function readOrderDisplayName(order) {
+      return toSafeText(
+        order.userName
+          || order.username
+          || order.nickname
+          || order.userNickname
+          || order.contactName
+          || order.buyerName
+          || ''
+      );
+    }
+
+    function readOrderCreatedAt(order) {
+      return (
+        order.createdAt
+        || order.createTime
+        || order.orderTime
+        || order.paidAt
+        || order.updatedAt
+        || ''
+      );
+    }
+
+    function readOrderAmount(order) {
+      if (order.totalAmount != null) return toNumber(order.totalAmount);
+      if (order.amount != null) return toNumber(order.amount);
+      if (order.finalAmount != null) return toNumber(order.finalAmount);
+      if (order.subtotal != null) return toNumber(order.subtotal);
+      const price = toNumber(order.price);
+      const quantity = Math.max(1, toNumber(order.quantity) || 1);
+      return price * quantity;
+    }
+
+    function isCountableOrder(order) {
+      const status = String(order.status || '').toLowerCase();
+      return !['cancelled', 'canceled', 'refunded', 'closed', 'failed'].includes(status);
+    }
+
+    async function fetchUsersSource() {
+      if (window.dataManager && typeof window.dataManager.getUsers === 'function') {
+        try {
+          const users = await window.dataManager.getUsers();
+          if (Array.isArray(users)) return users;
+        } catch (error) {}
+      }
+      return readArray(STORAGE_USERS);
+    }
+
+    async function fetchOrdersSource() {
+      if (window.dataManager && typeof window.dataManager.getOrders === 'function') {
+        try {
+          const orders = await window.dataManager.getOrders();
+          if (Array.isArray(orders)) return orders;
+        } catch (error) {}
+      }
+      return readArray(STORAGE_ORDERS);
+    }
+
+    function readCurrentUser() {
+      try {
+        const localUser = JSON.parse(localStorage.getItem('zhimai_user') || 'null');
+        if (localUser && typeof localUser === 'object') return localUser;
+      } catch (error) {}
+
+      try {
+        const sessionUser = JSON.parse(sessionStorage.getItem('zhimai_user') || 'null');
+        if (sessionUser && typeof sessionUser === 'object') return sessionUser;
+      } catch (error) {}
+
+      return null;
+    }
+
+    function normalizeRawUser(user, fallbackIndex) {
+      const sourceUserId = toSafeText(user.id || user.userId || user.uid || '');
+      const sourcePhone = toSafeText(user.phone || user.mobile || user.contactPhone || '');
+      const stableId = sourceUserId || sourcePhone || `U${fallbackIndex + 1}`;
+      const createdAtRaw = user.createdAt || user.registeredAt || user.createTime || user.created_at || '';
+      const spent = toNumber(user.totalSpent || user.spent || 0);
+      const orderCount = toNumber(user.orderCount || user.orders || 0);
+
+      return {
+        id: String(stableId),
+        sourceUserId,
+        sourcePhone,
+        name: toSafeText(user.nickname || user.username || user.name || sourcePhone || `用户${fallbackIndex + 1}`),
+        avatar: toSafeText(user.avatar || user.headImg || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(String(stableId))}`),
+        level: normalizeLevel(user.level, spent),
+        totalSpent: spent,
+        orderCount,
+        createdAtRaw,
+        status: normalizeStatus(user.status, user),
+        phone: sourcePhone || '-'
+      };
+    }
+
+    function createMemberKey(user) {
+      if (user.sourceUserId) return `id:${user.sourceUserId}`;
+      if (user.sourcePhone) return `phone:${user.sourcePhone}`;
+      return `fallback:${user.id}`;
+    }
+
+    function buildOrderUserSeeds(orders) {
+      const seedMap = new Map();
+
+      orders.forEach((order, index) => {
+        const owner = readOrderOwner(order);
+        const key = owner.userId ? `id:${owner.userId}` : (owner.phone ? `phone:${owner.phone}` : '');
+        if (!key) return;
+
+        const createdAtRaw = readOrderCreatedAt(order);
+        const existing = seedMap.get(key);
+        const next = {
+          id: owner.userId || owner.phone || `O${index + 1}`,
+          sourceUserId: owner.userId,
+          sourcePhone: owner.phone,
+          name: readOrderDisplayName(order) || owner.phone || `订单用户${index + 1}`,
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(owner.userId || owner.phone || String(index + 1))}`,
+          level: 'vip1',
+          totalSpent: 0,
+          orderCount: 0,
+          createdAtRaw,
+          status: 'active',
+          phone: owner.phone || '-'
+        };
+
+        if (!existing) {
+          seedMap.set(key, next);
+          return;
+        }
+
+        const existingTime = parseDate(existing.createdAtRaw);
+        const nextTime = parseDate(next.createdAtRaw);
+        if (!existingTime || (nextTime && nextTime < existingTime)) {
+          existing.createdAtRaw = next.createdAtRaw;
+        }
+        if (!existing.name && next.name) existing.name = next.name;
+      });
+
+      return seedMap;
+    }
+
+    function buildCanonicalUserPool(rawUsers, orders, currentUser) {
+      const canonicalMap = new Map();
+      const orderSeeds = buildOrderUserSeeds(orders);
+
+      rawUsers.forEach((rawUser, index) => {
+        const normalized = normalizeRawUser(rawUser || {}, index);
+        canonicalMap.set(createMemberKey(normalized), normalized);
+      });
+
+      orderSeeds.forEach((seed, key) => {
+        if (canonicalMap.has(key)) {
+          const current = canonicalMap.get(key);
+          canonicalMap.set(key, {
+            ...current,
+            sourcePhone: current.sourcePhone || seed.sourcePhone,
+            phone: current.phone !== '-' ? current.phone : (seed.sourcePhone || '-'),
+            name: current.name || seed.name,
+            createdAtRaw: current.createdAtRaw || seed.createdAtRaw
+          });
+          return;
+        }
+        canonicalMap.set(key, seed);
+      });
+
+      if (currentUser) {
+        const normalizedCurrent = normalizeRawUser(currentUser, canonicalMap.size + 1);
+        const key = createMemberKey(normalizedCurrent);
+        if (canonicalMap.has(key)) {
+          canonicalMap.set(key, { ...canonicalMap.get(key), ...normalizedCurrent });
+        } else {
+          canonicalMap.set(key, normalizedCurrent);
+        }
+      }
+
+      return Array.from(canonicalMap.values());
+    }
+
+    function syncCanonicalUsersToStorage(canonicalUsers) {
+      const nextUsers = canonicalUsers.map((item) => ({
+        id: item.sourceUserId || item.id,
+        userId: item.sourceUserId || item.id,
+        phone: item.sourcePhone || '',
+        mobile: item.sourcePhone || '',
+        nickname: item.name,
+        username: item.name,
+        avatar: item.avatar,
+        level: item.level,
+        status: item.status,
+        totalSpent: toNumber(item.totalSpent),
+        orderCount: toNumber(item.orderCount),
+        createdAt: item.createdAtRaw || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }));
+
+      const currentUsers = readArray(STORAGE_USERS);
+      if (JSON.stringify(currentUsers) !== JSON.stringify(nextUsers)) {
+        saveUsers(nextUsers);
+      }
+    }
+
+    function collectOrderStats(orders) {
+      const byUserId = new Map();
+      const byPhone = new Map();
+
+      orders.forEach((order) => {
+        if (!isCountableOrder(order)) return;
+        const owner = readOrderOwner(order);
+        const amount = readOrderAmount(order);
+
+        if (owner.userId) {
+          const current = byUserId.get(owner.userId) || { spent: 0, orders: 0 };
+          current.spent += amount;
+          current.orders += 1;
+          byUserId.set(owner.userId, current);
+        }
+
+        if (owner.phone) {
+          const current = byPhone.get(owner.phone) || { spent: 0, orders: 0 };
+          current.spent += amount;
+          current.orders += 1;
+          byPhone.set(owner.phone, current);
+        }
+      });
+
+      return { byUserId, byPhone };
+    }
+
+    function buildMemberList(users, orderStats) {
+      return users
+        .map((user, index) => {
+          const fromOrderById = user.sourceUserId ? orderStats.byUserId.get(user.sourceUserId) : null;
+          const fromOrderByPhone = user.sourcePhone ? orderStats.byPhone.get(user.sourcePhone) : null;
+          const orderInfo = fromOrderById || fromOrderByPhone || { spent: 0, orders: 0 };
+          const spent = Math.max(toNumber(user.totalSpent), toNumber(orderInfo.spent));
+          const orders = Math.max(toNumber(user.orderCount), toNumber(orderInfo.orders));
+
+          return {
+            id: String(user.id || `U${index + 1}`),
+            sourceUserId: user.sourceUserId,
+            sourcePhone: user.sourcePhone,
+            name: toSafeText(user.name, `用户${index + 1}`),
+            avatar: toSafeText(user.avatar, `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(String(user.id || index + 1))}`),
+            level: normalizeLevel(user.level, spent),
+            spent,
+            orders,
+            createdAtRaw: user.createdAtRaw,
+            createdAt: formatDate(user.createdAtRaw),
+            status: normalizeStatus(user.status),
+            phone: user.sourcePhone || '-'
+          };
+        })
+        .sort((a, b) => {
+          const timeA = parseDate(a.createdAtRaw)?.getTime() || 0;
+          const timeB = parseDate(b.createdAtRaw)?.getTime() || 0;
+          if (timeB !== timeA) return timeB - timeA;
+          return b.spent - a.spent;
+        });
+    }
+
+    async function initMembers() {
+      const [users, orders] = await Promise.all([fetchUsersSource(), fetchOrdersSource()]);
+      const currentUser = readCurrentUser();
+      const canonicalUsers = buildCanonicalUserPool(users, orders, currentUser);
+      syncCanonicalUsersToStorage(canonicalUsers);
+      const orderStats = collectOrderStats(orders);
+      allMembers = buildMemberList(canonicalUsers, orderStats);
+      selectedMembers = new Set();
+      currentPage = 1;
+      renderMembers();
+      updateStats();
+      updateBatchActions();
+    }
+
+    function escapeHtml(text) {
+      return String(text ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function renderMembers() {
+      const tbody = document.querySelector('.member-table tbody');
+      const filtered = getFilteredMembers();
+      const start = (currentPage - 1) * pageSize;
+      const pageData = filtered.slice(start, start + pageSize);
+
+      if (pageData.length === 0) {
+        currentPageMemberIds = [];
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:32px 16px;">暂无会员数据</td></tr>';
+        renderPagination(filtered.length);
+        syncSelectAllMembersCheckbox();
+        return;
+      }
+
+      currentPageMemberIds = pageData.map(member => String(member.id));
+
+      tbody.innerHTML = pageData.map(member => `
+        <tr>
+          <td><input type="checkbox" class="member-checkbox" value="${escapeHtml(member.id)}" ${selectedMembers.has(String(member.id)) ? 'checked' : ''} onchange='toggleSelect(${JSON.stringify(String(member.id))})'></td>
+          <td>
+            <div class="member-info">
+              <img src="${escapeHtml(member.avatar)}" alt="" class="member-avatar">
+              <div class="member-details">
+                <div class="member-name">${escapeHtml(member.name)}</div>
+                <div class="member-id">ID: ${escapeHtml(member.id)}</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="level-badge ${member.level}">${getLevelName(member.level)}</span></td>
+          <td>
+            <div class="member-stats-cell">
+              <span class="value">¥${member.spent.toLocaleString()}</span>
+              <span class="label">累计消费</span>
+            </div>
+          </td>
+          <td>
+            <div class="member-stats-cell">
+              <span class="value">${member.orders}</span>
+              <span class="label">有效订单</span>
+            </div>
+          </td>
+          <td>${escapeHtml(member.createdAt)}</td>
+          <td><span class="status-badge ${member.status}">${getStatusName(member.status)}</span></td>
+          <td>
+            <div class="action-btns">
+              <button class="action-btn view" onclick='viewMember(${JSON.stringify(String(member.id))})' title="查看详情"><i class="fa fa-eye"></i></button>
+              <button class="action-btn edit" onclick='editMember(${JSON.stringify(String(member.id))})' title="编辑"><i class="fa fa-edit"></i></button>
+              ${member.status === 'banned'
+                ? `<button class="action-btn" style="background: rgba(16, 185, 129, 0.1); color: #10b981;" onclick='unbanMember(${JSON.stringify(String(member.id))})' title="解除封禁"><i class="fa fa-unlock"></i></button>`
+                : `<button class="action-btn ban" onclick='banMember(${JSON.stringify(String(member.id))})' title="封禁"><i class="fa fa-ban"></i></button>`
+              }
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      renderPagination(filtered.length);
+      syncSelectAllMembersCheckbox();
+    }
+
+    function isInToday(date) {
+      if (!date) return false;
+      const now = new Date();
+      return date.getFullYear() === now.getFullYear()
+        && date.getMonth() === now.getMonth()
+        && date.getDate() === now.getDate();
+    }
+
+    function isInLastDays(date, days) {
+      if (!date) return false;
+      const diff = Date.now() - date.getTime();
+      return diff >= 0 && diff <= days * 24 * 60 * 60 * 1000;
+    }
+
+    function getFilteredMembers() {
+      const level = document.getElementById('filterLevel').value;
+      const status = document.getElementById('filterStatus').value;
+      const timeScope = document.getElementById('filterTime').value;
+      const keyword = document.getElementById('filterKeyword').value.trim().toLowerCase();
+
+      return allMembers.filter((member) => {
+        if (level && member.level !== level) return false;
+        if (status && member.status !== status) return false;
+
+        const createdDate = parseDate(member.createdAtRaw);
+        if (timeScope === 'today' && !isInToday(createdDate)) return false;
+        if (timeScope === 'week' && !isInLastDays(createdDate, 7)) return false;
+        if (timeScope === 'month' && !isInLastDays(createdDate, 30)) return false;
+
+        if (keyword) {
+          const haystack = [member.name, member.id, member.phone].map(item => String(item || '').toLowerCase());
+          if (!haystack.some(item => item.includes(keyword))) return false;
+        }
+
+        return true;
+      });
+    }
+
+    function getLevelName(level) {
+      const map = {
+        vip1: '普通会员',
+        vip2: '白银会员',
+        vip3: '黄金会员',
+        vip4: '钻石会员'
+      };
+      return map[level] || level;
+    }
+
+    function getStatusName(status) {
+      const map = {
+        active: '正常',
+        unverified: '正常',
+        banned: '封禁'
+      };
+      return map[status] || status;
+    }
+
+    function renderPagination(total) {
+      totalPages = Math.max(1, Math.ceil(total / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      const pagination = document.querySelector('.pagination');
+      if (!pagination) return;
+
+      let html = `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})"><i class="fa fa-chevron-left"></i></button>`;
+      const visible = Math.min(totalPages, 5);
+      for (let i = 1; i <= visible; i += 1) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+      }
+      if (totalPages > 5) {
+        html += '<span class="page-btn" style="border: none; cursor: default;">...</span>';
+        html += `<button class="page-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+      }
+      html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})"><i class="fa fa-chevron-right"></i></button>`;
+      pagination.innerHTML = html;
+    }
+
+    function goToPage(page) {
+      if (page < 1 || page > totalPages) return;
+      currentPage = page;
+      renderMembers();
+    }
+
+    function applyFilter() {
+      currentPage = 1;
+      renderMembers();
+    }
+
+    function updateStats() {
+      const cards = document.querySelectorAll('.stat-info h3');
+      if (cards.length < 4) return;
+      const todayNew = allMembers.filter(item => isInToday(parseDate(item.createdAtRaw))).length;
+      const vipCount = allMembers.filter(item => item.level !== 'vip1').length;
+      const bannedCount = allMembers.filter(item => item.status === 'banned').length;
+
+      cards[0].textContent = allMembers.length.toLocaleString();
+      cards[1].textContent = `+${todayNew}`;
+      cards[2].textContent = vipCount.toLocaleString();
+      cards[3].textContent = bannedCount.toLocaleString();
+    }
+
+    function updateBatchActions() {
+      const batchBar = document.querySelector('.batch-actions');
+      const countEl = document.getElementById('selectedCount');
+      if (!batchBar || !countEl) return;
+      if (selectedMembers.size > 0) {
+        batchBar.style.display = 'flex';
+        countEl.textContent = selectedMembers.size;
+      } else {
+        batchBar.style.display = 'none';
+      }
+    }
+
+    function syncSelectAllMembersCheckbox() {
+      if (!selectAllMembersCheckbox) return;
+
+      if (currentPageMemberIds.length === 0) {
+        selectAllMembersCheckbox.checked = false;
+        selectAllMembersCheckbox.indeterminate = false;
+        selectAllMembersCheckbox.disabled = true;
+        return;
+      }
+
+      selectAllMembersCheckbox.disabled = false;
+      const selectedOnPage = currentPageMemberIds.filter(id => selectedMembers.has(id)).length;
+      selectAllMembersCheckbox.checked = selectedOnPage === currentPageMemberIds.length;
+      selectAllMembersCheckbox.indeterminate = selectedOnPage > 0 && selectedOnPage < currentPageMemberIds.length;
+    }
+
+    function toggleSelect(id) {
+      const memberId = String(id);
+      if (selectedMembers.has(memberId)) {
+        selectedMembers.delete(memberId);
+      } else {
+        selectedMembers.add(memberId);
+      }
+      updateBatchActions();
+      syncSelectAllMembersCheckbox();
+    }
+
+    function toggleSelectAll(checked) {
+      if (currentPageMemberIds.length === 0) return;
+
+      currentPageMemberIds.forEach((memberId) => {
+        if (checked) {
+          selectedMembers.add(memberId);
+        } else {
+          selectedMembers.delete(memberId);
+        }
+      });
+
+      document.querySelectorAll('.member-checkbox').forEach((checkbox) => {
+        checkbox.checked = checked;
+      });
+
+      updateBatchActions();
+      syncSelectAllMembersCheckbox();
+    }
+
+    function clearSelection() {
+      selectedMembers.clear();
+      document.querySelectorAll('.member-checkbox').forEach((checkbox) => { checkbox.checked = false; });
+      updateBatchActions();
+      syncSelectAllMembersCheckbox();
+    }
+
+    function syncMemberToStorage(memberId, updates = {}) {
+      const target = allMembers.find(item => String(item.id) === String(memberId));
+      if (!target) return;
+
+      const nextName = toSafeText(updates.name, target.name);
+      const nextLevel = normalizeLevel(updates.level, target.spent);
+      const nextStatus = normalizeStatus(updates.status, target);
+      const users = readArray(STORAGE_USERS);
+      let updated = false;
+
+      for (let i = 0; i < users.length; i += 1) {
+        const user = users[i] || {};
+        const byId = target.sourceUserId && String(user.id || user.userId || '') === target.sourceUserId;
+        const byPhone = target.sourcePhone && String(user.phone || user.mobile || '') === target.sourcePhone;
+        if (byId || byPhone) {
+          users[i] = {
+            ...user,
+            nickname: nextName,
+            username: nextName,
+            level: nextLevel,
+            status: nextStatus,
+            updatedAt: new Date().toISOString()
+          };
+          updated = true;
+          break;
+        }
+      }
+
+      if (!updated) {
+        users.push({
+          id: target.sourceUserId || target.id,
+          userId: target.sourceUserId || target.id,
+          phone: target.sourcePhone || '',
+          mobile: target.sourcePhone || '',
+          nickname: nextName,
+          username: nextName,
+          avatar: target.avatar,
+          level: nextLevel,
+          status: nextStatus,
+          totalSpent: target.spent,
+          orderCount: target.orders,
+          createdAt: target.createdAtRaw || new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      }
+
+      saveUsers(users);
+      target.name = nextName;
+      target.level = nextLevel;
+      target.status = nextStatus;
+    }
+
+    function syncStatusToStorage(memberId, nextStatus) {
+      syncMemberToStorage(memberId, { status: nextStatus });
+    }
+
+    function batchSendCoupon() {
+      showToast('批量发券功能将在后续版本提供', 'info');
+    }
+
+    function batchChangeLevel() {
+      showToast('会员等级体系已规划为未来系统', 'info');
+    }
+
+    function batchBan() {
+      if (selectedMembers.size === 0) return;
+      if (!confirm(`确认封禁已选中的 ${selectedMembers.size} 位会员吗？`)) return;
+      selectedMembers.forEach((memberId) => syncStatusToStorage(memberId, 'banned'));
+      clearSelection();
+      renderMembers();
+      updateStats();
+      showToast('批量封禁已生效', 'success');
+    }
+
+    function viewMember(id) {
+      const member = allMembers.find(item => String(item.id) === String(id));
+      if (!member) return;
+
+      const modal = document.createElement('div');
+      modal.className = 'modal active';
+      modal.innerHTML = `
+        <div class="modal-overlay" onclick="this.parentElement.remove()"></div>
+        <div class="modal-content" style="max-width: 500px;">
+          <div class="modal-header">
+            <h3 class="modal-title">会员详情</h3>
+            <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div style="text-align: center; margin-bottom: 24px;">
+              <img src="${escapeHtml(member.avatar)}" style="width: 80px; height: 80px; border-radius: 50%; margin-bottom: 12px;">
+              <h3>${escapeHtml(member.name)}</h3>
+              <span class="level-badge ${member.level}">${getLevelName(member.level)}</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+              <div style="background: var(--bg-color); padding: 16px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 24px; font-weight: 600; color: var(--primary);">¥${member.spent.toLocaleString()}</div>
+                <div style="color: var(--text-muted); font-size: 12px;">累计消费</div>
+              </div>
+              <div style="background: var(--bg-color); padding: 16px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 24px; font-weight: 600; color: var(--success);">${member.orders}</div>
+                <div style="color: var(--text-muted); font-size: 12px;">有效订单</div>
+              </div>
+            </div>
+            <div style="margin-bottom: 12px;"><label style="color: var(--text-muted);">会员ID：</label> ${escapeHtml(member.id)}</div>
+            <div style="margin-bottom: 12px;"><label style="color: var(--text-muted);">手机号：</label> ${escapeHtml(member.phone)}</div>
+            <div style="margin-bottom: 12px;"><label style="color: var(--text-muted);">注册时间：</label> ${escapeHtml(member.createdAt)}</div>
+            <div><label style="color: var(--text-muted);">当前状态：</label> <span class="status-badge ${member.status}">${getStatusName(member.status)}</span></div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline" onclick="this.closest('.modal').remove()">关闭</button>
+            <button class="btn btn-primary" onclick='this.closest(".modal").remove(); editMember(${JSON.stringify(String(member.id))})'>编辑</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    function editMember(id) {
+      const member = allMembers.find(item => String(item.id) === String(id));
+      if (!member) return;
+
+      const modal = document.createElement('div');
+      modal.className = 'modal active';
+      modal.innerHTML = `
+        <div class="modal-overlay" onclick="this.parentElement.remove()"></div>
+        <div class="modal-content" style="max-width: 540px;">
+          <div class="modal-header">
+            <h3 class="modal-title">编辑会员</h3>
+            <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div style="display: grid; gap: 14px;">
+              <div>
+                <label style="display:block; margin-bottom: 6px; color: var(--text-muted); font-size: 12px;">昵称</label>
+                <input type="text" id="editMemberName" class="filter-input" style="width: 100%;" value="${escapeHtml(member.name)}">
+              </div>
+              <div>
+                <label style="display:block; margin-bottom: 6px; color: var(--text-muted); font-size: 12px;">手机号</label>
+                <input type="text" class="filter-input" style="width: 100%; opacity: 0.7;" value="${escapeHtml(member.phone)}" readonly>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                  <label style="display:block; margin-bottom: 6px; color: var(--text-muted); font-size: 12px;">会员等级</label>
+                  <select id="editMemberLevel" class="filter-select" style="width: 100%;">
+                    <option value="vip1" ${member.level === 'vip1' ? 'selected' : ''}>普通会员</option>
+                    <option value="vip2" ${member.level === 'vip2' ? 'selected' : ''}>白银会员</option>
+                    <option value="vip3" ${member.level === 'vip3' ? 'selected' : ''}>黄金会员</option>
+                    <option value="vip4" ${member.level === 'vip4' ? 'selected' : ''}>钻石会员</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="display:block; margin-bottom: 6px; color: var(--text-muted); font-size: 12px;">状态</label>
+                  <select id="editMemberStatus" class="filter-select" style="width: 100%;">
+                    <option value="active" ${member.status === 'active' ? 'selected' : ''}>正常</option>
+                    <option value="banned" ${member.status === 'banned' ? 'selected' : ''}>封禁</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline" type="button" data-action="close-edit-member">取消</button>
+            <button class="btn btn-primary" type="button" data-action="save-edit-member">保存</button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+
+      const closeBtn = modal.querySelector('[data-action="close-edit-member"]');
+      const saveBtn = modal.querySelector('[data-action="save-edit-member"]');
+      const nameInput = modal.querySelector('#editMemberName');
+      const levelSelect = modal.querySelector('#editMemberLevel');
+      const statusSelect = modal.querySelector('#editMemberStatus');
+
+      if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+          modal.remove();
+        });
+      }
+
+      if (saveBtn) {
+        saveBtn.addEventListener('click', function() {
+          const nextName = toSafeText(nameInput?.value, member.name);
+          const nextLevel = String(levelSelect?.value || member.level);
+          const nextStatus = String(statusSelect?.value || member.status);
+          syncMemberToStorage(member.id, {
+            name: nextName,
+            level: nextLevel,
+            status: nextStatus
+          });
+          modal.remove();
+          renderMembers();
+          updateStats();
+          showToast('会员信息已更新', 'success');
+        });
+      }
+    }
+
+    function banMember(id) {
+      const member = allMembers.find(item => String(item.id) === String(id));
+      if (!member) return;
+      if (!confirm(`确认封禁会员“${member.name}”吗？`)) return;
+      syncStatusToStorage(member.id, 'banned');
+      renderMembers();
+      updateStats();
+      showToast('会员已封禁', 'success');
+    }
+
+    function unbanMember(id) {
+      const member = allMembers.find(item => String(item.id) === String(id));
+      if (!member) return;
+      if (!confirm(`确认解除会员“${member.name}”封禁吗？`)) return;
+      syncStatusToStorage(member.id, 'active');
+      renderMembers();
+      updateStats();
+      showToast('会员已解除封禁', 'success');
+    }
+
+    function exportMembers() {
+      showToast('导出功能将在后续版本提供', 'info');
+    }
+
+    function showToast(message, type = 'info') {
+      const colorMap = {
+        success: '#10b981',
+        error: '#ef4444',
+        warning: '#f59e0b',
+        info: '#6366f1'
+      };
+      const toast = document.createElement('div');
+      toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: #fff;
+        font-size: 14px;
+        z-index: 9999;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+      `;
+      toast.style.background = colorMap[type] || colorMap.info;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(function() { toast.remove(); }, 3000);
+    }
+
+    window.addEventListener('storage', function(event) {
+      if (event.key === STORAGE_USERS || event.key === STORAGE_ORDERS) {
+        initMembers();
+      }
+    });
+
+    initMembers();
+  </script>
+</body>
+</html>
+
+
+
+
+

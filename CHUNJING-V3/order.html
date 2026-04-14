@@ -1,0 +1,966 @@
+<!-- 
+  文件名: order.html
+  页面名称: 确认订单
+  功能说明: 订单确认页面，填写游戏账号信息、联系方式、选择优惠券和支付方式
+  提交后跳转到支付页面
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>确认订单 - 织麦电竞</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/order.css" />
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- 腾讯云 CloudBase SDK -->
+  <style>
+    .order-page {
+      padding-top: 100px;
+      min-height: 100vh;
+      background: var(--bg-dark);
+    }
+    .order-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+    .order-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      min-height: 40px;
+      border-radius: 10px;
+      color: #d7def7;
+      text-decoration: none;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      transition: all 0.25s ease;
+    }
+    .order-back-link:hover {
+      color: #fff;
+      border-color: rgba(108, 99, 255, 0.55);
+      background: rgba(108, 99, 255, 0.12);
+    }
+    .order-section {
+      background: rgba(255,255,255,0.03);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .order-section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .order-section-title i {
+      color: var(--primary);
+    }
+    
+    /* 商品信息 */
+    .product-info {
+      display: flex;
+      gap: 20px;
+      padding: 16px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 12px;
+    }
+    .product-info img {
+      width: 120px;
+      height: 90px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .product-info-content {
+      flex: 1;
+    }
+    .product-info-content h3 {
+      font-size: 16px;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .product-info-content p {
+      font-size: 14px;
+      color: var(--text-gray);
+      margin-bottom: 12px;
+    }
+    .product-info-price {
+      font-size: 20px;
+      color: var(--primary);
+      font-weight: 600;
+    }
+    
+    /* 数量选择 */
+    .quantity-selector {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .quantity-selector label {
+      color: var(--text-gray);
+      font-size: 14px;
+    }
+    .quantity-control {
+      display: flex;
+      align-items: center;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .quantity-control button {
+      width: 40px;
+      height: 40px;
+      background: transparent;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .quantity-control button:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    .quantity-control input {
+      width: 60px;
+      height: 40px;
+      background: transparent;
+      border: none;
+      color: #fff;
+      text-align: center;
+      font-size: 16px;
+    }
+    
+    /* 游戏账号信息 */
+    .game-account-form .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .game-account-form .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .game-account-form label {
+      font-size: 14px;
+      color: var(--text-gray);
+    }
+    .game-account-form input,
+    .game-account-form select,
+    .game-account-form textarea {
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+    }
+    .game-account-form input:focus,
+    .game-account-form select:focus,
+    .game-account-form textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .game-account-form textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    /* 优惠券 */
+    .coupon-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .coupon-item {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 12px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .coupon-item:hover {
+      background: rgba(255,255,255,0.05);
+    }
+    .coupon-item.selected {
+      border-color: var(--primary);
+      background: rgba(108, 99, 255, 0.1);
+    }
+    .coupon-item.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .coupon-value {
+      width: 80px;
+      text-align: center;
+    }
+    .coupon-value .value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .coupon-value .type {
+      font-size: 12px;
+      color: var(--text-gray);
+    }
+    .coupon-info {
+      flex: 1;
+      padding: 0 16px;
+    }
+    .coupon-info .name {
+      font-size: 14px;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .coupon-info .desc {
+      font-size: 12px;
+      color: var(--text-gray);
+    }
+    .coupon-check {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .coupon-item.selected .coupon-check {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+    .coupon-item.selected .coupon-check i {
+      color: #fff;
+      font-size: 12px;
+    }
+    .no-coupon {
+      text-align: center;
+      padding: 32px;
+      color: var(--text-gray);
+    }
+    
+    /* 支付方式 */
+    .payment-methods {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .payment-method {
+      padding: 20px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 12px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.3s;
+    }
+    .payment-method:hover {
+      background: rgba(255,255,255,0.05);
+    }
+    .payment-method.selected {
+      border-color: var(--primary);
+      background: rgba(108, 99, 255, 0.1);
+    }
+    .payment-method i {
+      font-size: 32px;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .payment-method.wechat i { color: #07c160; }
+    .payment-method.alipay i { color: #1677ff; }
+    .payment-method.balance i { color: #faad14; }
+    .payment-method span {
+      font-size: 14px;
+      color: #fff;
+    }
+    
+    /* 订单汇总 */
+    .order-summary {
+      background: rgba(108, 99, 255, 0.1);
+      border: 1px solid rgba(108, 99, 255, 0.2);
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .summary-row:last-child {
+      border-bottom: none;
+    }
+    .summary-row .label {
+      color: var(--text-gray);
+    }
+    .summary-row .value {
+      color: #fff;
+    }
+    .summary-row.total {
+      padding-top: 20px;
+      margin-top: 12px;
+      border-top: 2px solid rgba(255,255,255,0.1);
+    }
+    .summary-row.total .value {
+      font-size: 24px;
+      color: var(--primary);
+      font-weight: 700;
+    }
+    
+    /* 提交按钮 */
+    .submit-section {
+      display: flex;
+      gap: 16px;
+      justify-content: flex-end;
+      align-items: center;
+    }
+    .submit-section .total-price {
+      font-size: 24px;
+      color: var(--primary);
+      font-weight: 700;
+    }
+    .submit-section .btn {
+      padding: 16px 48px;
+      font-size: 16px;
+    }
+    
+    /* 登录提示 */
+    .login-tip {
+      text-align: center;
+      padding: 48px 24px;
+    }
+    .login-tip i {
+      font-size: 48px;
+      color: var(--text-gray);
+      margin-bottom: 16px;
+    }
+    .login-tip h3 {
+      font-size: 20px;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .login-tip p {
+      color: var(--text-gray);
+      margin-bottom: 24px;
+    }
+    
+    @media (max-width: 768px) {
+      .game-account-form .form-row {
+        grid-template-columns: 1fr;
+      }
+      .payment-methods {
+        grid-template-columns: 1fr;
+      }
+      .product-info {
+        flex-direction: column;
+      }
+      .product-info img {
+        width: 100%;
+        height: 180px;
+      }
+      .submit-section {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 导航栏 -->
+<header class="navbar" id="navbar">
+  <div class="nav-inner container">
+    <a href="index.html" class="logo">
+      <span class="logo-icon">⚡</span>
+      <span class="logo-text">织麦<em>电竞</em></span>
+    </a>
+    <nav class="nav-links" id="navLinks">
+      <a href="index.html#home" class="nav-item">首页</a>
+      <a href="index.html#about" class="nav-item">关于我们</a>
+      <a href="services.html" class="nav-item">产品服务</a>
+      <a href="index.html#contact" class="nav-item">联系我们</a>
+    </nav>
+    <a href="auth.html" class="btn-nav" id="navAuthBtn">登录 / 注册</a>
+    <button class="btn-back" id="backBtn" onclick="goBack()" title="返回上一页">
+      <i class="fa fa-arrow-left"></i>
+    </button>
+  </div>
+</header>
+
+<!-- 订单页面 -->
+<main class="order-page">
+  <div class="order-container">
+    <div class="page-header" style="margin-bottom: 32px;">
+      <a href="services.html" class="back-link order-back-link" id="orderBackLink" onclick="return handleOrderBackClick(event)"><i class="fa fa-arrow-left"></i> 返回</a>
+      <h1 class="page-title">确认订单</h1>
+    </div>
+
+    <!-- 未登录提示 -->
+    <div id="loginTip" class="order-section login-tip" style="display: none;">
+      <i class="fa fa-user-lock"></i>
+      <h3>请先登录</h3>
+      <p>登录后即可下单购买商品</p>
+      <a href="auth.html" class="btn btn-primary"><i class="fa fa-sign-in-alt"></i> 立即登录</a>
+    </div>
+
+    <!-- 订单表单 -->
+    <div id="orderForm">
+      <!-- 商品信息 -->
+      <div class="order-section">
+        <h2 class="order-section-title"><i class="fa fa-box"></i> 商品信息</h2>
+        <div class="product-info" id="productInfo">
+          <img src="" alt="商品图片" id="productImage">
+          <div class="product-info-content">
+            <h3 id="productName">商品名称</h3>
+            <p id="productDesc">商品描述</p>
+            <div class="product-info-price">¥<span id="productPrice">0</span><span id="priceUnit"></span></div>
+            <div class="quantity-selector">
+              <label>购买数量：</label>
+              <div class="quantity-control">
+                <button onclick="changeQuantity(-1)"><i class="fa fa-minus"></i></button>
+                <input type="number" id="quantity" value="1" min="1" max="99" readonly>
+                <button onclick="changeQuantity(1)"><i class="fa fa-plus"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 游戏账号信息 -->
+      <div class="order-section">
+        <h2 class="order-section-title"><i class="fa fa-gamepad"></i> 游戏账号信息</h2>
+        <div class="game-account-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>游戏账号/ID（选填）</label>
+              <input type="text" id="gameAccount" placeholder="请输入您的游戏账号">
+            </div>
+            <div class="form-group">
+              <label>游戏区服</label>
+              <select id="gameServer">
+                <option value="">请选择区服</option>
+                <option value="QQ">QQ</option>
+                <option value="微信">微信</option>
+                <option value="Steam">Steam</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>联系电话（必填）<span style="color: #ff4d4f;">*</span></label>
+              <input type="tel" id="contactPhone" placeholder="请输入您的手机号码" maxlength="11">
+            </div>
+            <div class="form-group">
+              <label>QQ号/微信号（必填）<span style="color: #ff4d4f;">*</span></label>
+              <input type="text" id="contactSocial" placeholder="请输入QQ号或微信号">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>备注信息</label>
+            <textarea id="orderRemark" placeholder="如有特殊要求请在此填写，例如：指定时间完成、指定英雄等"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- 优惠券 -->
+      <div class="order-section">
+        <h2 class="order-section-title"><i class="fa fa-ticket"></i> 优惠券</h2>
+        <div class="coupon-list" id="couponList">
+          <div class="no-coupon">暂无可用优惠券</div>
+        </div>
+      </div>
+
+      <!-- 支付方式 -->
+      <div class="order-section">
+        <h2 class="order-section-title"><i class="fa fa-credit-card"></i> 支付方式</h2>
+        <div class="payment-methods">
+          <div class="payment-method wechat selected" onclick="selectPayment('wechat')">
+            <i class="fa-brands fa-weixin"></i>
+            <span>微信支付</span>
+          </div>
+          <div class="payment-method alipay" onclick="selectPayment('alipay')">
+            <i class="fa-brands fa-alipay"></i>
+            <span>支付宝</span>
+          </div>
+          <div class="payment-method balance" onclick="selectPayment('balance')">
+            <i class="fa fa-wallet"></i>
+            <span>余额支付 (¥<span id="userBalance">0</span>)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 订单汇总 -->
+      <div class="order-section order-summary">
+        <div class="summary-row">
+          <span class="label">商品金额</span>
+          <span class="value">¥<span id="subtotal">0</span></span>
+        </div>
+        <div class="summary-row">
+          <span class="label">优惠券抵扣</span>
+          <span class="value" style="color: #52c41a;">-¥<span id="discount">0</span></span>
+        </div>
+        <div class="summary-row total">
+          <span class="label">应付总额</span>
+          <span class="value">¥<span id="totalAmount">0</span></span>
+        </div>
+      </div>
+
+      <!-- 提交 -->
+      <div class="submit-section">
+        <div class="total-price">应付总额：¥<span id="finalTotal">0</span></div>
+        <button class="btn btn-primary" onclick="submitOrder()">
+          <i class="fa fa-check"></i> 确认下单
+        </button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- 底部 -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <p>&copy; 2026 织麦电竞. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="js/data.js"></script>
+<script src="js/main.js"></script>
+<script>
+// 全局变量
+let currentProduct = null;
+let currentUser = null;
+let quantity = 1;
+let selectedCoupon = null;
+let selectedPayment = 'wechat';
+let userCoupons = [];
+
+function getWalletBalance() {
+  if (!currentUser) return 0;
+
+  const wallets = JSON.parse(localStorage.getItem('zhimai_wallets') || '{}');
+  const walletBalance = wallets[currentUser.id]?.balance;
+
+  if (typeof walletBalance === 'number' && !Number.isNaN(walletBalance)) {
+    return walletBalance;
+  }
+
+  return Number(currentUser.balance || 0);
+}
+
+// 获取URL参数
+function getUrlParam(name) {
+  const params = new URLSearchParams(window.location.search);
+  return params.get(name);
+}
+
+function normalizeGameCode(rawValue) {
+  const value = String(rawValue || '').trim().toLowerCase();
+  return /^[a-z0-9_-]+$/.test(value) ? value : '';
+}
+
+function buildOrderBackUrl() {
+  const productIdFromUrl = String(getUrlParam('product') || '').trim();
+  const focusProduct = String(getUrlParam('focusProduct') || productIdFromUrl || currentProduct?.id || '').trim();
+  const gameFromUrl = normalizeGameCode(getUrlParam('game'));
+  const gameFromProduct = normalizeGameCode(currentProduct?.game);
+  const gameCode = gameFromUrl || gameFromProduct;
+
+  const params = new URLSearchParams();
+  if (gameCode) {
+    params.set('game', gameCode);
+  }
+  if (focusProduct) {
+    params.set('focusProduct', focusProduct);
+  }
+  const query = params.toString();
+  return query ? `services.html?${query}` : 'services.html';
+}
+
+function syncOrderBackLink() {
+  const link = document.getElementById('orderBackLink');
+  if (link) {
+    link.href = buildOrderBackUrl();
+  }
+}
+
+function goBack() {
+  window.location.href = buildOrderBackUrl();
+}
+
+function handleOrderBackClick(event) {
+  event.preventDefault();
+  goBack();
+  return false;
+}
+
+// 检查登录状态
+function checkLogin() {
+  currentUser = JSON.parse(localStorage.getItem('zhimai_user') || sessionStorage.getItem('zhimai_user') || 'null');
+  
+  if (!currentUser) {
+    document.getElementById('loginTip').style.display = 'block';
+    document.getElementById('orderForm').style.display = 'none';
+    return false;
+  }
+  
+  // 更新导航栏 - 头像已隐藏，保持登录/注册按钮显示
+  // const navAuthBtn = document.getElementById('navAuthBtn');
+  // if (navAuthBtn) {
+  //   navAuthBtn.outerHTML = `
+  //     <a href="profile.html" class="nav-user">
+  //       <div class="nav-avatar">${currentUser.username.charAt(0).toUpperCase()}</div>
+  //     </a>
+  //   `;
+  // }
+  
+  // 显示余额
+  document.getElementById('userBalance').textContent = getWalletBalance().toFixed(2);
+  
+  // 加载上次保存的订单信息
+  loadSavedOrderInfo();
+  
+  return true;
+}
+
+// 加载上次保存的订单信息
+function loadSavedOrderInfo() {
+  if (!currentUser) return;
+  
+  const savedInfo = localStorage.getItem(`zhimai_order_info_${currentUser.id}`);
+  if (savedInfo) {
+    const info = JSON.parse(savedInfo);
+    if (info.gameAccount) document.getElementById('gameAccount').value = info.gameAccount;
+    if (info.gameServer) document.getElementById('gameServer').value = info.gameServer;
+    if (info.contactPhone) document.getElementById('contactPhone').value = info.contactPhone;
+    if (info.contactSocial) document.getElementById('contactSocial').value = info.contactSocial;
+  }
+}
+
+// 保存订单信息到本地
+function saveOrderInfo() {
+  if (!currentUser) return;
+  
+  const info = {
+    gameAccount: document.getElementById('gameAccount').value.trim(),
+    gameServer: document.getElementById('gameServer').value,
+    contactPhone: document.getElementById('contactPhone').value.trim(),
+    contactSocial: document.getElementById('contactSocial').value.trim()
+  };
+  
+  localStorage.setItem(`zhimai_order_info_${currentUser.id}`, JSON.stringify(info));
+}
+
+// 加载商品信息
+function isActiveProductStatus(status) {
+  return status === 1 || status === '1' || status === 'active';
+}
+
+function loadProduct() {
+  const productId = getUrlParam('product');
+  
+  if (!productId) {
+    showToast('请选择商品', 'error');
+    setTimeout(() => window.location.href = buildOrderBackUrl(), 1500);
+    return;
+  }
+  
+  const products = dataManager.getProducts();
+  currentProduct = products.find(p => p.id === parseInt(productId));
+  
+  if (!currentProduct || !isActiveProductStatus(currentProduct.status)) {
+    showToast('商品不存在或已下架', 'error');
+    setTimeout(() => window.location.href = buildOrderBackUrl(), 1500);
+    return;
+  }
+  
+  // 填充商品信息
+  document.getElementById('productImage').src = currentProduct.image;
+  document.getElementById('productName').textContent = currentProduct.name;
+  document.getElementById('productDesc').textContent = currentProduct.desc;
+  document.getElementById('productPrice').textContent = currentProduct.price.toFixed(2);
+  document.getElementById('priceUnit').textContent = currentProduct.priceUnit || '';
+  
+  // 设置数量最大值
+  document.getElementById('quantity').max = currentProduct.stock;
+  
+  updatePrice();
+  loadCoupons();
+  syncOrderBackLink();
+}
+
+// 加载优惠券
+function loadCoupons() {
+  if (!currentUser) return;
+  
+  const allUserCoupons = JSON.parse(localStorage.getItem('zhimai_user_coupons') || '[]');
+  userCoupons = allUserCoupons.filter(c => c.userId === currentUser.id && c.status === 'unused');
+  const container = document.getElementById('couponList');
+  
+  if (userCoupons.length === 0) {
+    container.innerHTML = '<div class="no-coupon">暂无可用优惠券</div>';
+    return;
+  }
+  
+  const subtotal = currentProduct.price * quantity;
+  
+  container.innerHTML = userCoupons.map(coupon => {
+    const isUsable = subtotal >= coupon.minOrder;
+    const valueText = coupon.type === 'percent' ? `${coupon.value}%` : `¥${coupon.value}`;
+    
+    const clickHandler = isUsable ? `selectCoupon('${coupon.id}')` : '';
+    return `
+      <div class="coupon-item ${isUsable ? '' : 'disabled'}" 
+           data-id="${coupon.id}" 
+           data-value="${coupon.value}"
+           data-type="${coupon.type}"
+           onclick="${clickHandler}">
+        <div class="coupon-value">
+          <div class="value">${valueText}</div>
+          <div class="type">${coupon.type === 'percent' ? '折扣券' : '满减券'}</div>
+        </div>
+        <div class="coupon-info">
+          <div class="name">${coupon.name}</div>
+          <div class="desc">满¥${coupon.minOrder}可用 | 有效期至 ${coupon.expireAt}</div>
+        </div>
+        <div class="coupon-check">
+          <i class="fa fa-check"></i>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// 选择数量
+function changeQuantity(delta) {
+  const newQty = quantity + delta;
+  if (newQty < 1) return;
+  if (currentProduct && newQty > currentProduct.stock) {
+    showToast('库存不足', 'error');
+    return;
+  }
+  quantity = newQty;
+  document.getElementById('quantity').value = quantity;
+  updatePrice();
+  loadCoupons(); // 重新检查优惠券可用性
+}
+
+// 选择优惠券
+function selectCoupon(couponId) {
+  const coupon = userCoupons.find(c => c.id === couponId);
+  if (!coupon) return;
+  
+  if (selectedCoupon && selectedCoupon.id === couponId) {
+    // 取消选择
+    selectedCoupon = null;
+    document.querySelectorAll('.coupon-item').forEach(el => el.classList.remove('selected'));
+  } else {
+    // 选择新优惠券
+    selectedCoupon = coupon;
+    document.querySelectorAll('.coupon-item').forEach(el => el.classList.remove('selected'));
+    document.querySelector(`.coupon-item[data-id="${couponId}"]`).classList.add('selected');
+  }
+  
+  updatePrice();
+}
+
+// 选择支付方式
+function selectPayment(method) {
+  selectedPayment = method;
+  document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('selected'));
+  document.querySelector(`.payment-method.${method}`).classList.add('selected');
+}
+
+// 更新价格
+function updatePrice() {
+  if (!currentProduct) return;
+  
+  const subtotal = currentProduct.price * quantity;
+  let discount = 0;
+  
+  if (selectedCoupon) {
+    if (selectedCoupon.type === 'percent') {
+      discount = subtotal * (selectedCoupon.value / 100);
+    } else {
+      discount = selectedCoupon.value;
+    }
+    discount = Math.min(discount, subtotal);
+  }
+  
+  const total = subtotal - discount;
+  
+  document.getElementById('subtotal').textContent = subtotal.toFixed(2);
+  document.getElementById('discount').textContent = discount.toFixed(2);
+  document.getElementById('totalAmount').textContent = total.toFixed(2);
+  document.getElementById('finalTotal').textContent = total.toFixed(2);
+}
+
+// 提交订单
+function submitOrder() {
+  if (!currentUser || !currentProduct) return;
+  
+  // 获取表单数据（游戏账号选填）
+  const gameAccount = document.getElementById('gameAccount').value.trim();
+  
+  // 验证联系方式
+  const contactPhone = document.getElementById('contactPhone').value.trim();
+  if (!contactPhone) {
+    showToast('请输入联系电话', 'error');
+    document.getElementById('contactPhone').focus();
+    return;
+  }
+  if (!/^1[3-9]\d{9}$/.test(contactPhone)) {
+    showToast('请输入正确的手机号码', 'error');
+    document.getElementById('contactPhone').focus();
+    return;
+  }
+  
+  const contactSocial = document.getElementById('contactSocial').value.trim();
+  if (!contactSocial) {
+    showToast('请输入QQ号或微信号', 'error');
+    document.getElementById('contactSocial').focus();
+    return;
+  }
+  
+  const gameServer = document.getElementById('gameServer').value;
+  const remark = document.getElementById('orderRemark').value.trim();
+  
+  // 计算价格
+  const subtotal = currentProduct.price * quantity;
+  let discount = 0;
+  if (selectedCoupon) {
+    if (selectedCoupon.type === 'percent') {
+      discount = subtotal * (selectedCoupon.value / 100);
+    } else {
+      discount = selectedCoupon.value;
+    }
+    discount = Math.min(discount, subtotal);
+  }
+  const total = subtotal - discount;
+  
+  // 检查余额支付
+  if (selectedPayment === 'balance') {
+    const balance = getWalletBalance();
+    if (balance < total) {
+      showToast('余额不足，请选择其他支付方式', 'error');
+      return;
+    }
+  }
+  
+  // 创建订单
+  const orderData = {
+    userId: currentUser.id,
+    username: currentUser.username,
+    productId: currentProduct.id,
+    productName: currentProduct.name,
+    productImage: currentProduct.image,
+    price: currentProduct.price,
+    quantity: quantity,
+    subtotal: subtotal,
+    discount: discount,
+    couponId: selectedCoupon ? selectedCoupon.id : null,
+    totalAmount: total,
+    gameAccount: gameAccount,
+    gameServer: gameServer,
+    contactPhone: contactPhone,
+    contactSocial: contactSocial,
+    remark: remark,
+    paymentMethod: selectedPayment
+  };
+  
+  // 同步创建订单
+  const orderId = 'ZM' + Date.now().toString(36).toUpperCase();
+  const newOrder = {
+    id: orderId,
+    ...orderData,
+    status: 'pending',
+    statusText: '待支付',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  const orders = dataManager.getOrders();
+  orders.unshift(newOrder);
+  dataManager.saveOrders(orders);
+  const order = newOrder;
+  
+  // 保存订单信息供下次使用
+  saveOrderInfo();
+  
+  // 使用优惠券
+  if (selectedCoupon) {
+    dataManager.useCoupon(selectedCoupon.id);
+  }
+  
+  // 所有支付方式统一进入支付页，余额支付在支付页完成密码校验后再扣款
+  window.location.href = `payment.html?order=${order.id}`;
+}
+
+// Toast提示
+function showToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `<i class="fa fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+  toast.style.cssText = `
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: ${type === 'success' ? '#52c41a' : '#ff4d4f'};
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    z-index: 9999;
+    animation: fadeInDown 0.3s ease;
+  `;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.animation = 'fadeOutUp 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 2000);
+}
+
+// 页面加载
+document.addEventListener('DOMContentLoaded', () => {
+  updateNavUserInfo(); // 更新导航栏用户头像
+  syncOrderBackLink();
+  if (checkLogin()) {
+    loadProduct();
+  }
+  
+  // 移动端「我的」未登录时跳登录页
+  const mobileProfileLink = document.getElementById('mobileProfileLink');
+  if (mobileProfileLink && !currentUser) {
+    mobileProfileLink.href = 'auth.html';
+  }
+});
+</script>
+
+<!-- 手机端底部导航 -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-list">
+    <a href="index.html" class="mobile-nav-item">
+      <i class="fa fa-home"></i>
+      <span>首页</span>
+    </a>
+    <a href="services.html" class="mobile-nav-item active">
+      <i class="fa fa-cart-shopping"></i>
+      <span>下单</span>
+    </a>
+    <a href="profile.html" class="mobile-nav-item" id="mobileProfileLink">
+      <i class="fa fa-user"></i>
+      <span>我的</span>
+    </a>
+  </div>
+</nav>
+
+</body>
+</html>

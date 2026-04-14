@@ -1,0 +1,833 @@
+<!-- LEGACY/FROZEN PAGE: Reference-only page. Do NOT add new features here. Active product-management mainline owner: products-categories.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>商品分类管理 - 织麦电竞后台</title>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <style>
+    .category-tree {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .category-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+      transition: var(--transition);
+    }
+
+    .category-item:hover {
+      background: rgba(99, 102, 241, 0.05);
+    }
+
+    .category-item:last-child {
+      border-bottom: none;
+    }
+
+    .category-level-1 {
+      padding-left: 16px;
+      font-weight: 500;
+    }
+
+    .category-level-2 {
+      padding-left: 48px;
+    }
+
+    .category-level-3 {
+      padding-left: 80px;
+    }
+
+    .category-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      font-size: 18px;
+    }
+
+    .category-icon.rank {
+      background: linear-gradient(135deg, #f59e0b20, #f59e0b40);
+      color: #f59e0b;
+    }
+
+    .category-icon.boost {
+      background: linear-gradient(135deg, #8b5cf620, #8b5cf640);
+      color: #8b5cf6;
+    }
+
+    .category-icon.skin {
+      background: linear-gradient(135deg, #06b6d420, #06b6d440);
+      color: #06b6d4;
+    }
+
+    .category-icon.account {
+      background: linear-gradient(135deg, #ec489920, #ec489940);
+      color: #ec4899;
+    }
+
+    .category-info {
+      flex: 1;
+    }
+
+    .category-name {
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .category-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .category-stats {
+      display: flex;
+      gap: 24px;
+      margin-right: 24px;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .category-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .category-actions button {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .btn-edit {
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--primary);
+    }
+
+    .btn-edit:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-delete {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+    }
+
+    .btn-delete:hover {
+      background: #ef4444;
+      color: #fff;
+    }
+
+    .btn-add-sub {
+      background: rgba(16, 185, 129, 0.1);
+      color: #10b981;
+    }
+
+    .btn-add-sub:hover {
+      background: #10b981;
+      color: #fff;
+    }
+
+    .expand-btn {
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: var(--transition);
+      margin-right: 8px;
+    }
+
+    .expand-btn:hover {
+      color: var(--primary);
+    }
+
+    .expand-btn.expanded {
+      transform: rotate(90deg);
+    }
+
+    .category-children {
+      display: none;
+    }
+
+    .category-children.show {
+      display: block;
+    }
+
+    .sort-input {
+      width: 60px;
+      padding: 6px 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      text-align: center;
+      font-size: 14px;
+      background: var(--card-bg);
+      color: var(--text-primary);
+    }
+
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-badge.active {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+    }
+
+    .status-badge.inactive {
+      background: rgba(107, 114, 128, 0.15);
+      color: #9ca3af;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .category-stats {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <i class="fa fa-gamepad"></i>
+          <span>织麦电竞</span>
+        </div>
+        <button class="sidebar-toggle" id="sidebarToggle">
+          <i class="fa fa-bars"></i>
+        </button>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-title">主菜单</div>
+          <ul class="nav-list">
+            <li class="nav-item">
+              <a href="index.html" class="nav-link">
+                <i class="fa fa-home"></i>
+                <span>仪表盘</span>
+              </a>
+            </li>
+            <li class="nav-item has-submenu active">
+              <a href="#" class="nav-link">
+                <i class="fa fa-box"></i>
+                <span>商品管理</span>
+                <i class="fa fa-chevron-right arrow"></i>
+              </a>
+              <ul class="submenu show">
+                <li><a href="products-categories.html">商品列表</a></li>
+                <li><a href="products-categories.html">商品分类</a></li>
+              </ul>
+            </li>
+            <li class="nav-item has-submenu">
+              <a href="#" class="nav-link">
+                <i class="fa fa-gamepad"></i>
+                <span>代打陪玩</span>
+                <i class="fa fa-chevron-right arrow"></i>
+              </a>
+              <ul class="submenu">
+                <li><a href="boosters.html">打手管理</a></li>
+                <li><a href="services.html">服务管理</a></li>
+              </ul>
+            </li>
+            <li class="nav-item">
+              <a href="orders.html" class="nav-link">
+                <i class="fa fa-shopping-cart"></i>
+                <span>订单管理</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="members.html" class="nav-link">
+                <i class="fa fa-users"></i>
+                <span>会员管理</span>
+              </a>
+            </li>
+            <li class="nav-item has-submenu">
+              <a href="#" class="nav-link">
+                <i class="fa fa-gift"></i>
+                <span>营销管理</span>
+                <i class="fa fa-chevron-right arrow"></i>
+              </a>
+              <ul class="submenu">
+                <li><a href="coupons.html">优惠券</a></li>
+              </ul>
+            </li>
+            <li class="nav-item">
+              <a href="settings.html" class="nav-link">
+                <i class="fa fa-cog"></i>
+                <span>系统设置</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 顶部导航 -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="menu-toggle" id="menuToggle">
+            <i class="fa fa-bars"></i>
+          </button>
+          <h1 class="page-title">商品分类管理</h1>
+        </div>
+        <div class="header-right">
+          <div class="header-actions">
+            <button class="action-btn">
+              <i class="fa fa-envelope"></i>
+            </button>
+          </div>
+          <div class="user-dropdown" id="userDropdown">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin" alt="avatar" class="user-avatar">
+            <div class="header-user-info"><span>管理员</span><span class="header-user-role">超管</span></div>
+            <i class="fa fa-chevron-down" style="font-size: 12px; color: var(--text-muted);"></i>
+            <div class="dropdown-menu" id="dropdownMenu">
+              <a href="#"><i class="fa fa-user"></i> 个人中心</a>
+              <a href="#" id="logoutBtn"><i class="fa fa-sign-out-alt"></i> 退出登录</a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- 页面内容 -->
+      <div class="page-content">
+        <!-- 统计卡片 -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+              <i class="fa fa-folder"></i>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">12</div>
+              <div class="stat-label">一级分类</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
+              <i class="fa fa-folder-open"></i>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">28</div>
+              <div class="stat-label">二级分类</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
+              <i class="fa fa-boxes"></i>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">156</div>
+              <div class="stat-label">商品总数</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #ec4899, #f472b6);">
+              <i class="fa fa-eye"></i>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">10</div>
+              <div class="stat-label">显示中</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 操作栏 -->
+        <div class="page-header">
+          <div class="search-box">
+            <i class="fa fa-search"></i>
+            <input type="text" placeholder="搜索分类名称..." id="searchInput">
+          </div>
+          <button class="btn btn-primary" onclick="openModal()">
+            <i class="fa fa-plus"></i> 添加分类
+          </button>
+        </div>
+
+        <!-- 分类列表 -->
+        <div class="category-tree">
+          <!-- 段位代练 -->
+          <div class="category-item category-level-1">
+            <button class="expand-btn expanded" onclick="toggleChildren(this)">
+              <i class="fa fa-chevron-right"></i>
+            </button>
+            <div class="category-icon rank">
+              <i class="fa fa-trophy"></i>
+            </div>
+            <div class="category-info">
+              <div class="category-name">段位代练</div>
+              <div class="category-meta">游戏段位提升服务</div>
+            </div>
+            <div class="category-stats">
+              <div class="stat-item">
+                <div class="stat-value">8</div>
+                <div class="stat-label">子分类</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">45</div>
+                <div class="stat-label">商品数</div>
+              </div>
+            </div>
+            <span class="status-badge active">显示</span>
+            <input type="number" class="sort-input" value="1">
+            <div class="category-actions">
+              <button class="btn-add-sub" title="添加子分类"><i class="fa fa-plus"></i></button>
+              <button class="btn-edit" title="编辑"><i class="fa fa-edit"></i></button>
+              <button class="btn-delete" title="删除"><i class="fa fa-trash"></i></button>
+            </div>
+          </div>
+          <div class="category-children show">
+            <div class="category-item category-level-2">
+              <div class="category-icon rank">
+                <i class="fa fa-arrow-up"></i>
+              </div>
+              <div class="category-info">
+                <div class="category-name">排位上分</div>
+                <div class="category-meta">单排/双排/三排上分</div>
+              </div>
+              <div class="category-stats">
+                <div class="stat-item">
+                  <div class="stat-value">3</div>
+                  <div class="stat-label">子分类</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value">18</div>
+                  <div class="stat-label">商品数</div>
+                </div>
+              </div>
+              <span class="status-badge active">显示</span>
+              <input type="number" class="sort-input" value="1">
+              <div class="category-actions">
+                <button class="btn-edit" title="编辑"><i class="fa fa-edit"></i></button>
+                <button class="btn-delete" title="删除"><i class="fa fa-trash"></i></button>
+              </div>
+            </div>
+            <div class="category-item category-level-2">
+              <div class="category-icon rank">
+                <i class="fa fa-star"></i>
+              </div>
+              <div class="category-info">
+                <div class="category-name">段位冲刺</div>
+                <div class="category-meta">快速冲击目标段位</div>
+              </div>
+              <div class="category-stats">
+                <div class="stat-item">
+                  <div class="stat-value">2</div>
+                  <div class="stat-label">子分类</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value">12</div>
+                  <div class="stat-label">商品数</div>
+                </div>
+              </div>
+              <span class="status-badge active">显示</span>
+              <input type="number" class="sort-input" value="2">
+              <div class="category-actions">
+                <button class="btn-edit" title="编辑"><i class="fa fa-edit"></i></button>
+                <button class="btn-delete" title="删除"><i class="fa fa-trash"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 代打服务 -->
+          <div class="category-item category-level-1">
+            <button class="expand-btn" onclick="toggleChildren(this)">
+              <i class="fa fa-chevron-right"></i>
+            </button>
+            <div class="category-icon boost">
+              <i class="fa fa-gamepad"></i>
+            </div>
+            <div class="category-info">
+              <div class="category-name">代打服务</div>
+              <div class="category-meta">专业代打各类任务</div>
+            </div>
+            <div class="category-stats">
+              <div class="stat-item">
+                <div class="stat-value">6</div>
+                <div class="stat-label">子分类</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">32</div>
+                <div class="stat-label">商品数</div>
+              </div>
+            </div>
+            <span class="status-badge active">显示</span>
+            <input type="number" class="sort-input" value="2">
+            <div class="category-actions">
+              <button class="btn-add-sub" title="添加子分类"><i class="fa fa-plus"></i></button>
+              <button class="btn-edit" title="编辑"><i class="fa fa-edit"></i></button>
+              <button class="btn-delete" title="删除"><i class="fa fa-trash"></i></button>
+            </div>
+          </div>
+          <div class="category-children">
+            <div class="category-item category-level-2">
+              <div class="category-icon boost">
+                <i class="fa fa-crosshairs"></i>
+              </div>
+              <div class="category-info">
+                <div class="category-name">任务代打</div>
+                <div class="category-meta">日常/周常任务</div>
+              </div>
+              <div class="category-stats">
+                <div class="stat-item">
+                  <div class="stat-value">0</div>
+                  <div class="stat-label">子分类</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value">8</div>
+                  <div class="stat-label">商品数</div>
+                </div>
+              </div>
+              <span class="status-badge active">显示</span>
+              <input type="number" class="sort-input" value="1">
+              <div class="category-actions">
+                <button class="btn-edit" title="编辑"><i class="fa fa-edit"></i></button>
+                <button class="btn-delete" title="删除"><i class="fa fa-trash"></i></button>
+              </div>
+            </div>
+            <div class="category-item category-level-2">
+              <div class="category-icon boost">
+                <i class="fa fa-medal"></i>
+              </div>
+              <div class="category-info">
+                <div class="category-name">成就解锁</div>
+                <div class="category-meta">各类成就代完成</div>
+              </div>
+              <div class="category-stats">
+                <div class="stat-item">
+                  <div class="stat-value">0</div>
+                  <div class="stat-label">子分类</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value">15</div>
+                  <div class="stat-label">商品数</div>
+                </div>
+              </div>
+              <span class="status-badge active">显示</span>
+              <input type="number" class="sort-input" value="2">
+              <div class="category-actions">
+                <button class="btn-edit" title="编辑"><i class="fa fa-edit"></i></button>
+                <button class="btn-delete" title="删除"><i class="fa fa-trash"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 陪玩服务 -->
+          <div class="category-item category-level-1">
+            <button class="expand-btn" onclick="toggleChildren(this)">
+              <i class="fa fa-chevron-right"></i>
+            </button>
+            <div class="category-icon skin">
+              <i class="fa fa-user-friends"></i>
+            </div>
+            <div class="category-info">
+              <div class="category-name">陪玩服务</div>
+              <div class="category-meta">专业陪玩带你飞</div>
+            </div>
+            <div class="category-stats">
+              <div class="stat-item">
+                <div class="stat-value">4</div>
+                <div class="stat-label">子分类</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">28</div>
+                <div class="stat-label">商品数</div>
+              </div>
+            </div>
+            <span class="status-badge active">显示</span>
+            <input type="number" class="sort-input" value="3">
+            <div class="category-actions">
+              <button class="btn-add-sub" title="添加子分类"><i class="fa fa-plus"></i></button>
+              <button class="btn-edit" title="编辑"><i class="fa fa-edit"></i></button>
+              <button class="btn-delete" title="删除"><i class="fa fa-trash"></i></button>
+            </div>
+          </div>
+          <div class="category-children">
+            <div class="category-item category-level-2">
+              <div class="category-icon skin">
+                <i class="fa fa-microphone"></i>
+              </div>
+              <div class="category-info">
+                <div class="category-name">语音陪玩</div>
+                <div class="category-meta">语音开黑陪玩</div>
+              </div>
+              <div class="category-stats">
+                <div class="stat-item">
+                  <div class="stat-value">2</div>
+                  <div class="stat-label">子分类</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value">12</div>
+                  <div class="stat-label">商品数</div>
+                </div>
+              </div>
+              <span class="status-badge active">显示</span>
+              <input type="number" class="sort-input" value="1">
+              <div class="category-actions">
+                <button class="btn-edit" title="编辑"><i class="fa fa-edit"></i></button>
+                <button class="btn-delete" title="删除"><i class="fa fa-trash"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 游戏账号 -->
+          <div class="category-item category-level-1">
+            <button class="expand-btn" onclick="toggleChildren(this)">
+              <i class="fa fa-chevron-right"></i>
+            </button>
+            <div class="category-icon account">
+              <i class="fa fa-id-card"></i>
+            </div>
+            <div class="category-info">
+              <div class="category-name">游戏账号</div>
+              <div class="category-meta">优质账号交易</div>
+            </div>
+            <div class="category-stats">
+              <div class="stat-item">
+                <div class="stat-value">3</div>
+                <div class="stat-label">子分类</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">51</div>
+                <div class="stat-label">商品数</div>
+              </div>
+            </div>
+            <span class="status-badge inactive">隐藏</span>
+            <input type="number" class="sort-input" value="4">
+            <div class="category-actions">
+              <button class="btn-add-sub" title="添加子分类"><i class="fa fa-plus"></i></button>
+              <button class="btn-edit" title="编辑"><i class="fa fa-edit"></i></button>
+              <button class="btn-delete" title="删除"><i class="fa fa-trash"></i></button>
+            </div>
+          </div>
+          <div class="category-children">
+            <div class="category-item category-level-2">
+              <div class="category-icon account">
+                <i class="fa fa-crown"></i>
+              </div>
+              <div class="category-info">
+                <div class="category-name">成品号</div>
+                <div class="category-meta">高段位成品账号</div>
+              </div>
+              <div class="category-stats">
+                <div class="stat-item">
+                  <div class="stat-value">0</div>
+                  <div class="stat-label">子分类</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value">23</div>
+                  <div class="stat-label">商品数</div>
+                </div>
+              </div>
+              <span class="status-badge inactive">隐藏</span>
+              <input type="number" class="sort-input" value="1">
+              <div class="category-actions">
+                <button class="btn-edit" title="编辑"><i class="fa fa-edit"></i></button>
+                <button class="btn-delete" title="删除"><i class="fa fa-trash"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 添加/编辑分类弹窗 -->
+  <div class="modal" id="categoryModal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title">添加分类</h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="categoryForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">分类名称 <span style="color: #ef4444;">*</span></label>
+              <input type="text" class="form-input" placeholder="请输入分类名称" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">上级分类</label>
+              <select class="form-select">
+                <option value="">作为一级分类</option>
+                <option value="1">段位代练</option>
+                <option value="2">代打服务</option>
+                <option value="3">陪玩服务</option>
+                <option value="4">游戏账号</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">分类图标</label>
+              <select class="form-select">
+                <option value="trophy">🏆 奖杯</option>
+                <option value="gamepad">🎮 游戏手柄</option>
+                <option value="users">👥 用户</option>
+                <option value="star">⭐ 星星</option>
+                <option value="crown">👑 皇冠</option>
+                <option value="target">🎯 目标</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">排序</label>
+              <input type="number" class="form-input" value="0" min="0">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">分类描述</label>
+            <textarea class="form-textarea" rows="3" placeholder="请输入分类描述..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">显示状态</label>
+            <div style="display: flex; gap: 20px;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="radio" name="status" value="active" checked>
+                <span>显示</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="radio" name="status" value="inactive">
+                <span>隐藏</span>
+              </label>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveCategory()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    // 检查登录状态
+    if (localStorage.getItem('zhimai_admin_logged_in') !== 'true') {
+      window.location.href = 'login.html';
+    }
+
+    // 退出登录
+    document.getElementById('logoutBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      localStorage.removeItem('zhimai_admin_logged_in');
+      localStorage.removeItem('zhimai_admin_user');
+      window.location.href = 'login.html';
+    });
+
+    // 下拉菜单
+    document.getElementById('userDropdown').addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.getElementById('dropdownMenu').classList.toggle('show');
+    });
+
+    document.addEventListener('click', function() {
+      document.getElementById('dropdownMenu').classList.remove('show');
+    });
+
+    // 展开/收起子分类
+    function toggleChildren(btn) {
+      btn.classList.toggle('expanded');
+      const children = btn.closest('.category-item').nextElementSibling;
+      if (children && children.classList.contains('category-children')) {
+        children.classList.toggle('show');
+      }
+    }
+
+    // 打开弹窗
+    function openModal() {
+      document.getElementById('categoryModal').classList.add('show');
+    }
+
+    // 关闭弹窗
+    function closeModal() {
+      document.getElementById('categoryModal').classList.remove('show');
+    }
+
+    // 保存分类
+    function saveCategory() {
+      alert('保存成功！');
+      closeModal();
+    }
+
+    // 搜索功能
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+      const keyword = e.target.value.toLowerCase();
+      const items = document.querySelectorAll('.category-item');
+      items.forEach(item => {
+        const name = item.querySelector('.category-name').textContent.toLowerCase();
+        if (name.includes(keyword)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+
+    // 侧边栏切换
+    document.getElementById('sidebarToggle').addEventListener('click', function() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    });
+
+    document.getElementById('menuToggle').addEventListener('click', function() {
+      document.getElementById('sidebar').classList.toggle('show');
+    });
+
+    // 子菜单切换
+    document.querySelectorAll('.nav-item.has-submenu > .nav-link').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const parent = this.parentElement;
+        parent.classList.toggle('open');
+      });
+    });
+  </script>
+</body>
+</html>

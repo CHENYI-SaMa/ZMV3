@@ -1,0 +1,209 @@
+<!-- 
+  文件名: games.html
+  页面名称: 选择游戏
+  功能说明: 游戏选择页面，展示可服务的游戏列表（目前只有三角洲行动）
+  用户选择游戏后跳转到对应的服务列表页
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>选择游戏 · 织麦电竞</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/games.css" />
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- 腾讯云 CloudBase SDK -->
+</head>
+<body>
+
+<!-- ========== 导航栏 ========== -->
+<header class="navbar" id="navbar">
+  <div class="nav-inner container">
+    <a href="index.html" class="logo">
+      <span class="logo-icon">⚡</span>
+      <span class="logo-text">织麦<em>电竞</em></span>
+    </a>
+    <nav class="nav-links" id="navLinks">
+      <a href="index.html#home" class="nav-item">首页</a>
+      <a href="index.html#about" class="nav-item">关于我们</a>
+      <a href="index.html#services" class="nav-item">产品服务</a>
+      <a href="index.html#join" class="nav-item">合作加入</a>
+      <a href="index.html#contact" class="nav-item">联系我们</a>
+    </nav>
+    <a href="auth.html" class="btn-nav" id="navAuthBtn">登录 / 注册</a>
+  </div>
+</header>
+
+<!-- 页面过渡动画层 -->
+<div class="page-transition" id="pageTransition">
+  <div class="transition-content">
+    <div class="transition-game-icon" id="transitionIcon">
+      <i class="fa fa-crosshairs"></i>
+    </div>
+    <div class="transition-game-name" id="transitionName">三角洲行动</div>
+    <div class="transition-loading">
+      <div class="loading-bar"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 游戏列表页 ========== -->
+<main class="games-page" id="gamesPage">
+  <div class="container">
+    
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h1 class="page-title">选择游戏</h1>
+      <p class="page-subtitle">请选择您需要服务的游戏</p>
+      <a href="index.html" class="back-home-btn" title="返回首页">
+        <i class="fa fa-home"></i>
+      </a>
+    </div>
+
+    <!-- 游戏列表 -->
+    <div class="games-list">
+      <div class="game-row" data-game="delta" data-name="三角洲行动" data-icon="fa-crosshairs">
+        <div class="game-row-logo">
+          <i class="fa fa-crosshairs"></i>
+        </div>
+        <div class="game-row-gradient"></div>
+        <div class="game-row-name">三角洲行动</div>
+        <div class="game-row-arrow"><i class="fa fa-chevron-right"></i></div>
+      </div>
+      
+      <div class="game-row" data-game="valorant" data-name="无畏契约" data-icon="fa-bullseye">
+        <div class="game-row-logo">
+          <i class="fa fa-bullseye"></i>
+        </div>
+        <div class="game-row-gradient"></div>
+        <div class="game-row-name">无畏契约</div>
+        <div class="game-row-arrow"><i class="fa fa-chevron-right"></i></div>
+      </div>
+      
+      <div class="game-row disabled" data-game="coming1" data-name="敬请期待" data-icon="fa-clock">
+        <div class="game-row-logo">
+          <i class="fa fa-clock"></i>
+        </div>
+        <div class="game-row-gradient"></div>
+        <div class="game-row-name">敬请期待</div>
+        <div class="game-row-arrow"><i class="fa fa-chevron-right"></i></div>
+      </div>
+      
+      <div class="game-row disabled" data-game="coming4" data-name="敬请期待" data-icon="fa-clock">
+        <div class="game-row-logo">
+          <i class="fa fa-clock"></i>
+        </div>
+        <div class="game-row-gradient"></div>
+        <div class="game-row-name">敬请期待</div>
+        <div class="game-row-arrow"><i class="fa fa-chevron-right"></i></div>
+      </div>
+      
+      <div class="game-row disabled" data-game="coming5" data-name="敬请期待" data-icon="fa-clock">
+        <div class="game-row-logo">
+          <i class="fa fa-clock"></i>
+        </div>
+        <div class="game-row-gradient"></div>
+        <div class="game-row-name">敬请期待</div>
+        <div class="game-row-arrow"><i class="fa fa-chevron-right"></i></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ========== 页脚 ========== -->
+<footer class="footer">
+  <div class="footer-bottom">
+    <div class="container">
+      <p>© 2026 织麦电竞 · 版权所有 | 三角洲行动专业代练服务平台</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+// 导航栏滚动效果
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 60) navbar?.classList.add('scrolled');
+  else navbar?.classList.remove('scrolled');
+});
+
+// 汉堡菜单
+const hamburger = document.getElementById('hamburger');
+const navLinks = document.getElementById('navLinks');
+hamburger?.addEventListener('click', () => navLinks?.classList.toggle('open'));
+document.addEventListener('click', (e) => {
+  if (!navbar?.contains(e.target)) navLinks?.classList.remove('open');
+});
+
+// 页面过渡动画
+const gameRows = document.querySelectorAll('.game-row:not(.disabled)');
+const pageTransition = document.getElementById('pageTransition');
+const transitionIcon = document.getElementById('transitionIcon');
+const transitionName = document.getElementById('transitionName');
+const gamesPage = document.getElementById('gamesPage');
+
+gameRows.forEach(row => {
+  row.addEventListener('click', (e) => {
+    e.preventDefault();
+    const game = row.dataset.game;
+    const name = row.dataset.name;
+    const iconClass = row.dataset.icon;
+    
+    // 设置过渡页面内容
+    transitionIcon.innerHTML = `<i class="fa ${iconClass}"></i>`;
+    transitionName.textContent = name;
+    
+    // 显示过渡动画
+    pageTransition.classList.add('active');
+    gamesPage.style.opacity = '0';
+    
+    // 延迟跳转（加快到600ms）
+    setTimeout(() => {
+      window.location.href = `services.html?game=${game}`;
+    }, 600);
+  });
+});
+</script>
+
+<!-- 手机端底部导航 -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-list">
+    <a href="index.html" class="mobile-nav-item">
+      <i class="fa fa-home"></i>
+      <span>首页</span>
+    </a>
+    <a href="services.html" class="mobile-nav-item active">
+      <i class="fa fa-cart-shopping"></i>
+      <span>下单</span>
+    </a>
+    <a href="profile.html" class="mobile-nav-item" id="mobileProfileLink">
+      <i class="fa fa-user"></i>
+      <span>我的</span>
+    </a>
+  </div>
+</nav>
+
+<script>
+// 检查登录状态，更新导航栏
+const currentUser = JSON.parse(localStorage.getItem('zhimai_user') || sessionStorage.getItem('zhimai_user') || 'null');
+const navAuthBtn = document.getElementById('navAuthBtn');
+const mobileProfileLink = document.getElementById('mobileProfileLink');
+
+// 头像已隐藏，保持登录/注册按钮显示
+// if (currentUser && navAuthBtn) {
+//   navAuthBtn.outerHTML = `
+//     <a href="profile.html" class="nav-user">
+//       <div class="nav-avatar">${currentUser.username.charAt(0).toUpperCase()}</div>
+//     </a>
+//   `;
+// }
+if (mobileProfileLink && !currentUser) {
+  mobileProfileLink.href = 'auth.html';
+}
+</script>
+<script src="js/data.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

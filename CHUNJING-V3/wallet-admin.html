@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <script>
+    window.location.replace('profile.html?tab=wallet');
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>测试账号控制台 - 织麦电竞</title>
+  <style>
+    :root {
+      --section-gap: 24px;
+      --block-gap: 16px;
+      --page-bg: #070b14;
+      --panel-bg: rgba(16, 23, 39, 0.92);
+      --panel-border: rgba(148, 163, 184, 0.16);
+      --panel-muted: rgba(148, 163, 184, 0.2);
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-strong: #0ea5e9;
+      --danger: #f87171;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --shadow: 0 24px 60px rgba(2, 6, 23, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text-primary);
+      background:
+        radial-gradient(circle at top left, rgba(14, 165, 233, 0.24), transparent 28%),
+        radial-gradient(circle at top right, rgba(34, 197, 94, 0.18), transparent 24%),
+        linear-gradient(180deg, #0b1220 0%, var(--page-bg) 100%);
+      padding: 32px 20px;
+    }
+
+    .console-shell {
+      width: min(1080px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: var(--section-gap);
+    }
+
+    .hero-card,
+    .access-card,
+    .console-section,
+    .status-banner {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .hero-card,
+    .access-card,
+    .console-section {
+      padding: 24px;
+    }
+
+    .hero-card {
+      display: grid;
+      gap: var(--block-gap);
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: var(--block-gap);
+      flex-wrap: wrap;
+    }
+
+    .hero-title {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 40px);
+      line-height: 1.1;
+    }
+
+    .hero-desc {
+      margin: 0;
+      max-width: 720px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.14);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      color: #e0f2fe;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .badge.warn {
+      background: rgba(251, 191, 36, 0.12);
+      border-color: rgba(251, 191, 36, 0.22);
+      color: #fef3c7;
+    }
+
+    .badge.muted {
+      background: rgba(148, 163, 184, 0.12);
+      border-color: rgba(148, 163, 184, 0.18);
+      color: var(--text-secondary);
+    }
+
+    .status-banner {
+      display: none;
+      padding: 14px 18px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .status-banner.show {
+      display: block;
+    }
+
+    .status-banner.success {
+      border-color: rgba(52, 211, 153, 0.28);
+      color: #d1fae5;
+      background: rgba(16, 185, 129, 0.12);
+    }
+
+    .status-banner.error {
+      border-color: rgba(248, 113, 113, 0.28);
+      color: #fee2e2;
+      background: rgba(239, 68, 68, 0.14);
+    }
+
+    .status-banner.info {
+      border-color: rgba(56, 189, 248, 0.28);
+      color: #e0f2fe;
+      background: rgba(14, 165, 233, 0.12);
+    }
+
+    .access-card {
+      display: none;
+      gap: var(--block-gap);
+    }
+
+    .access-card.show {
+      display: grid;
+    }
+
+    .access-title {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .access-desc {
+      margin: 0;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .console-app {
+      display: none;
+      gap: var(--section-gap);
+    }
+
+    .console-app.show {
+      display: grid;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: var(--block-gap);
+      flex-wrap: wrap;
+      margin-bottom: var(--block-gap);
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .section-desc {
+      margin: 0;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 680px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: var(--block-gap);
+    }
+
+    .summary-card {
+      border: 1px solid var(--panel-muted);
+      border-radius: 18px;
+      padding: 16px;
+      background: rgba(15, 23, 42, 0.5);
+      display: grid;
+      gap: 10px;
+      min-height: 112px;
+    }
+
+    .summary-label {
+      color: var(--text-muted);
+      font-size: 13px;
+      letter-spacing: 0.02em;
+    }
+
+    .summary-value {
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .summary-subtext {
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: var(--block-gap);
+    }
+
+    .action-card {
+      border: 1px solid var(--panel-muted);
+      border-radius: 18px;
+      padding: 18px;
+      background: rgba(15, 23, 42, 0.5);
+      display: grid;
+      gap: 12px;
+    }
+
+    .action-title {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .action-copy {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 44px;
+    }
+
+    .action-meta {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.18s ease, opacity 0.18s ease, border-color 0.18s ease;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      opacity: 0.96;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+    }
+
+    .btn-secondary {
+      background: rgba(148, 163, 184, 0.1);
+      border-color: rgba(148, 163, 184, 0.18);
+    }
+
+    .btn-danger {
+      background: rgba(248, 113, 113, 0.14);
+      border-color: rgba(248, 113, 113, 0.26);
+      color: #fecaca;
+    }
+
+    .inline-note {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .footer-note {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 20px 14px;
+      }
+
+      .hero-card,
+      .access-card,
+      .console-section {
+        padding: 20px;
+      }
+
+      .summary-card {
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="console-shell">
+    <section class="hero-card">
+      <div class="hero-top">
+        <div>
+          <h1 class="hero-title">测试账号控制台</h1>
+          <p class="hero-desc">
+            这是一个严格限定在本地 mock 模式、严格限定在测试账号自身数据范围内的前端测试工具。
+            所有操作都只会作用于当前测试账号，不会执行全局清空，也不会修改其他用户的数据。
+          </p>
+        </div>
+        <div class="badge-row">
+          <span class="badge">Local Mock Only</span>
+          <span class="badge warn">Test Account Only</span>
+          <span class="badge muted">No Global Reset</span>
+        </div>
+      </div>
+      <p class="inline-note">如果你在其他标签页同时打开了个人中心、优惠券或订单页面，执行重置后可能需要刷新那些页签才能看到最新状态。</p>
+    </section>
+
+    <div class="status-banner" id="statusBanner" role="status" aria-live="polite"></div>
+
+    <section class="access-card" id="loginRequiredCard">
+      <h2 class="access-title">需要先登录测试账号</h2>
+      <p class="access-desc">当前没有有效登录会话。这个控制台只允许当前测试账号本人进入，请先登录测试账号后再使用。</p>
+      <div class="button-row">
+        <a class="btn btn-primary" href="auth.html">前往登录</a>
+        <a class="btn btn-secondary" href="index.html">返回首页</a>
+      </div>
+    </section>
+
+    <section class="access-card" id="accessDeniedCard">
+      <h2 class="access-title">当前账号无权使用测试控制台</h2>
+      <p class="access-desc" id="accessDeniedText">此页面只开放给指定测试账号。为了避免误改其他账号数据，当前账号不会显示任何测试工具。</p>
+      <div class="button-row">
+        <a class="btn btn-secondary" href="profile.html">返回个人中心</a>
+        <a class="btn btn-primary" href="auth.html">切换账号</a>
+      </div>
+    </section>
+
+    <main class="console-app" id="consoleApp">
+      <section class="console-section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Test Account Overview</h2>
+            <p class="section-desc">以下信息全部来自共享 mock 数据层的实时读取，不依赖页面内缓存状态。</p>
+          </div>
+          <div class="button-row">
+            <button class="btn btn-secondary" type="button" id="refreshSummaryBtn">刷新状态</button>
+          </div>
+        </div>
+        <div class="summary-grid" id="summaryGrid"></div>
+      </section>
+
+      <section class="console-section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Quick Test Actions</h2>
+            <p class="section-desc">用于快速构造本地前端联调所需的数据，不会触碰其他用户。</p>
+          </div>
+        </div>
+        <div class="action-grid">
+          <article class="action-card">
+            <h3 class="action-title">添加 1 条测试订单</h3>
+            <p class="action-copy">创建一条属于当前测试账号的待支付订单，方便验证订单详情、支付页和订单列表流程。</p>
+            <div class="action-meta">local mock only</div>
+            <button class="btn btn-primary" type="button" data-action="add-order">添加订单</button>
+          </article>
+          <article class="action-card">
+            <h3 class="action-title">添加 1 张测试优惠券</h3>
+            <p class="action-copy">直接发放到当前测试账号名下，方便验证优惠券显示、数量同步和下单使用场景。</p>
+            <div class="action-meta">test user scoped</div>
+            <button class="btn btn-primary" type="button" data-action="add-coupon">添加优惠券</button>
+          </article>
+          <article class="action-card">
+            <h3 class="action-title">恢复默认钱包余额</h3>
+            <p class="action-copy">把当前测试账号的钱包余额恢复到默认 mock 基线，方便重复验证钱包支付流程。</p>
+            <div class="action-meta">requires confirmation</div>
+            <button class="btn btn-secondary" type="button" data-action="restore-wallet">恢复余额</button>
+          </article>
+          <article class="action-card">
+            <h3 class="action-title">设置默认测试支付密码</h3>
+            <p class="action-copy">将当前测试账号的钱包支付密码设置为固定测试值，便于快速验证余额支付和密码校验流程。</p>
+            <div class="action-meta">default: 未设置</div>
+            <button class="btn btn-secondary" type="button" data-action="set-default-payment-password">设置默认密码</button>
+          </article>
+          <article class="action-card">
+            <h3 class="action-title">重置支付密码为未设置</h3>
+            <p class="action-copy">清空当前测试账号的钱包支付密码，用于验证首次设置流程和未设置拦截逻辑。</p>
+            <div class="action-meta">requires confirmation</div>
+            <button class="btn btn-secondary" type="button" data-action="reset-payment-password">重置为未设置</button>
+          </article>
+        </div>
+      </section>
+
+      <section class="console-section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Selective Reset Tools</h2>
+            <p class="section-desc">所有重置都严格限定在当前测试账号自己的 userId 范围内，不会清空全站数据。</p>
+          </div>
+        </div>
+        <div class="action-grid">
+          <article class="action-card">
+            <h3 class="action-title">重置当前测试账号订单</h3>
+            <p class="action-copy">只清除当前测试账号自己的订单数据，其他用户订单保持不变。</p>
+            <div class="action-meta">current user only</div>
+            <button class="btn btn-danger" type="button" data-action="reset-orders">重置订单</button>
+          </article>
+          <article class="action-card">
+            <h3 class="action-title">重置当前测试账号优惠券</h3>
+            <p class="action-copy">只移除当前测试账号名下的优惠券，不影响全局券池和其他用户已领取数据。</p>
+            <div class="action-meta">current user only</div>
+            <button class="btn btn-danger" type="button" data-action="reset-coupons">重置优惠券</button>
+          </article>
+          <article class="action-card">
+            <h3 class="action-title">重置当前测试账号钱包</h3>
+            <p class="action-copy">只恢复当前测试账号的钱包数据到默认基线，不会清空其他用户钱包。</p>
+            <div class="action-meta">current user only</div>
+            <button class="btn btn-danger" type="button" data-action="reset-wallet">重置钱包</button>
+          </article>
+          <article class="action-card">
+            <h3 class="action-title">重置当前测试账号支付密码</h3>
+            <p class="action-copy">只清空当前测试账号的钱包支付密码，方便重新走“首次设置支付密码”流程。</p>
+            <div class="action-meta">current user only</div>
+            <button class="btn btn-danger" type="button" data-action="reset-payment-password">重置支付密码</button>
+          </article>
+        </div>
+      </section>
+
+      <section class="console-section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Restore Test Baseline</h2>
+            <p class="section-desc">一键恢复当前测试账号到可重复验证的本地基线状态，不删除账号本身，不影响其他用户。</p>
+          </div>
+        </div>
+        <div class="action-card">
+          <h3 class="action-title">恢复当前测试账号基线</h3>
+          <p class="action-copy">会重置当前测试账号的订单、优惠券、钱包余额和支付密码，让这个账号回到干净、可重复的 mock 测试状态。</p>
+          <div class="button-row">
+            <button class="btn btn-primary" type="button" data-action="restore-baseline">恢复测试基线</button>
+          </div>
+        </div>
+      </section>
+
+      <p class="footer-note">本页不是后台系统，也不是多用户管理台。它只是一个只对测试账号开放的本地 mock 测试工具。</p>
+    </main>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+    let currentTestUserId = null;
+
+    const ACTION_CONFIG = {
+      'add-order': {
+        method: 'addTestOrderForUser'
+      },
+      'add-coupon': {
+        method: 'addTestCouponForUser'
+      },
+      'restore-wallet': {
+        method: 'restoreDefaultWalletBalance',
+        confirm: '确定要把当前测试账号的钱包余额恢复到默认基线吗？'
+      },
+      'set-default-payment-password': {
+        method: 'setDefaultMockPaymentPassword',
+        confirm: '确定要把当前测试账号的钱包支付密码设置为默认值（未设置）吗？'
+      },
+      'reset-payment-password': {
+        method: 'resetCurrentUserPaymentPassword',
+        confirm: '确定要将当前测试账号的钱包支付密码重置为“未设置”吗？'
+      },
+      'reset-orders': {
+        method: 'resetCurrentUserOrders',
+        confirm: '确定要清空当前测试账号自己的订单数据吗？'
+      },
+      'reset-coupons': {
+        method: 'resetCurrentUserCoupons',
+        confirm: '确定要清空当前测试账号自己的优惠券数据吗？'
+      },
+      'reset-wallet': {
+        method: 'resetCurrentUserWallet',
+        confirm: '确定要重置当前测试账号自己的钱包数据吗？'
+      },
+      'restore-baseline': {
+        method: 'restoreCurrentUserBaseline',
+        confirm: '确定要恢复当前测试账号的本地测试基线吗？这会重置该账号自己的订单、优惠券、钱包和支付密码。'
+      }
+    };
+
+    function showStatus(message, type = 'info') {
+      const banner = document.getElementById('statusBanner');
+      banner.textContent = message;
+      banner.className = `status-banner show ${type}`;
+    }
+
+    function hideStatus() {
+      const banner = document.getElementById('statusBanner');
+      banner.textContent = '';
+      banner.className = 'status-banner';
+    }
+
+    function setAccessMode(mode, currentUser = null) {
+      document.getElementById('loginRequiredCard').classList.toggle('show', mode === 'login-required');
+      document.getElementById('accessDeniedCard').classList.toggle('show', mode === 'denied');
+      document.getElementById('consoleApp').classList.toggle('show', mode === 'console');
+
+      if (mode === 'denied' && currentUser) {
+        const phone = currentUser.phone || '未绑定手机号';
+        const userName = currentUser.username || currentUser.nickname || '未知账号';
+        document.getElementById('accessDeniedText').textContent = `当前登录账号 ${userName}（${phone}）不是指定测试账号，因此不会显示任何本地测试工具。`;
+      }
+    }
+
+    function renderSummary(summary) {
+      const summaryGrid = document.getElementById('summaryGrid');
+      const cards = [
+        {
+          label: 'User ID',
+          value: summary.userId,
+          subtext: '当前测试账号唯一标识'
+        },
+        {
+          label: '手机号',
+          value: summary.phone || '未绑定',
+          subtext: summary.username
+        },
+        {
+          label: '钱包余额',
+          value: `¥${summary.walletBalance.toFixed(2)}`,
+          subtext: '当前钱包可用余额'
+        },
+        {
+          label: '订单数',
+          value: String(summary.orderCount),
+          subtext: '当前测试账号名下订单'
+        },
+        {
+          label: '优惠券数',
+          value: String(summary.ownedCouponCount),
+          subtext: '当前测试账号已拥有优惠券'
+        },
+        {
+          label: '支付密码',
+          value: summary.hasPaymentPassword ? '已设置' : '未设置',
+          subtext: summary.hasPaymentPassword ? '可直接验证修改流程' : '可测试首次设置流程'
+        },
+        {
+          label: '本地登录状态',
+          value: summary.loginStatus.local ? '已登录' : '未登录',
+          subtext: 'localStorage 会话'
+        },
+        {
+          label: '会话状态',
+          value: summary.loginStatus.session ? '已激活' : '未激活',
+          subtext: 'sessionStorage 会话'
+        }
+      ];
+
+      summaryGrid.innerHTML = cards.map(card => `
+        <article class="summary-card">
+          <div class="summary-label">${card.label}</div>
+          <div class="summary-value">${card.value}</div>
+          <div class="summary-subtext">${card.subtext}</div>
+        </article>
+      `).join('');
+    }
+
+    function refreshConsoleState() {
+      const currentUser = dataManager.getCurrentLoggedInUser ? dataManager.getCurrentLoggedInUser() : null;
+
+      if (!currentUser) {
+        currentTestUserId = null;
+        setAccessMode('login-required');
+        return;
+      }
+
+      if (!dataManager.isTestAccountUser || !dataManager.isTestAccountUser(currentUser)) {
+        currentTestUserId = null;
+        setAccessMode('denied', currentUser);
+        return;
+      }
+
+      currentTestUserId = currentUser.id;
+      const summary = dataManager.getTestUserSummary(currentTestUserId);
+      setAccessMode('console');
+      renderSummary(summary);
+    }
+
+    function performAction(actionName) {
+      const action = ACTION_CONFIG[actionName];
+      if (!action || !currentTestUserId) {
+        showStatus('当前没有可执行的测试账号操作。', 'error');
+        return;
+      }
+
+      if (action.confirm && !window.confirm(action.confirm)) {
+        return;
+      }
+
+      hideStatus();
+
+      try {
+        const result = dataManager[action.method](currentTestUserId);
+        refreshConsoleState();
+        showStatus(result?.message || '操作已完成。', 'success');
+      } catch (error) {
+        showStatus(error?.message || '操作失败，请稍后重试。', 'error');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('[data-action]').forEach(button => {
+        button.addEventListener('click', () => performAction(button.dataset.action));
+      });
+
+      document.getElementById('refreshSummaryBtn').addEventListener('click', () => {
+        refreshConsoleState();
+        showStatus('测试账号状态已刷新。', 'info');
+      });
+
+      refreshConsoleState();
+    });
+  </script>
+</body>
+</html>

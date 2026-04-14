@@ -1,0 +1,659 @@
+<!--
+  文件名: auth.html
+  页面名称: 登录/注册
+  功能说明: 用户登录和注册页面，支持手机号登录、账号注册、忘记密码
+  登录后跳转到首页或之前访问的页面
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 / 注册 - 织麦电竞</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="auth-page">
+
+<!-- 返回登录按钮，默认隐藏，在注册/忘记密码页面显示 -->
+<a href="#" class="auth-back" id="backToLoginBtn" title="返回登录" onclick="backToLogin(); return false;" style="display: none;">
+  <i class="fa fa-arrow-left"></i>
+</a>
+
+<!-- 顶部居中 Logo -->
+<div class="auth-header">
+  <a href="index.html" class="logo-large" title="返回首页">
+    <span class="logo-icon">⚡</span>
+    <span class="logo-text">织麦<em>电竞</em></span>
+  </a>
+  <h2>三角洲行动专业服务平台</h2>
+  <p>安全 · 专业 · 高效</p>
+</div>
+
+<div class="auth-container">
+
+  <!-- 右侧表单区 -->
+  <div class="auth-form-section">
+    <div class="auth-form-container">
+      <!-- 标签切换，当前隐藏 -->
+      <div class="auth-tabs single-tab" style="display: none;">
+        <button class="auth-tab active" data-tab="login"><span>登录</span></button>
+      </div>
+
+      <!-- 登录表单 -->
+      <form class="auth-form" id="loginForm">
+        <h3>欢迎回来</h3>
+        <p class="form-subtitle">登录您的织麦电竞账号（演示环境，请勿使用真实密码）</p>
+
+        <div class="form-group">
+          <label><i class="fa fa-mobile-alt"></i> 手机号</label>
+          <input type="tel" id="loginPhone" placeholder="请输入手机号" maxlength="11">
+        </div>
+
+        <div class="form-group">
+          <label><i class="fa fa-lock"></i> 密码</label>
+          <input type="password" id="loginPassword" placeholder="请输入密码">
+        </div>
+
+        <div class="form-options">
+          <a href="#" class="forgot-link" onclick="showForgotPassword()">忘记密码？</a>
+          <a href="#" class="register-link" onclick="switchToRegister()">注册账号</a>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">
+          <i class="fa fa-sign-in-alt"></i> 立即登录
+        </button>
+
+        <div class="social-login" data-social-login-state="reserved" aria-label="更多登录方式预留区域">
+          <p class="form-subtitle" style="margin: 0;">更多登录方式预留中</p>
+          <div class="social-login-buttons" hidden aria-hidden="true">
+            <button type="button" class="social-btn wechat" onclick="socialLogin('wechat')" title="微信登录" tabindex="-1">
+              <i class="fa-brands fa-weixin"></i>
+            </button>
+            <button type="button" class="social-btn qq" onclick="socialLogin('qq')" title="QQ登录" tabindex="-1">
+              <i class="fa-brands fa-qq"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="brand-features-bottom">
+          <div class="feature-item">
+            <i class="fa fa-shield-alt"></i>
+            <span>账号安全保障</span>
+          </div>
+          <div class="feature-item">
+            <i class="fa fa-bolt"></i>
+            <span>极速响应服务</span>
+          </div>
+          <div class="feature-item">
+            <i class="fa fa-headset"></i>
+            <span>7×24小时客服</span>
+          </div>
+        </div>
+      </form>
+
+      <!-- 注册表单 -->
+      <form class="auth-form" id="registerForm" style="display: none;">
+        <h3>创建账号</h3>
+        <p class="form-subtitle">注册成为织麦电竞会员（演示环境，数据仅保存在当前浏览器）</p>
+
+        <div class="form-group">
+          <label><i class="fa fa-mobile-alt"></i> 手机号</label>
+          <input type="tel" id="regPhone" placeholder="请输入手机号" maxlength="11">
+        </div>
+
+        <div class="form-group">
+          <label><i class="fa fa-user"></i> 用户名</label>
+          <input type="text" id="regUsername" placeholder="设置用户名（2-16位）">
+        </div>
+
+        <div class="form-group">
+          <label><i class="fa fa-lock"></i> 密码</label>
+          <input type="password" id="regPassword" placeholder="设置密码（6-20位）">
+        </div>
+
+        <div class="form-group">
+          <label><i class="fa fa-lock"></i> 确认密码</label>
+          <input type="password" id="regConfirmPassword" placeholder="再次输入密码">
+        </div>
+
+        <div class="form-group">
+          <label><i class="fa fa-shield-alt"></i> 验证码</label>
+          <div class="input-group verify-group-inline">
+            <input type="text" id="regCode" placeholder="请输入验证码" maxlength="6">
+            <button type="button" class="btn-verify" id="sendCodeBtn" onclick="sendVerifyCode()">
+              获取验证码
+            </button>
+          </div>
+        </div>
+
+        <label class="checkbox-label terms">
+          <input type="checkbox" id="agreeTerms">
+          <span>我已阅读并同意 <a href="#">用户协议</a> 和 <a href="#">隐私政策</a></span>
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-full">
+          <i class="fa fa-user-plus"></i> 立即注册
+        </button>
+      </form>
+
+      <!-- 忘记密码表单 -->
+      <form class="auth-form" id="forgotForm" style="display: none;">
+        <h3>找回密码</h3>
+        <p class="form-subtitle">演示环境不提供短信验证，请勿填写真实敏感信息</p>
+
+        <div class="form-group">
+          <label><i class="fa fa-mobile-alt"></i> 手机号</label>
+          <input type="tel" id="forgotPhone" placeholder="请输入手机号" maxlength="11">
+        </div>
+
+        <div class="form-group">
+          <label><i class="fa fa-shield-alt"></i> 验证码</label>
+          <div class="input-group verify-group-inline">
+            <input type="text" id="forgotCode" placeholder="请输入验证码" maxlength="6">
+            <button type="button" class="btn-verify" onclick="sendForgotCode()">
+              获取验证码
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label><i class="fa fa-lock"></i> 新密码</label>
+          <input type="password" id="forgotPassword" placeholder="设置新密码">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">
+          <i class="fa fa-key"></i> 重置密码
+        </button>
+
+        <button type="button" class="btn btn-text btn-full" onclick="backToLogin()">
+          <i class="fa fa-arrow-left"></i> 返回登录
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Toast 提示 -->
+<div class="toast" id="toast"></div>
+
+<script>
+window.USE_LOCAL_MOCK = true;
+
+function initUsers() {
+  if (!localStorage.getItem("zhimai_users")) {
+    localStorage.setItem("zhimai_users", JSON.stringify([]));
+  }
+}
+
+function getLocalUsers() {
+  return JSON.parse(localStorage.getItem("zhimai_users") || "[]");
+}
+
+function saveLocalUsers(users) {
+  localStorage.setItem("zhimai_users", JSON.stringify(users));
+}
+
+function createSecureRandomHex(bytes = 16) {
+  if (typeof window !== "undefined" && window.crypto && typeof window.crypto.getRandomValues === "function") {
+    const randomBytes = new Uint8Array(Math.max(1, Number(bytes) || 16));
+    window.crypto.getRandomValues(randomBytes);
+    return Array.from(randomBytes, (item) => item.toString(16).padStart(2, "0")).join("");
+  }
+
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+}
+
+function createPasswordSalt() {
+  return createSecureRandomHex(16);
+}
+
+function derivePasswordHashLegacy(password, salt) {
+  const text = `${String(password || "")}::${String(salt || "")}`;
+  let hash = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+  }
+  return (`00000000${(hash >>> 0).toString(16)}`).slice(-8);
+}
+
+function isLegacyPasswordHash(hash) {
+  return /^[0-9a-f]{8}$/i.test(String(hash || ""));
+}
+
+function derivePasswordHash(password, salt) {
+  const text = `${String(password || "")}::${String(salt || "")}`;
+  let h1 = 0xdeadbeef ^ text.length;
+  let h2 = 0x41c6ce57 ^ text.length;
+  let h3 = 0xc0decafe ^ text.length;
+  let h4 = 0x9e3779b9 ^ text.length;
+
+  for (let i = 0; i < text.length; i++) {
+    const code = text.charCodeAt(i);
+    h1 = Math.imul(h1 ^ code, 2654435761);
+    h2 = Math.imul(h2 ^ code, 1597334677);
+    h3 = Math.imul(h3 ^ code, 2246822507);
+    h4 = Math.imul(h4 ^ code, 3266489909);
+  }
+
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h3 ^ (h3 >>> 13), 3266489909);
+  h3 = Math.imul(h3 ^ (h3 >>> 16), 2246822507) ^ Math.imul(h4 ^ (h4 >>> 13), 3266489909);
+  h4 = Math.imul(h4 ^ (h4 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+
+  return [h1, h2, h3, h4]
+    .map((item) => (`00000000${(item >>> 0).toString(16)}`).slice(-8))
+    .join("");
+}
+
+function buildPasswordCredentials(password) {
+  const salt = createPasswordSalt();
+  return {
+    passwordHash: derivePasswordHash(password, salt),
+    passwordSalt: salt
+  };
+}
+
+function verifyPasswordCredentials(user, password) {
+  if (user && user.passwordHash && user.passwordSalt) {
+    const currentHash = String(user.passwordHash || "");
+    const normalizedSalt = String(user.passwordSalt || "");
+    const nextHash = derivePasswordHash(password, normalizedSalt);
+    if (nextHash === currentHash) return true;
+    if (isLegacyPasswordHash(currentHash)) {
+      return derivePasswordHashLegacy(password, normalizedSalt) === currentHash;
+    }
+    return false;
+  }
+  return String(user?.password || "") === String(password || "");
+}
+
+function upgradeLegacyPasswordRecord(user, password) {
+  if (!user) return user;
+  const hasHashRecord = Boolean(user.passwordHash && user.passwordSalt);
+  const needUpgrade = !hasHashRecord || isLegacyPasswordHash(user.passwordHash);
+  if (!needUpgrade) return user;
+  const credentials = buildPasswordCredentials(password);
+  return {
+    ...user,
+    ...credentials,
+    password: ""
+  };
+}
+
+function createSessionToken(prefix = "token") {
+  const normalizedPrefix = String(prefix || "token").replace(/[^a-z0-9_-]/gi, "").toLowerCase() || "token";
+
+  if (typeof window !== "undefined" && window.crypto) {
+    if (typeof window.crypto.randomUUID === "function") {
+      return `${normalizedPrefix}_${window.crypto.randomUUID()}`;
+    }
+    if (typeof window.crypto.getRandomValues === "function") {
+      const bytes = new Uint8Array(16);
+      window.crypto.getRandomValues(bytes);
+      const tokenBody = Array.from(bytes, (item) => item.toString(16).padStart(2, "0")).join("");
+      return `${normalizedPrefix}_${tokenBody}`;
+    }
+  }
+
+  return `${normalizedPrefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
+}
+
+function generateUniqueUserId(users) {
+  const existing = new Set((users || []).map((item) => String(item.id || "")));
+  let nextId = "";
+  do {
+    const randomDigits = Math.floor(Math.random() * 10000000).toString().padStart(7, "0");
+    nextId = `ZM${randomDigits}`;
+  } while (existing.has(nextId));
+  return nextId;
+}
+
+function getWalletStore() {
+  return JSON.parse(localStorage.getItem("zhimai_wallets") || "{}");
+}
+
+function saveWalletStore(wallets) {
+  localStorage.setItem("zhimai_wallets", JSON.stringify(wallets));
+}
+
+function ensureLocalWallet(userId, fallbackBalance = 0) {
+  const wallets = getWalletStore();
+
+  if (!wallets[userId]) {
+    wallets[userId] = {
+      balance: Number(fallbackBalance || 0),
+      transactions: []
+    };
+    saveWalletStore(wallets);
+  }
+
+  return wallets[userId];
+}
+
+function sanitizeLocalUser(user) {
+  const wallet = ensureLocalWallet(user.id, Number(user.balance || 0));
+  return {
+    ...user,
+    balance: Number(wallet.balance || 0)
+  };
+}
+
+function persistLocalLogin(user) {
+  const { password, passwordHash, passwordSalt, ...safeUser } = sanitizeLocalUser(user);
+  const token = createSessionToken("token");
+
+  localStorage.setItem("zhimai_user", JSON.stringify(safeUser));
+  sessionStorage.setItem("zhimai_user", JSON.stringify(safeUser));
+  sessionStorage.setItem("zhimai_token", token);
+
+  return {
+    code: 200,
+    data: {
+      token,
+      user: safeUser
+    }
+  };
+}
+
+const LocalAuthAPI = {
+  async login(phone, password) {
+    const users = getLocalUsers();
+    const user = users.find((item) => item.phone === phone);
+
+    if (!user || !verifyPasswordCredentials(user, password)) {
+      throw new Error("手机号或密码错误");
+    }
+
+    const upgradedUser = upgradeLegacyPasswordRecord(user, password);
+    if (upgradedUser !== user) {
+      const index = users.findIndex((item) => String(item.id) === String(user.id));
+      if (index >= 0) {
+        users[index] = upgradedUser;
+        saveLocalUsers(users);
+      }
+    }
+
+    return persistLocalLogin(upgradedUser);
+  },
+
+  async register(phone, password, username, avatar) {
+    const users = getLocalUsers();
+
+    if (users.some((item) => item.phone === phone)) {
+      throw new Error("该手机号已注册");
+    }
+
+    const credentials = buildPasswordCredentials(password);
+    const newUser = {
+      id: generateUniqueUserId(users),
+      phone,
+      username,
+      nickname: username,
+      avatar: avatar || "",
+      password: "",
+      ...credentials,
+      balance: 0,
+      createdAt: new Date().toISOString()
+    };
+
+    users.unshift(newUser);
+    saveLocalUsers(users);
+    ensureLocalWallet(newUser.id, newUser.balance);
+
+    return {
+      code: 200,
+      data: {
+        user: sanitizeLocalUser(newUser)
+      }
+    };
+  }
+};
+
+function getAuthApi() {
+  return LocalAuthAPI;
+}
+
+function getSafeAuthErrorMessage(error, fallbackMessage) {
+  const rawMessage = typeof error?.message === "string" ? error.message.trim() : "";
+
+  if (!rawMessage) {
+    return fallbackMessage;
+  }
+
+  if (/cloudbase|tcb|wx\.cloud|cloud\./i.test(rawMessage) || /初始化/.test(rawMessage)) {
+    return fallbackMessage;
+  }
+
+  return rawMessage;
+}
+
+function normalizeInternalRedirectTarget(target, fallback = "index.html") {
+  const value = String(target || "").trim();
+  if (!value) return fallback;
+  if (value.includes("\n") || value.includes("\r")) return fallback;
+  if (/^(javascript:|data:|vbscript:)/i.test(value)) return fallback;
+
+  try {
+    const parsed = new URL(value, window.location.origin);
+    if (parsed.origin !== window.location.origin) return fallback;
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return fallback;
+    return `${parsed.pathname}${parsed.search}${parsed.hash}` || fallback;
+  } catch (_) {
+    return fallback;
+  }
+}
+
+document.querySelectorAll(".auth-tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".auth-tab").forEach((item) => item.classList.remove("active"));
+    tab.classList.add("active");
+
+    const tabName = tab.dataset.tab;
+    document.getElementById("loginForm").style.display = tabName === "login" ? "block" : "none";
+    document.getElementById("registerForm").style.display = tabName === "register" ? "block" : "none";
+    document.getElementById("forgotForm").style.display = "none";
+  });
+});
+
+function showForgotPassword() {
+  document.getElementById("loginForm").style.display = "none";
+  document.getElementById("forgotForm").style.display = "block";
+  document.querySelector(".auth-tab span").textContent = "找回密码";
+  document.getElementById("backToLoginBtn").style.display = "flex";
+}
+
+function switchToRegister() {
+  document.getElementById("loginForm").style.display = "none";
+  document.getElementById("registerForm").style.display = "block";
+  document.querySelector(".auth-tab span").textContent = "注册";
+  document.getElementById("backToLoginBtn").style.display = "flex";
+}
+
+function backToLogin() {
+  document.getElementById("forgotForm").style.display = "none";
+  document.getElementById("registerForm").style.display = "none";
+  document.getElementById("loginForm").style.display = "block";
+  document.querySelector(".auth-tab span").textContent = "登录";
+  document.getElementById("backToLoginBtn").style.display = "none";
+}
+
+function togglePassword(inputId) {
+  const input = document.getElementById(inputId);
+  const btn = input.nextElementSibling;
+  const icon = btn.querySelector("i");
+
+  if (input.type === "password") {
+    input.type = "text";
+    icon.classList.remove("fa-eye");
+    icon.classList.add("fa-eye-slash");
+  } else {
+    input.type = "password";
+    icon.classList.remove("fa-eye-slash");
+    icon.classList.add("fa-eye");
+  }
+}
+
+let countdown = 0;
+function sendVerifyCode() {
+  if (countdown > 0) return;
+
+  const phone = document.getElementById("regPhone").value;
+  if (!/^1[3-9]\d{9}$/.test(phone)) {
+    showToast("请输入正确的手机号", "error");
+    return;
+  }
+
+  showToast("功能未开放", "info");
+}
+
+function sendForgotCode() {
+  showToast("功能未开放", "info");
+}
+
+function socialLogin(type) {
+  showToast(`${type === "wechat" ? "微信" : "QQ"}登录入口暂未开放，请先使用手机号登录`, "info");
+}
+
+function showToast(message, type = "success") {
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.className = `toast show ${type}`;
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 3000);
+}
+
+document.getElementById("loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const phone = document.getElementById("loginPhone").value;
+  const password = document.getElementById("loginPassword").value;
+
+  if (!phone || !password) {
+    showToast("请填写完整信息", "error");
+    return;
+  }
+
+  try {
+    const authApi = getAuthApi();
+    const result = await authApi.login(phone, password);
+
+    showToast("登录成功！", "success");
+
+    const redirect = normalizeInternalRedirectTarget(
+      sessionStorage.getItem("redirect_after_login"),
+      "index.html"
+    );
+    sessionStorage.removeItem("redirect_after_login");
+    setTimeout(() => {
+      window.location.href = redirect;
+    }, 1000);
+  } catch (err) {
+    err = new Error(getSafeAuthErrorMessage(err, "登录失败，请检查账号或稍后重试"));
+    showToast(err.message || "登录失败", "error");
+  }
+});
+
+document.getElementById("registerForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const phone = document.getElementById("regPhone").value;
+  const username = document.getElementById("regUsername").value;
+  const password = document.getElementById("regPassword").value;
+  const confirmPassword = document.getElementById("regConfirmPassword").value;
+  const code = document.getElementById("regCode").value;
+  const agreeTerms = document.getElementById("agreeTerms").checked;
+
+  if (!phone || !username || !password || !code) {
+    showToast("请填写完整信息", "error");
+    return;
+  }
+
+  if (!/^1[3-9]\d{9}$/.test(phone)) {
+    showToast("请输入正确的手机号", "error");
+    return;
+  }
+
+  if (username.length < 2 || username.length > 16) {
+    showToast("用户名长度应为2-16位", "error");
+    return;
+  }
+
+  if (password.length < 6 || password.length > 20) {
+    showToast("密码长度应为6-20位", "error");
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    showToast("两次输入的密码不一致", "error");
+    return;
+  }
+
+  showToast("功能未开放", "info");
+  return;
+
+  if (!agreeTerms) {
+    showToast("请阅读并同意用户协议", "error");
+    return;
+  }
+
+  try {
+    const authApi = getAuthApi();
+    await authApi.register(phone, password, username, "");
+    await authApi.login(phone, password);
+
+    showToast("注册成功，欢迎加入织麦电竞！", "success");
+
+    setTimeout(() => {
+      window.location.href = "index.html";
+    }, 1500);
+  } catch (err) {
+    err = new Error(getSafeAuthErrorMessage(err, "注册失败，请稍后重试"));
+    showToast(err.message || "注册失败", "error");
+  }
+});
+
+document.getElementById("forgotForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+
+  const phone = document.getElementById("forgotPhone").value;
+  const code = document.getElementById("forgotCode").value;
+  const newPassword = document.getElementById("forgotPassword").value;
+
+  if (!phone || !code || !newPassword) {
+    showToast("请填写完整信息", "error");
+    return;
+  }
+
+  showToast("功能未开放", "info");
+  return;
+
+  const users = JSON.parse(localStorage.getItem("zhimai_users") || "[]");
+  const index = users.findIndex((user) => user.phone === phone);
+
+  if (index === -1) {
+    showToast("该手机号未注册", "error");
+    return;
+  }
+
+  const credentials = buildPasswordCredentials(newPassword);
+  users[index] = {
+    ...users[index],
+    ...credentials,
+    password: ""
+  };
+  localStorage.setItem("zhimai_users", JSON.stringify(users));
+
+  showToast("新密码已保存，请使用新密码登录", "success");
+  backToLogin();
+});
+
+initUsers();
+</script>
+
+</body>
+</html>

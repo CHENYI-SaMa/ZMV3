@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>促销活动 - 织麦电竞后台</title>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <style>
+    .promo-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .content-wrapper > .page-content {
+      margin-top: 0;
+    }
+
+    .content-wrapper > .page-content > :first-child {
+      margin-top: 0;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .stat-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .stat-icon.blue { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; }
+    .stat-icon.green { background: linear-gradient(135deg, #10b981, #34d399); color: #fff; }
+    .stat-icon.orange { background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #fff; }
+    .stat-icon.red { background: linear-gradient(135deg, #ec4899, #f472b6); color: #fff; }
+
+    .stat-info h3 {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .stat-info p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .promo-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .promo-tab {
+      padding: 10px 24px;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: var(--transition);
+      color: var(--text-secondary);
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+    }
+
+    .promo-tab:hover {
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .promo-tab.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .promo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .promo-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .promo-card:hover {
+      box-shadow: var(--shadow-card);
+    }
+
+    .promo-header {
+      padding: 20px;
+      color: #fff;
+      position: relative;
+    }
+
+    .promo-header.discount { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+    .promo-header.flash { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+    .promo-header.full { background: linear-gradient(135deg, #ec4899, #f472b6); }
+    .promo-header.bundle { background: linear-gradient(135deg, #10b981, #34d399); }
+
+    .promo-type {
+      font-size: 12px;
+      opacity: 0.9;
+      margin-bottom: 8px;
+    }
+
+    .promo-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .promo-time {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    .promo-status {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 4px 12px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 20px;
+      font-size: 12px;
+    }
+
+    .promo-body {
+      padding: 20px;
+    }
+
+    .promo-rules {
+      margin-bottom: 16px;
+    }
+
+    .promo-rule {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .promo-rule:last-child {
+      border-bottom: none;
+    }
+
+    .promo-rule i {
+      color: var(--primary);
+      width: 20px;
+    }
+
+    .promo-stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      padding: 16px;
+      background: rgba(99, 102, 241, 0.05);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+    }
+
+    .promo-stat {
+      text-align: center;
+    }
+
+    .promo-stat-value {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .promo-stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .promo-footer {
+      display: flex;
+      gap: 8px;
+    }
+
+    .promo-footer .btn {
+      flex: 1;
+      padding: 10px;
+      font-size: 13px;
+    }
+
+    .create-promo-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 2px dashed var(--border-color);
+    }
+
+    .create-promo-card:hover {
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.05);
+    }
+
+    .create-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(99, 102, 241, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: var(--primary);
+    }
+
+    .create-promo-card h3 {
+      font-size: 16px;
+      color: var(--text-primary);
+    }
+
+    .create-promo-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    @media (max-width: 1200px) {
+      .promo-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .promo-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .promo-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .promo-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .promo-tabs {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 顶部导航 -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="menu-toggle" id="menuToggle">
+            <i class="fa fa-bars"></i>
+          </button>
+          <h1 class="page-title">促销活动</h1>
+        </div>
+        <div class="header-right">
+          <div class="user-dropdown" id="userDropdown">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin" alt="avatar" class="user-avatar">
+            <div class="header-user-info"><span>管理员</span><span class="header-user-role">超管</span></div>
+            <i class="fa fa-chevron-down" style="font-size: 12px; color: var(--text-muted);"></i>
+            <div class="dropdown-menu" id="dropdownMenu">
+              <a href="#"><i class="fa fa-user"></i> 个人中心</a>
+              <a href="#" id="logoutBtn"><i class="fa fa-sign-out-alt"></i> 退出登录</a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- 页面内容 -->
+      <div class="content-wrapper">
+        <div class="page-content">
+        <!-- 活动统计 -->
+        <div class="promo-stats">
+          <div class="stat-card">
+            <div class="stat-icon blue">
+              <i class="fa fa-bullhorn"></i>
+            </div>
+            <div class="stat-info">
+              <h3>8</h3>
+              <p>进行中活动</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">
+              <i class="fa fa-check-circle"></i>
+            </div>
+            <div class="stat-info">
+              <h3>156</h3>
+              <p>已结束活动</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon orange">
+              <i class="fa fa-clock"></i>
+            </div>
+            <div class="stat-info">
+              <h3>3</h3>
+              <p>待开始活动</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon red">
+              <i class="fa fa-yen-sign"></i>
+            </div>
+            <div class="stat-info">
+              <h3>¥89,234</h3>
+              <p>活动总销售额</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 活动类型标签 -->
+        <div class="promo-tabs">
+          <div class="promo-tab active">全部活动</div>
+          <div class="promo-tab">限时折扣</div>
+          <div class="promo-tab">满减活动</div>
+          <div class="promo-tab">秒杀活动</div>
+          <div class="promo-tab">套餐优惠</div>
+        </div>
+
+        <!-- 活动列表 -->
+        <div class="promo-grid">
+          <!-- 活动卡片1 -->
+          <div class="promo-card">
+            <div class="promo-header discount">
+              <div class="promo-type">限时折扣</div>
+              <div class="promo-title">春季大促 全场8折</div>
+              <div class="promo-time"><i class="fa fa-clock"></i> 2024.03.01 - 2024.03.31</div>
+              <div class="promo-status">进行中</div>
+            </div>
+            <div class="promo-body">
+              <div class="promo-rules">
+                <div class="promo-rule"><i class="fa fa-percent"></i> 全场商品8折优惠</div>
+                <div class="promo-rule"><i class="fa fa-box"></i> 适用商品：156件</div>
+                <div class="promo-rule"><i class="fa fa-user"></i> 参与用户：不限</div>
+              </div>
+              <div class="promo-stats-row">
+                <div class="promo-stat">
+                  <div class="promo-stat-value">1,234</div>
+                  <div class="promo-stat-label">订单数</div>
+                </div>
+                <div class="promo-stat">
+                  <div class="promo-stat-value">¥45,680</div>
+                  <div class="promo-stat-label">销售额</div>
+                </div>
+                <div class="promo-stat">
+                  <div class="promo-stat-value">¥11,420</div>
+                  <div class="promo-stat-label">优惠金额</div>
+                </div>
+              </div>
+              <div class="promo-footer">
+                <button class="btn btn-secondary" onclick="viewPromotionDetail(1)">查看详情</button>
+                <button class="btn btn-primary" onclick="editPromotion(1)">编辑活动</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 活动卡片2 -->
+          <div class="promo-card">
+            <div class="promo-header full">
+              <div class="promo-type">满减活动</div>
+              <div class="promo-title">满减优惠 多买多省</div>
+              <div class="promo-time"><i class="fa fa-clock"></i> 2024.03.15 - 2024.04.15</div>
+              <div class="promo-status">进行中</div>
+            </div>
+            <div class="promo-body">
+              <div class="promo-rules">
+                <div class="promo-rule"><i class="fa fa-tag"></i> 满100减20</div>
+                <div class="promo-rule"><i class="fa fa-tag"></i> 满300减80</div>
+                <div class="promo-rule"><i class="fa fa-tag"></i> 满500减150</div>
+              </div>
+              <div class="promo-stats-row">
+                <div class="promo-stat">
+                  <div class="promo-stat-value">856</div>
+                  <div class="promo-stat-label">订单数</div>
+                </div>
+                <div class="promo-stat">
+                  <div class="promo-stat-value">¥32,450</div>
+                  <div class="promo-stat-label">销售额</div>
+                </div>
+                <div class="promo-stat">
+                  <div class="promo-stat-value">¥6,890</div>
+                  <div class="promo-stat-label">优惠金额</div>
+                </div>
+              </div>
+              <div class="promo-footer">
+                <button class="btn btn-secondary" onclick="viewPromotionDetail(2)">查看详情</button>
+                <button class="btn btn-primary" onclick="editPromotion(2)">编辑活动</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 活动卡片3 -->
+          <div class="promo-card">
+            <div class="promo-header flash">
+              <div class="promo-type">秒杀活动</div>
+              <div class="promo-title">周末秒杀 限时抢购</div>
+              <div class="promo-time"><i class="fa fa-clock"></i> 每周六 10:00-12:00</div>
+              <div class="promo-status">进行中</div>
+            </div>
+            <div class="promo-body">
+              <div class="promo-rules">
+                <div class="promo-rule"><i class="fa fa-bolt"></i> 限量100份</div>
+                <div class="promo-rule"><i class="fa fa-percent"></i> 低至5折</div>
+                <div class="promo-rule"><i class="fa fa-box"></i> 适用商品：20件</div>
+              </div>
+              <div class="promo-stats-row">
+                <div class="promo-stat">
+                  <div class="promo-stat-value">320</div>
+                  <div class="promo-stat-label">订单数</div>
+                </div>
+                <div class="promo-stat">
+                  <div class="promo-stat-value">¥11,104</div>
+                  <div class="promo-stat-label">销售额</div>
+                </div>
+                <div class="promo-stat">
+                  <div class="promo-stat-value">¥11,104</div>
+                  <div class="promo-stat-label">优惠金额</div>
+                </div>
+              </div>
+              <div class="promo-footer">
+                <button class="btn btn-secondary" onclick="viewPromotionDetail(3)">查看详情</button>
+                <button class="btn btn-primary" onclick="editPromotion(3)">编辑活动</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 活动卡片4 -->
+          <div class="promo-card">
+            <div class="promo-header bundle">
+              <div class="promo-type">套餐优惠</div>
+              <div class="promo-title">代练套餐 超值组合</div>
+              <div class="promo-time"><i class="fa fa-clock"></i> 长期有效</div>
+              <div class="promo-status">进行中</div>
+            </div>
+            <div class="promo-body">
+              <div class="promo-rules">
+                <div class="promo-rule"><i class="fa fa-boxes"></i> 段位代练+陪玩套餐</div>
+                <div class="promo-rule"><i class="fa fa-tag"></i> 套餐价立省30%</div>
+                <div class="promo-rule"><i class="fa fa-user"></i> 新用户专享</div>
+              </div>
+              <div class="promo-stats-row">
+                <div class="promo-stat">
+                  <div class="promo-stat-value">156</div>
+                  <div class="promo-stat-label">订单数</div>
+                </div>
+                <div class="promo-stat">
+                  <div class="promo-stat-value">¥18,720</div>
+                  <div class="promo-stat-label">销售额</div>
+                </div>
+                <div class="promo-stat">
+                  <div class="promo-stat-value">¥5,616</div>
+                  <div class="promo-stat-label">优惠金额</div>
+                </div>
+              </div>
+              <div class="promo-footer">
+                <button class="btn btn-secondary" onclick="viewPromotionDetail(4)">查看详情</button>
+                <button class="btn btn-primary" onclick="editPromotion(4)">编辑活动</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 创建新活动 -->
+          <div class="create-promo-card" onclick="createPromotion()">
+            <div class="create-icon">
+              <i class="fa fa-plus"></i>
+            </div>
+            <h3>创建新活动</h3>
+            <p>点击创建限时折扣、满减、秒杀等促销活动</p>
+          </div>
+        </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    // 检查登录状态
+    if (localStorage.getItem('zhimai_admin_logged_in') !== 'true') {
+      window.location.href = 'login.html';
+    }
+
+    // 退出登录
+    document.getElementById('logoutBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      localStorage.removeItem('zhimai_admin_logged_in');
+      localStorage.removeItem('zhimai_admin_user');
+      window.location.href = 'login.html';
+    });
+
+    // 下拉菜单
+    document.getElementById('userDropdown').addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.getElementById('dropdownMenu').classList.toggle('show');
+    });
+
+    document.addEventListener('click', function() {
+      document.getElementById('dropdownMenu').classList.remove('show');
+    });
+
+    // 活动标签切换
+    document.querySelectorAll('.promo-tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.promo-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // 侧边栏切换
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    if (sidebarToggle) {
+      sidebarToggle.addEventListener('click', function() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.querySelector('.main-content');
+        sidebar.classList.toggle('collapsed');
+        if (mainContent) {
+          mainContent.classList.toggle('expanded');
+        }
+        // 保存状态
+        localStorage.setItem('zhimai_sidebar_collapsed', sidebar.classList.contains('collapsed'));
+      });
+    }
+
+    document.getElementById('menuToggle').addEventListener('click', function() {
+      document.getElementById('sidebar').classList.toggle('show');
+    });
+
+    // 子菜单切换
+    document.querySelectorAll('.nav-item.has-submenu > .nav-link').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const parent = this.parentElement;
+        parent.classList.toggle('open');
+      });
+    });
+
+    // 恢复侧边栏状态
+    function restoreSidebarState() {
+      const isCollapsed = localStorage.getItem('zhimai_sidebar_collapsed') === 'true';
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.querySelector('.main-content');
+      if (isCollapsed && sidebar) {
+        sidebar.classList.add('collapsed');
+        if (mainContent) {
+          mainContent.classList.add('expanded');
+        }
+      }
+    }
+    restoreSidebarState();
+
+    // 查看活动详情
+    function viewPromotionDetail(promoId) {
+      const promotions = [
+        { id: 1, name: '春季大促 全场8折', type: '限时折扣', time: '2024.03.01 - 2024.03.31', status: '进行中', 
+          rules: ['全场商品8折优惠', '适用商品：156件', '参与用户：不限'],
+          stats: { orders: 1234, sales: 45680, discount: 11420 }},
+        { id: 2, name: '满减优惠 多买多省', type: '满减活动', time: '2024.03.15 - 2024.04.15', status: '进行中',
+          rules: ['满100减20', '满300减80', '满500减150'],
+          stats: { orders: 856, sales: 32450, discount: 6890 }},
+        { id: 3, name: '周末秒杀 限时抢购', type: '秒杀活动', time: '每周六 10:00-12:00', status: '进行中',
+          rules: ['限量100份', '低至5折', '适用商品：20件'],
+          stats: { orders: 320, sales: 11104, discount: 11104 }},
+        { id: 4, name: '代练套餐 超值组合', type: '套餐优惠', time: '长期有效', status: '进行中',
+          rules: ['段位代练+陪玩套餐', '套餐价立省30%', '新用户专享'],
+          stats: { orders: 156, sales: 18720, discount: 5616 }}
+      ];
+      
+      const promo = promotions.find(p => p.id === promoId);
+      if (!promo) return;
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal active';
+      modal.innerHTML = `
+        <div class="modal-overlay" onclick="this.parentElement.remove()"></div>
+        <div class="modal-content" style="max-width: 600px;">
+          <div class="modal-header">
+            <h3 class="modal-title">活动详情</h3>
+            <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div style="background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; padding: 24px; border-radius: 12px; margin-bottom: 20px;">
+              <div style="font-size: 12px; opacity: 0.9; margin-bottom: 8px;">${promo.type}</div>
+              <div style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">${promo.name}</div>
+              <div style="font-size: 13px; opacity: 0.9;"><i class="fa fa-clock"></i> ${promo.time}</div>
+            </div>
+            <div style="margin-bottom: 20px;">
+              <h4 style="margin-bottom: 12px; font-size: 14px; color: var(--text-secondary);">活动规则</h4>
+              ${promo.rules.map(r => `<div style="padding: 10px 0; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);"><i class="fa fa-check" style="color: var(--success); margin-right: 8px;"></i>${r}</div>`).join('')}
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; background: rgba(99,102,241,0.05); padding: 20px; border-radius: 8px;">
+              <div style="text-align: center;">
+                <div style="font-size: 24px; font-weight: 600; color: var(--primary);">${promo.stats.orders}</div>
+                <div style="font-size: 12px; color: var(--text-muted);">订单数</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 24px; font-weight: 600; color: var(--success);">¥${promo.stats.sales.toLocaleString()}</div>
+                <div style="font-size: 12px; color: var(--text-muted);">销售额</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 24px; font-weight: 600; color: var(--warning);">¥${promo.stats.discount.toLocaleString()}</div>
+                <div style="font-size: 12px; color: var(--text-muted);">优惠金额</div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline" onclick="this.closest('.modal').remove()">关闭</button>
+            <button class="btn btn-primary" onclick="this.closest('.modal').remove(); editPromotion(${promo.id})">编辑活动</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    // 编辑活动
+    function editPromotion(promoId) {
+      const modal = document.createElement('div');
+      modal.className = 'modal active';
+      modal.innerHTML = `
+        <div class="modal-overlay" onclick="this.parentElement.remove()"></div>
+        <div class="modal-content" style="max-width: 500px;">
+          <div class="modal-header">
+            <h3 class="modal-title">编辑活动</h3>
+            <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">活动名称</label>
+              <input type="text" class="form-input" value="春季大促 全场8折" id="editPromoName">
+            </div>
+            <div class="form-group">
+              <label class="form-label">活动类型</label>
+              <select class="form-select" id="editPromoType">
+                <option value="discount">限时折扣</option>
+                <option value="full">满减活动</option>
+                <option value="flash">秒杀活动</option>
+                <option value="bundle">套餐优惠</option>
+              </select>
+            </div>
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div class="form-group">
+                <label class="form-label">开始时间</label>
+                <input type="datetime-local" class="form-input" id="editPromoStart">
+              </div>
+              <div class="form-group">
+                <label class="form-label">结束时间</label>
+                <input type="datetime-local" class="form-input" id="editPromoEnd">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">活动规则</label>
+              <textarea class="form-input" rows="3" id="editPromoRules">全场商品8折优惠</textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline" onclick="this.closest('.modal').remove()">取消</button>
+            <button class="btn btn-primary" onclick="savePromotion()">保存</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    function savePromotion() {
+      showToast('活动已保存', 'success');
+      document.querySelector('.modal.active')?.remove();
+    }
+
+    // 创建新活动
+    function createPromotion() {
+      editPromotion(null);
+      document.querySelector('.modal-title').textContent = '创建新活动';
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.style.cssText = `
+        position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 8px;
+        color: #fff; font-size: 14px; z-index: 9999; animation: slideIn 0.3s ease;
+        ${type === 'success' ? 'background: #10b981;' : type === 'error' ? 'background: #ef4444;' : 'background: var(--primary);'}
+      `;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+  </script>
+  <script>
+    (function renderFuturePromotionsPlaceholder() {
+      const wrapper = document.querySelector('.content-wrapper');
+      if (!wrapper) return;
+      const title = '优惠活动系统暂未开发';
+      const desc = '当前版本保留管理入口和UI框架，活动数据暂不接入。';
+      const note = '后续活动引擎上线后可在本入口恢复完整配置能力。';
+
+      wrapper.innerHTML = `
+        <div style="padding: 28px;">
+          <div style="max-width: 860px; margin: 0 auto; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; padding: 36px 30px; text-align: center;">
+            <div style="width: 72px; height: 72px; margin: 0 auto 16px; border-radius: 50%; background: rgba(99, 102, 241, 0.14); color: var(--primary-light); display: flex; align-items: center; justify-content: center; font-size: 30px;">
+              <i class="fa fa-tools"></i>
+            </div>
+            <h2 style="margin: 0 0 12px; font-size: 24px; color: var(--text-primary);">${title}</h2>
+            <p style="margin: 0 0 8px; color: var(--text-secondary); line-height: 1.7;">${desc}</p>
+            <p style="margin: 0; color: var(--text-muted); font-size: 13px;">${note}</p>
+          </div>
+        </div>
+      `;
+
+      document.querySelectorAll('.modal').forEach(function(modal) {
+        modal.remove();
+      });
+    })();
+  </script>
+</body>
+</html>

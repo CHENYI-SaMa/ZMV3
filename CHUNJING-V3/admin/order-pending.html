@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>待处理订单 - 织麦电竞后台</title>
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <div class="admin-container">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <header class="top-header">
+        <div class="header-left">
+          <button class="sidebar-toggle" id="sidebarToggle"><i class="fa fa-bars"></i></button>
+          <span class="page-title">待处理订单</span>
+        </div>
+        <div class="header-right">
+          <div class="header-actions">
+            <div class="user-dropdown" id="userDropdown">
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin" alt="avatar" class="user-avatar">
+              <div class="header-user-info"><span class="user-name" id="adminName">管理员</span><span class="header-user-role">超管</span></div>
+              <i class="fa fa-chevron-down" style="font-size:12px;color:var(--text-muted);"></i>
+              <div class="dropdown-menu" id="dropdownMenu">
+                <a href="#"><i class="fa fa-user"></i> 个人中心</a>
+                <div style="border-top:1px solid var(--border-color);margin:8px 0;"></div>
+                <a href="#" id="logoutBtn"><i class="fa fa-sign-out-alt"></i> 退出登录</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="content-wrapper">
+        <div style="background:rgba(250,173,20,0.1);border:1px solid rgba(250,173,20,0.3);border-radius:8px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+          <i class="fa fa-clock" style="color:#f59e0b;font-size:18px;"></i>
+          <div>
+            <strong style="color:#f59e0b;">待处理订单</strong>
+            <span style="color:var(--text-secondary);margin-left:8px;">这些订单已支付，等待安排打手处理</span>
+          </div>
+          <span id="pendingCount" style="margin-left:auto;background:#f59e0b;color:#fff;padding:2px 10px;border-radius:12px;font-weight:600;">0</span>
+        </div>
+
+        <div class="filter-bar">
+          <div class="filter-left">
+            <input type="text" class="filter-input" id="filterSearch" placeholder="搜索订单号、用户">
+            <select class="filter-select" id="filterGame">
+              <option value="">全部游戏</option>
+              <option value="delta">三角洲行动</option>
+              <option value="honor">王者荣耀</option>
+              <option value="lol">英雄联盟</option>
+            </select>
+            <button class="btn btn-primary" onclick="applyFilter()"><i class="fa fa-search"></i> 搜索</button>
+            <button class="btn btn-outline" onclick="resetFilter()"><i class="fa fa-undo"></i> 重置</button>
+          </div>
+          <div class="filter-right">
+            <button class="btn btn-success" onclick="batchProcess()">
+              <i class="fa fa-play"></i> 批量开始处理
+            </button>
+          </div>
+        </div>
+
+        <div class="data-card">
+          <div class="table-header">
+            <span class="table-title">待处理订单列表</span>
+            <div class="table-actions">
+              <label style="display:flex;align-items:center;gap:6px;color:var(--text-secondary);cursor:pointer;">
+                <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"> 全选
+              </label>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th width="40"><input type="checkbox" id="selectAllHeader" onchange="toggleSelectAll(this)"></th>
+                  <th>订单号</th>
+                  <th>用户</th>
+                  <th>商品</th>
+                  <th>金额</th>
+                  <th>支付方式</th>
+                  <th>支付时间</th>
+                  <th width="160">操作</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="pagination"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal" id="assignModal">
+    <div class="modal-overlay" onclick="closeModal('assignModal')"></div>
+    <div class="modal-content" style="max-width:500px;">
+      <div class="modal-header">
+        <h3 class="modal-title">分配打手</h3>
+        <button class="modal-close" onclick="closeModal('assignModal')"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--text-secondary);margin-bottom:16px;">订单号：<strong id="assignOrderId"></strong></p>
+        <div class="form-group">
+          <label class="form-label">选择打手</label>
+          <select class="form-input" id="assignBooster">
+            <option value="">-- 请选择打手 --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">备注</label>
+          <textarea class="form-input" id="assignRemark" rows="3" placeholder="备注信息（可选）"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('assignModal')">取消</button>
+        <button class="btn btn-primary" onclick="confirmAssign()">确认分配并开始处理</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    if (localStorage.getItem('zhimai_admin_logged_in') !== 'true') {
+      window.location.href = 'login.html';
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', e => {
+      e.preventDefault();
+      localStorage.removeItem('zhimai_admin_logged_in');
+      window.location.href = 'login.html';
+    });
+    document.getElementById('userDropdown').addEventListener('click', e => {
+      e.stopPropagation();
+      document.getElementById('dropdownMenu').classList.toggle('show');
+    });
+    document.addEventListener('click', () => document.getElementById('dropdownMenu').classList.remove('show'));
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    });
+
+    const adminInfo = JSON.parse(localStorage.getItem('zhimai_admin_user') || '{}');
+    if (adminInfo.username) document.getElementById('adminName').textContent = adminInfo.username;
+
+    let allOrders = [];
+    let filteredOrders = [];
+    let currentPage = 1;
+    const pageSize = 10;
+    let currentAssignOrderId = null;
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function escapeJsSingleQuote(value) {
+      return String(value ?? '')
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'");
+    }
+
+    function sanitizeImageUrl(value, fallback) {
+      const raw = String(value || '').trim();
+      if (!raw) return fallback;
+      if (/^(https?:\/\/|data:image\/|\/|\.{1,2}\/)/i.test(raw)) {
+        return raw;
+      }
+      return fallback;
+    }
+
+    function loadOrders() {
+      const orders = dataManager.getOrders();
+      allOrders = orders.filter(o => o.status === 'paid');
+      document.getElementById('pendingCount').textContent = allOrders.length;
+      applyFilter();
+    }
+
+    function applyFilter() {
+      const search = document.getElementById('filterSearch').value.trim().toLowerCase();
+      const game = document.getElementById('filterGame').value;
+      filteredOrders = allOrders.filter(o => {
+        if (search && !o.id.toLowerCase().includes(search) && !o.username.toLowerCase().includes(search)) return false;
+        if (game && o.game !== game) return false;
+        return true;
+      });
+      currentPage = 1;
+      renderTable();
+    }
+
+    function resetFilter() {
+      document.getElementById('filterSearch').value = '';
+      document.getElementById('filterGame').value = '';
+      applyFilter();
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      const start = (currentPage - 1) * pageSize;
+      const pageData = filteredOrders.slice(start, start + pageSize);
+      const payMap = { wechat: '微信', alipay: '支付宝', balance: '余额' };
+      tbody.textContent = '';
+
+      if (!pageData.length) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 8;
+        td.style.textAlign = 'center';
+        td.style.padding = '48px';
+        td.style.color = 'var(--text-muted)';
+        const icon = document.createElement('i');
+        icon.className = 'fa fa-check-circle';
+        icon.style.cssText = 'font-size:32px;display:block;margin-bottom:8px;color:var(--success);';
+        td.appendChild(icon);
+        td.appendChild(document.createTextNode('暂无待处理订单'));
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        document.getElementById('pagination').textContent = '';
+        return;
+      }
+
+      pageData.forEach((o) => {
+        const tr = document.createElement('tr');
+
+        const tdCheck = document.createElement('td');
+        const rowCheck = document.createElement('input');
+        rowCheck.type = 'checkbox';
+        rowCheck.className = 'row-check';
+        rowCheck.value = String(o.id || '--');
+        tdCheck.appendChild(rowCheck);
+        tr.appendChild(tdCheck);
+
+        const tdOrderId = document.createElement('td');
+        const orderStrong = document.createElement('strong');
+        orderStrong.style.color = '#1890ff';
+        orderStrong.textContent = o.id || '--';
+        tdOrderId.appendChild(orderStrong);
+        tr.appendChild(tdOrderId);
+
+        const tdUser = document.createElement('td');
+        const userDiv = document.createElement('div');
+        userDiv.textContent = o.username || '--';
+        const userSmall = document.createElement('small');
+        userSmall.style.color = 'var(--text-muted)';
+        userSmall.textContent = o.userId || '--';
+        tdUser.appendChild(userDiv);
+        tdUser.appendChild(userSmall);
+        tr.appendChild(tdUser);
+
+        const tdProduct = document.createElement('td');
+        const productWrap = document.createElement('div');
+        productWrap.style.cssText = 'display:flex;align-items:center;gap:8px;';
+        const productImg = document.createElement('img');
+        productImg.src = sanitizeImageUrl(
+          o.productImage,
+          'https://via.placeholder.com/36x28/333/999?text=%E5%95%86%E5%93%81'
+        );
+        productImg.style.cssText = 'width:36px;height:28px;object-fit:cover;border-radius:4px;';
+        const productText = document.createElement('span');
+        const rawProductName = String(o.productName || '--');
+        productText.textContent = rawProductName.length > 18 ? `${rawProductName.substring(0, 18)}...` : rawProductName;
+        productWrap.appendChild(productImg);
+        productWrap.appendChild(productText);
+        tdProduct.appendChild(productWrap);
+        tr.appendChild(tdProduct);
+
+        const tdAmount = document.createElement('td');
+        tdAmount.className = 'price';
+        tdAmount.textContent = `¥${Number(o.totalAmount || 0).toFixed(2)}`;
+        tr.appendChild(tdAmount);
+
+        const tdPay = document.createElement('td');
+        tdPay.textContent = payMap[o.paymentMethod] || '--';
+        tr.appendChild(tdPay);
+
+        const tdTime = document.createElement('td');
+        tdTime.textContent = new Date(o.paidAt || o.createdAt).toLocaleString('zh-CN');
+        tr.appendChild(tdTime);
+
+        const tdActions = document.createElement('td');
+
+        const assignBtn = document.createElement('button');
+        assignBtn.type = 'button';
+        assignBtn.className = 'btn-icon btn-primary';
+        assignBtn.title = '分配打手';
+        assignBtn.addEventListener('click', () => openAssign(o.id));
+        const assignIcon = document.createElement('i');
+        assignIcon.className = 'fa fa-user-plus';
+        assignBtn.appendChild(assignIcon);
+        tdActions.appendChild(assignBtn);
+
+        const startBtn = document.createElement('button');
+        startBtn.type = 'button';
+        startBtn.className = 'btn-icon btn-success';
+        startBtn.title = '直接开始处理';
+        startBtn.addEventListener('click', () => quickStart(o.id));
+        const startIcon = document.createElement('i');
+        startIcon.className = 'fa fa-play';
+        startBtn.appendChild(startIcon);
+        tdActions.appendChild(startBtn);
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.className = 'btn-icon danger';
+        cancelBtn.title = '取消订单';
+        cancelBtn.addEventListener('click', () => cancelOrd(o.id));
+        const cancelIcon = document.createElement('i');
+        cancelIcon.className = 'fa fa-times';
+        cancelBtn.appendChild(cancelIcon);
+        tdActions.appendChild(cancelBtn);
+
+        tr.appendChild(tdActions);
+        tbody.appendChild(tr);
+      });
+
+      renderPagination(filteredOrders.length);
+    }
+
+    function renderPagination(total) {
+      const pages = Math.ceil(total / pageSize);
+      const pagination = document.getElementById('pagination');
+      pagination.textContent = '';
+
+      if (pages <= 1) {
+        return;
+      }
+
+      const totalSpan = document.createElement('span');
+      totalSpan.style.color = 'var(--text-secondary)';
+      totalSpan.textContent = `共 ${total} 条`;
+      pagination.appendChild(totalSpan);
+
+      for (let i = 1; i <= pages; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.type = 'button';
+        pageBtn.className = `page-btn${i === currentPage ? ' active' : ''}`;
+        pageBtn.textContent = String(i);
+        pageBtn.addEventListener('click', () => gotoPage(i));
+        pagination.appendChild(pageBtn);
+      }
+    }
+
+    function gotoPage(p) {
+      currentPage = p;
+      renderTable();
+    }
+
+    function toggleSelectAll(el) {
+      document.querySelectorAll('.row-check').forEach(c => c.checked = el.checked);
+      const header = document.getElementById('selectAllHeader');
+      const main = document.getElementById('selectAll');
+      if (header && header !== el) header.checked = el.checked;
+      if (main && main !== el) main.checked = el.checked;
+    }
+
+    function getSelectedIds() {
+      return [...document.querySelectorAll('.row-check:checked')].map(c => c.value);
+    }
+
+    function openAssign(orderId) {
+      currentAssignOrderId = orderId;
+      document.getElementById('assignOrderId').textContent = orderId;
+      const sel = document.getElementById('assignBooster');
+      const boosters = dataManager.getBoosters ? dataManager.getBoosters() : [];
+
+      sel.textContent = '';
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = '-- 请选择打手 --';
+      sel.appendChild(placeholder);
+
+      boosters
+        .filter(b => b && b.status === 1)
+        .forEach((b) => {
+          const option = document.createElement('option');
+          option.value = String(b.id || '');
+          option.textContent = `${String(b.name || '未命名')} (${String(b.game || '全游戏')})`;
+          sel.appendChild(option);
+        });
+
+      if (sel.options.length === 1) {
+        placeholder.textContent = '-- 暂无可用打手 --';
+      }
+      document.getElementById('assignModal').classList.add('show');
+    }
+
+    function confirmAssign() {
+      const boosterId = document.getElementById('assignBooster').value;
+      const remark = document.getElementById('assignRemark').value;
+      quickStart(currentAssignOrderId, boosterId, remark);
+      closeModal('assignModal');
+    }
+
+    function quickStart(orderId, boosterId, remark) {
+      const orders = dataManager.getOrders();
+      const idx = orders.findIndex(o => o.id === orderId);
+      if (idx === -1) return;
+      orders[idx].status = 'processing';
+      orders[idx].statusText = '处理中';
+      orders[idx].startedAt = new Date().toISOString();
+      if (boosterId) orders[idx].boosterId = boosterId;
+      if (remark) orders[idx].remark = remark;
+      dataManager.saveOrders(orders);
+      showToast('订单已开始处理', 'success');
+      loadOrders();
+    }
+
+    function cancelOrd(orderId) {
+      if (!confirm(`确认取消订单 ${orderId} 吗？`)) return;
+      const orders = dataManager.getOrders();
+      const idx = orders.findIndex(o => o.id === orderId);
+      if (idx !== -1) {
+        orders[idx].status = 'cancelled';
+        orders[idx].statusText = '已取消';
+        dataManager.saveOrders(orders);
+        showToast('订单已取消', 'warning');
+        loadOrders();
+      }
+    }
+
+    function batchProcess() {
+      const ids = getSelectedIds();
+      if (!ids.length) { showToast('请先选择要处理的订单', 'warning'); return; }
+      if (!confirm(`确认批量开始处理 ${ids.length} 个订单吗？`)) return;
+      const orders = dataManager.getOrders();
+      ids.forEach(id => {
+        const idx = orders.findIndex(o => o.id === id);
+        if (idx !== -1) {
+          orders[idx].status = 'processing';
+          orders[idx].statusText = '处理中';
+          orders[idx].startedAt = new Date().toISOString();
+        }
+      });
+      dataManager.saveOrders(orders);
+      showToast(`已批量开始处理 ${ids.length} 个订单`, 'success');
+      loadOrders();
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('show');
+    }
+
+    function showToast(msg, type = 'info') {
+      const existing = document.querySelector('.zm-toast');
+      if (existing) existing.remove();
+      const colors = { success: '#10b981', warning: '#f59e0b', error: '#ef4444', info: '#3b82f6' };
+      const toast = document.createElement('div');
+      toast.className = 'zm-toast';
+      toast.style.cssText = `position:fixed;top:20px;right:20px;background:${colors[type]};color:#fff;padding:12px 20px;border-radius:8px;z-index:9999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.3);`;
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    loadOrders();
+  </script>
+</body>
+</html>

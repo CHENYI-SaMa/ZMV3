@@ -1,0 +1,2607 @@
+<!-- 
+  后台管理 - 游戏商品管理
+  流程：选择游戏 → 管理该游戏的分类和商品
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>游戏商品管理 - 织麦电竞后台</title>
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    /* 顶部导航 */
+    .top-header {
+      height: 64px;
+      background: var(--header-bg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+    }
+    .sidebar-toggle {
+      background: none;
+      border: none;
+      color: var(--text-color);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 6px;
+    }
+    .sidebar-toggle:hover {
+      background: var(--card-hover);
+    }
+    .page-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .action-btn {
+      position: relative;
+      background: none;
+      border: none;
+      font-size: 18px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 8px;
+      border-radius: var(--radius);
+      transition: var(--transition);
+    }
+    .action-btn:hover {
+      color: var(--text-primary);
+      background: var(--card-hover);
+    }
+    .action-btn .badge {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 8px;
+      height: 8px;
+      background: var(--error);
+      border-radius: 50%;
+    }
+    .user-dropdown {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: var(--radius);
+      position: relative;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+    }
+    .user-dropdown:hover {
+      border-color: var(--primary);
+    }
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      min-width: 160px;
+      display: none;
+      z-index: 1000;
+      overflow: hidden;
+    }
+    .dropdown-menu.show {
+      display: block;
+    }
+    .dropdown-menu a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      color: var(--text-secondary);
+      transition: var(--transition);
+      font-size: 13px;
+      text-decoration: none;
+    }
+    .dropdown-menu a:hover {
+      background: var(--card-hover);
+      color: var(--text-primary);
+    }
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--border-color);
+    }
+    .user-name {
+      font-weight: 500;
+      color: var(--text-primary);
+      font-size: 13px;
+    }
+
+    /* 游戏选择界面 */
+    .game-selection {
+      padding: 40px;
+      height: calc(100vh - 64px);
+      overflow-y: auto;
+    }
+    .game-selection h2 {
+      margin-bottom: 30px;
+      font-size: 24px;
+    }
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .game-card {
+      background: var(--card-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+    }
+    .game-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+    .game-card-actions {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      opacity: 0.9;
+      transition: opacity 0.2s ease;
+    }
+    .game-card:hover .game-card-actions {
+      opacity: 1;
+    }
+    .game-card-action {
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: rgba(9, 15, 37, 0.9);
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .game-card-action:hover {
+      color: var(--text-primary);
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.18);
+    }
+    .game-card-action.delete:hover {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.18);
+      color: #ef4444;
+    }
+    .game-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 36px;
+      color: white;
+    }
+    .game-name {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .game-count {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .add-game-card {
+      border-style: dashed;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 180px;
+      color: var(--text-muted);
+    }
+    .add-game-card:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .add-game-card i {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    /* 管理界面 */
+    .management-view {
+      display: none;
+      height: calc(100vh - 64px);
+    }
+    .management-view.show {
+      display: flex;
+    }
+    
+    /* 左侧分类栏 */
+    .category-sidebar {
+      width: 260px;
+      background: var(--card-bg);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .sidebar-header h3 {
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .back-btn {
+      padding: 6px 12px;
+      border: none;
+      background: var(--border-color);
+      color: var(--text-color);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .back-btn:hover {
+      background: var(--primary);
+      color: white;
+    }
+
+    /* 侧边栏折叠样式 */
+    .sidebar.collapsed {
+      width: 70px !important;
+    }
+    .sidebar.collapsed .logo-text,
+    .sidebar.collapsed .nav-link span,
+    .sidebar.collapsed .arrow {
+      display: none;
+    }
+    .sidebar.collapsed .nav-link {
+      justify-content: center;
+      padding: 12px;
+    }
+    .sidebar.collapsed .submenu {
+      display: none !important;
+    }
+    .main-content.expanded {
+      margin-left: 70px !important;
+    }
+    .category-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+    .category-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 4px;
+    }
+    .category-item:hover {
+      background: var(--bg-color);
+    }
+    .category-item.active {
+      background: rgba(99, 102, 241, 0.15);
+      border-left: 3px solid var(--primary);
+    }
+    .category-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .category-icon-small {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 14px;
+    }
+    .category-name-small {
+      font-weight: 500;
+    }
+    .category-count-badge {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--bg-color);
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .category-actions {
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .category-item:hover .category-actions {
+      opacity: 1;
+    }
+    .btn-icon-small {
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+    .btn-icon-small:hover {
+      background: var(--border-color);
+      color: var(--text-color);
+    }
+    .btn-icon-small.delete:hover {
+      background: #ef4444;
+      color: white;
+    }
+    .add-category-btn {
+      margin: 12px;
+      padding: 12px;
+      border: 2px dashed var(--border-color);
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .add-category-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* 右侧商品区域 */
+    .product-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .area-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .area-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .area-title small {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: normal;
+      margin-left: 8px;
+    }
+    
+    /* 筛选栏 */
+    .filter-bar {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .filter-left {
+      display: flex;
+      gap: 12px;
+    }
+    .filter-right {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .search-box {
+      position: relative;
+      width: 280px;
+    }
+    .search-box i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
+    .search-box input {
+      width: 100%;
+      padding: 8px 12px 8px 36px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-color);
+      color: var(--text-color);
+    }
+    .btn-search {
+      padding: 8px 20px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .btn-add {
+      padding: 8px 16px;
+      background: #22c55e;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-add:hover {
+      background: #16a34a;
+    }
+    
+    /* 商品表格 */
+    .table-container {
+      flex: 1;
+      overflow: auto;
+      padding: 0 24px;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .data-table th {
+      text-align: left;
+      padding: 14px 12px;
+      border-bottom: 1px solid var(--border-color);
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 14px 12px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+    .data-table tbody tr:hover {
+      background: rgba(99, 102, 241, 0.05);
+    }
+    .checkbox-col {
+      width: 0;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+    .table-container th.checkbox-col,
+    .table-container td.checkbox-col {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .table-container.batch-delete-mode .checkbox-col {
+      width: 40px;
+      padding-left: 12px !important;
+      padding-right: 12px !important;
+    }
+    .table-container.batch-delete-mode th.checkbox-col,
+    .table-container.batch-delete-mode td.checkbox-col {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #selectAll,
+    .row-checkbox {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+    .id-col {
+      width: 80px;
+      color: var(--text-muted);
+    }
+    .image-col {
+      width: 70px;
+    }
+    .product-img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: var(--bg-color);
+    }
+    .name-col {
+      min-width: 200px;
+    }
+    .product-name-cell {
+      font-weight: 500;
+    }
+    .product-desc-cell {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .category-col {
+      width: 130px;
+    }
+    .inline-category-select {
+      width: 100%;
+      min-width: 96px;
+      max-width: 128px;
+      height: 32px;
+      padding: 0 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+      color-scheme: dark;
+    }
+    .inline-category-select:focus {
+      border-color: var(--primary);
+    }
+    .inline-category-select option {
+      background: #152444;
+      color: #e8eeff;
+    }
+    .inline-category-select option:checked {
+      background: #4f46e5;
+      color: #ffffff;
+    }
+    .price-col {
+      width: 100px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    .profit-col {
+      width: 100px;
+      color: #22c55e;
+      font-weight: 600;
+      text-align: center;
+    }
+    .sort-col {
+      width: 70px;
+      text-align: center;
+      color: var(--text-secondary);
+    }
+    .inline-sort-input {
+      width: 72px;
+      height: 32px;
+      padding: 0 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-size: 13px;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .inline-sort-input:focus {
+      border-color: var(--primary);
+    }
+    .stock-col, .sales-col {
+      width: 80px;
+      text-align: center;
+    }
+    .status-col {
+      width: 120px;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      white-space: nowrap;
+      word-break: keep-all;
+      line-height: 1;
+      min-width: 74px;
+    }
+    .status-text {
+      white-space: nowrap;
+    }
+    .status-badge.active {
+      background: rgba(34, 197, 94, 0.15);
+      color: #22c55e;
+    }
+    .status-badge.inactive {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+    .status-badge.active .status-dot {
+      background: #22c55e;
+    }
+    .status-badge.inactive .status-dot {
+      background: #ef4444;
+    }
+    .time-col {
+      width: 140px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    .action-col {
+      width: 140px;
+    }
+    .action-btns {
+      display: flex;
+      gap: 8px;
+    }
+    .action-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: var(--bg-color);
+      color: var(--text-muted);
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .action-btn:hover {
+      background: var(--primary);
+      color: white;
+    }
+    .action-btn.delete:hover {
+      background: #ef4444;
+    }
+    
+    /* 表格底部 */
+    .table-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .batch-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .btn-batch {
+      padding: 8px 16px;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-color);
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-batch:hover {
+      border-color: var(--primary);
+    }
+    .btn-batch.delete:hover {
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+    
+    /* 分页 */
+    .pagination {
+      display: flex;
+      gap: 4px;
+    }
+    .page-btn {
+      min-width: 32px;
+      height: 32px;
+      padding: 0 8px;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-color);
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .page-btn:hover {
+      border-color: var(--primary);
+    }
+    .page-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    
+    /* 弹窗样式 */
+    .upload-area {
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius);
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: var(--bg-color);
+    }
+    .upload-area:hover {
+      border-color: var(--primary);
+    }
+    .upload-area.has-image {
+      padding: 0;
+      border: none;
+    }
+    .upload-placeholder {
+      color: var(--text-muted);
+    }
+    .upload-placeholder i {
+      font-size: 48px;
+      margin-bottom: 12px;
+      display: block;
+    }
+    .image-preview {
+      position: relative;
+      display: inline-block;
+    }
+    .image-preview img {
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: var(--radius);
+    }
+    .image-preview .remove-btn {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #ef4444;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .status-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+    .status-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: var(--primary);
+    }
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+    
+    /* 空状态 */
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state i {
+      font-size: 64px;
+      margin-bottom: 20px;
+      opacity: 0.3;
+    }
+    .empty-state h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: var(--text-color);
+    }
+    /* 兼容旧脚本：本页弹窗使用 .show，admin.css 使用 .active */
+    .modal.show {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 顶部导航 -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="sidebar-toggle" id="sidebarToggle">
+            <i class="fa fa-bars"></i>
+          </button>
+          <span class="page-title">游戏商品管理</span>
+        </div>
+        <div class="header-right">
+          <div class="header-actions">
+            <!-- 通知按钮 -->
+            <div class="user-dropdown" id="userDropdown" onclick="toggleUserDropdown()">
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin" alt="avatar" class="user-avatar">
+              <div class="header-user-info">
+                <span class="user-name" id="adminUserName">管理员</span>
+                <span class="header-user-role" id="adminUserRole">超管</span>
+              </div>
+              <i class="fa fa-chevron-down" style="font-size: 12px; color: var(--text-muted);"></i>
+              <div class="dropdown-menu" id="dropdownMenu">
+                <a href="settings.html"><i class="fa fa-cog"></i> 系统设置</a>
+                <div style="border-top: 1px solid var(--border-color); margin: 8px 0;"></div>
+                <a href="#" onclick="logout()"><i class="fa fa-sign-out-alt"></i> 退出登录</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- 游戏选择界面 -->
+      <div class="game-selection" id="gameSelection">
+        <h2><i class="fa fa-gamepad" style="color: var(--primary);"></i> 选择要管理的游戏</h2>
+        <div class="game-grid" id="gameGrid">
+          <!-- 动态加载游戏列表 -->
+        </div>
+      </div>
+
+      <!-- 管理界面 -->
+      <div class="management-view" id="managementView">
+        <!-- 左侧分类栏 -->
+        <div class="category-sidebar">
+          <div class="sidebar-header">
+            <h3><i class="fa fa-folder"></i> 商品分类</h3>
+            <button class="back-btn" onclick="backToGameSelection()">
+              <i class="fa fa-arrow-left"></i> 返回
+            </button>
+          </div>
+          <div class="category-list" id="categoryList">
+            <!-- 动态加载分类 -->
+          </div>
+          <button class="add-category-btn" onclick="openCategoryModal()">
+            <i class="fa fa-plus"></i> 添加分类
+          </button>
+        </div>
+
+        <!-- 右侧商品区域 -->
+        <div class="product-area">
+          <div class="area-header">
+            <div class="area-title">
+              <span id="currentGameName">游戏名称</span>
+              <small id="currentCategoryName">全部商品</small>
+            </div>
+          </div>
+          
+          <div class="filter-bar">
+            <div class="filter-left">
+              <select class="form-select" id="statusFilter" onchange="loadProducts()">
+                <option value="">全部状态</option>
+                <option value="active">上架中</option>
+                <option value="inactive">已下架</option>
+              </select>
+            </div>
+            <div class="filter-right">
+              <div class="search-box">
+                <i class="fa fa-search"></i>
+                <input type="text" id="searchInput" placeholder="搜索商品名称/ID...">
+              </div>
+              <button class="btn-search" onclick="searchProducts()">搜索</button>
+              <button class="btn-add" onclick="openProductModal()">
+                <i class="fa fa-plus"></i> 添加商品
+              </button>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th class="checkbox-col"><input type="checkbox" id="selectAll"></th>
+                  <th class="id-col">商品ID</th>
+                  <th class="image-col">商品图片</th>
+                  <th class="name-col">商品名称</th>
+                  <th class="category-col">分类</th>
+                  <th class="price-col">价格</th>
+                  <th class="profit-col">利润</th>
+                  <th class="sort-col">排序</th>
+                  <th class="stock-col">库存</th>
+                  <th class="sales-col">销量</th>
+                  <th class="status-col">状态</th>
+                  <th class="action-col">操作</th>
+                </tr>
+              </thead>
+              <tbody id="productTableBody">
+                <!-- 动态加载 -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="table-footer">
+            <div class="batch-actions">
+              <button class="btn-batch" onclick="batchExport()">
+                <i class="fa fa-download"></i> 导出
+              </button>
+              <button class="btn-batch delete" id="batchDeleteBtn" onclick="batchDelete()">
+                <i class="fa fa-trash"></i> 批量删除
+              </button>
+              <button class="btn-batch" id="cancelBatchDeleteBtn" onclick="cancelBatchDeleteMode()" style="display: none;">
+                <i class="fa fa-times"></i> 取消批删
+              </button>
+            </div>
+            <div class="pagination" id="pagination">
+              <!-- 动态加载 -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 游戏编辑弹窗 -->
+  <div class="modal" id="gameModal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="gameModalTitle">添加新游戏</h3>
+        <button class="modal-close" onclick="closeGameModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="gameForm">
+          <input type="hidden" id="gameId">
+          
+          <!-- 游戏图标上传 -->
+          <div class="form-group">
+            <label class="form-label">游戏图标 <span style="color: #ef4444;">*</span></label>
+            <div class="upload-area" id="gameIconUpload" onclick="document.getElementById('gameIconInput').click()">
+              <div class="upload-placeholder" id="gameIconPlaceholder">
+                <i class="fa fa-cloud-upload-alt"></i>
+                <p>点击上传游戏图标</p>
+                <small>支持 JPG、PNG 格式，建议尺寸 200x200，最大 2MB</small>
+              </div>
+              <div class="image-preview" id="gameIconPreview" style="display: none;">
+                <img src="" alt="游戏图标" id="gameIconImg" style="width: 120px; height: 120px; object-fit: cover; border-radius: 16px;">
+                <button type="button" class="remove-btn" onclick="removeGameIcon(event)">
+                  <i class="fa fa-times"></i>
+                </button>
+              </div>
+            </div>
+            <input type="file" id="gameIconInput" accept="image/*" style="display: none;" onchange="handleGameIconUpload(event)">
+            <input type="hidden" id="gameIconUrl">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">游戏名称 <span style="color: #ef4444;">*</span></label>
+            <input type="text" class="form-input" id="gameName" required placeholder="请输入游戏名称，如：三角洲行动">
+          </div>
+          <div class="form-group">
+            <label class="form-label">游戏标识 <span style="color: #ef4444;">*</span></label>
+            <input type="text" class="form-input" id="gameCode" required placeholder="如：delta、valorant">
+            <small style="color: var(--text-muted);">用于系统识别的唯一标识，不能重复，只能使用英文小写字母和下划线</small>
+          </div>
+          <div class="form-group">
+            <label class="form-label">排序</label>
+            <input type="number" class="form-input" id="gameSort" placeholder="数字越小越靠前" min="0" value="0">
+          </div>
+
+          <!-- 初始分类设置 -->
+          <div class="form-group" id="initialCategoriesGroup">
+            <label class="form-label">初始分类（可选）</label>
+            <div id="initialCategories">
+              <div class="category-input-row" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <input type="text" class="form-input" placeholder="分类名称" style="flex: 1;">
+                <button type="button" class="btn btn-secondary" onclick="removeCategoryRow(this)" style="padding: 8px 12px;">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary" onclick="addCategoryRow()" style="margin-top: 10px;">
+              <i class="fa fa-plus"></i> 添加分类
+            </button>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeGameModal()">取消</button>
+        <button type="button" class="btn btn-primary" onclick="saveGame()" id="saveGameBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 分类编辑弹窗 -->
+  <div class="modal" id="categoryModal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="categoryModalTitle">添加分类</h3>
+        <button class="modal-close" onclick="closeCategoryModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="categoryForm">
+          <input type="hidden" id="categoryId">
+          <div class="form-group">
+            <label class="form-label">分类名称 <span style="color: #ef4444;">*</span></label>
+            <input type="text" class="form-input" id="categoryName" required placeholder="请输入分类名称">
+          </div>
+          <div class="form-group">
+            <label class="form-label">图标</label>
+            <select class="form-select" id="categoryIcon">
+              <option value="fa-folder">文件夹</option>
+              <option value="fa-tag">标签</option>
+              <option value="fa-star">星星</option>
+              <option value="fa-fire">火焰</option>
+              <option value="fa-bolt">闪电</option>
+              <option value="fa-crown">皇冠</option>
+              <option value="fa-gem">宝石</option>
+              <option value="fa-shield-alt">盾牌</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">排序</label>
+            <input type="number" class="form-input" id="categorySort" placeholder="数字越小越靠前" min="0" value="0">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeCategoryModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveCategory()" id="saveCategoryBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 商品编辑弹窗 -->
+  <div class="modal" id="productModal">
+    <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">添加商品</h3>
+        <button class="modal-close" onclick="closeProductModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="productForm">
+          <input type="hidden" id="productId">
+          
+          <div class="form-group">
+            <label class="form-label">商品图片</label>
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('imageInput').click()">
+              <div class="upload-placeholder" id="uploadPlaceholder">
+                <i class="fa fa-cloud-upload-alt"></i>
+                <p>点击上传图片</p>
+                <small>支持 JPG、PNG 格式，最大 2MB</small>
+              </div>
+              <div class="image-preview" id="imagePreview" style="display: none;">
+                <img src="" alt="预览" id="previewImg">
+                <button type="button" class="remove-btn" onclick="removeImage(event)">
+                  <i class="fa fa-times"></i>
+                </button>
+              </div>
+            </div>
+            <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+            <input type="hidden" id="imageUrl">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">商品名称 <span style="color: #ef4444;">*</span></label>
+              <input type="text" class="form-input" id="productName" required placeholder="请输入商品名称">
+            </div>
+            <div class="form-group">
+              <label class="form-label">商品分类 <span style="color: #ef4444;">*</span></label>
+              <select class="form-select" id="productCategory" required>
+                <option value="">请选择</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">价格 <span style="color: #ef4444;">*</span></label>
+              <input type="number" class="form-input" id="productPrice" required placeholder="请输入价格" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+              <label class="form-label">库存</label>
+              <input type="number" class="form-input" id="productStock" placeholder="请输入库存" min="0" value="999">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">利润</label>
+              <input type="number" class="form-input" id="productProfit" placeholder="请输入利润" min="0" step="0.01" value="0">
+              <small style="color: var(--text-muted);">该值会同步到仪表盘利润统计</small>
+            </div>
+            <div class="form-group">
+              <label class="form-label">商品ID <span style="color: #ef4444;">*</span></label>
+              <input type="number" class="form-input" id="productBusinessId" placeholder="请输入商品唯一ID" min="1" step="1">
+              <small style="color: var(--text-muted);">用于前台展示与检索，必须唯一</small>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">排序</label>
+              <input type="number" class="form-input" id="productSort" placeholder="数字越小越靠前" min="0" value="0">
+              <small style="color: var(--text-muted);">仅控制后台列表前后顺序</small>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">商品简介</label>
+            <input type="text" class="form-input" id="productDesc" placeholder="简短描述商品特点">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">详细描述</label>
+            <textarea class="form-textarea" id="productDetail" rows="4" placeholder="请输入商品详细描述"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">上架状态</label>
+            <label class="status-switch">
+              <input type="checkbox" id="productStatus" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeProductModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveProduct()" id="saveBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/cloudbase.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script>
+    // 数据存储
+    let games = [];
+    let categories = [];
+    let products = [];
+    let currentGame = null;
+    let currentCategory = '';
+    let currentPage = 1;
+    let pageSize = 10;
+    let isBatchDeleteMode = false;
+    let realSalesLookup = new Map();
+
+    // 页面加载
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadGames();
+      renderGameGrid();
+      loadAdminInfo();
+      
+      // 汉堡菜单点击事件
+      document.getElementById('sidebarToggle')?.addEventListener('click', toggleSidebar);
+      
+      // 点击外部关闭面板
+      document.addEventListener('click', (e) => {
+        const dropdownMenu = document.getElementById('dropdownMenu');
+        const userDropdown = document.getElementById('userDropdown');
+        
+        if (dropdownMenu && userDropdown && !userDropdown.contains(e.target)) {
+          dropdownMenu.classList.remove('show');
+        }
+      });
+    });
+
+    window.addEventListener('storage', (event) => {
+      if (!event || event.key !== 'zhimai_orders' || !currentGame) return;
+      rebuildRealSalesLookup();
+      renderProductTable();
+    });
+
+    window.addEventListener('focus', () => {
+      if (!currentGame) return;
+      rebuildRealSalesLookup();
+      renderProductTable();
+    });
+
+    // 侧边栏切换
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.querySelector('.main-content');
+      
+      if (sidebar) {
+        sidebar.classList.toggle('collapsed');
+        if (mainContent) {
+          mainContent.classList.toggle('expanded');
+        }
+        
+        // 保存状态
+        const isCollapsed = sidebar.classList.contains('collapsed');
+        localStorage.setItem('zhimai_sidebar_collapsed', isCollapsed);
+      }
+    }
+    
+    // 恢复侧边栏状态
+    function restoreSidebarState() {
+      const isCollapsed = localStorage.getItem('zhimai_sidebar_collapsed') === 'true';
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.querySelector('.main-content');
+      
+      if (isCollapsed && sidebar) {
+        sidebar.classList.add('collapsed');
+        if (mainContent) {
+          mainContent.classList.add('expanded');
+        }
+      }
+    }
+
+    // ========== ????? ==========
+    function getStoredAdminInfo() {
+      const sessionAdmin = JSON.parse(localStorage.getItem('zhimai_admin_user') || 'null');
+      if (sessionAdmin && typeof sessionAdmin === 'object') {
+        return sessionAdmin;
+      }
+
+      const legacyAdmin = JSON.parse(localStorage.getItem('zhimai_admin') || 'null');
+      if (legacyAdmin && typeof legacyAdmin === 'object') {
+        return legacyAdmin;
+      }
+
+      return null;
+    }
+
+    function normalizeAdminRole(role) {
+      const roleText = String(role || '').trim();
+      if (!roleText) return '超管';
+
+      const lowered = roleText.toLowerCase();
+      if (lowered === 'admin' || lowered === 'super_admin' || lowered === 'superadmin' || lowered === 'root') {
+        return '超管';
+      }
+      return roleText;
+    }
+
+    function loadAdminInfo() {
+      const nameNode = document.getElementById('adminUserName');
+      const roleNode = document.getElementById('adminUserRole');
+      if (!nameNode) return;
+
+      const admin = getStoredAdminInfo();
+      if (!admin) {
+        nameNode.textContent = '管理员';
+        if (roleNode) roleNode.textContent = '超管';
+        return;
+      }
+
+      const adminName = admin.nickname || admin.name || admin.username || '管理员';
+      nameNode.textContent = adminName;
+      if (roleNode) {
+        roleNode.textContent = normalizeAdminRole(admin.role);
+      }
+    }
+    
+    function toggleUserDropdown() {
+      const menu = document.getElementById('dropdownMenu');
+      menu.classList.toggle('show');
+    }
+    
+    function logout() {
+      if (confirm('确定要退出登录吗？')) {
+        localStorage.removeItem('zhimai_admin');
+        localStorage.removeItem('zhimai_admin_token');
+        localStorage.removeItem('zhimai_admin_logged_in');
+        localStorage.removeItem('zhimai_admin_user');
+        window.location.href = 'login.html';
+      }
+    }
+
+    // ========== 游戏管理 ==========
+    async function loadGames() {
+      // 从数据库加载游戏列表
+      try {
+        const result = await CloudBaseAPI.callFunction('product', { action: 'getGames' });
+        games = result.data || [];
+      } catch (err) {
+        // 如果云函数不存在，使用本地存储
+        games = JSON.parse(localStorage.getItem('zhimai_games') || '[]');
+        if (games.length === 0) {
+          // 默认游戏
+          games = [
+            { _id: 'game_delta', name: '三角洲行动', code: 'delta', icon: 'fa-crosshairs', sort: 0 },
+            { _id: 'game_valorant', name: '无畏契约', code: 'valorant', icon: 'fa-shield-alt', sort: 1 }
+          ];
+          saveGamesLocal();
+        }
+      }
+    }
+
+    function saveGamesLocal() {
+      localStorage.setItem('zhimai_games', JSON.stringify(games));
+    }
+
+    function renderGameGrid() {
+      const grid = document.getElementById('gameGrid');
+      
+      // 计算每个游戏的商品数量
+      const gameCounts = {};
+      products.forEach(p => {
+        gameCounts[p.game] = (gameCounts[p.game] || 0) + 1;
+      });
+      
+      let html = games.map(game => {
+        const rawGameId = String(game._id || '');
+        const safeGameId = encodeURIComponent(rawGameId);
+        const safeGameName = escapeHTML(game.name || '');
+        const safeIconUrl = escapeHTML(sanitizeImageUrl(game.iconUrl || '', ''));
+        const iconClass = /^fa-[a-z0-9-]+$/i.test(String(game.icon || '').trim()) ? String(game.icon).trim() : 'fa-gamepad';
+        const safeIconClass = escapeHTML(iconClass);
+        const safeGameCount = Number(gameCounts[game.code] || 0);
+        return `
+        <div class="game-card" onclick="selectGame('${safeGameId}')">
+          <div class="game-card-actions">
+            <button class="game-card-action" onclick="event.stopPropagation(); openGameModal('${safeGameId}')" title="编辑">
+              <i class="fa fa-pencil"></i>
+            </button>
+            <button class="game-card-action delete" onclick="event.stopPropagation(); deleteGame('${safeGameId}')" title="删除">
+              <i class="fa fa-trash"></i>
+            </button>
+          </div>
+          <div class="game-icon" style="${safeIconUrl ? `background: url('${safeIconUrl}') center/cover no-repeat;` : ''}">
+            ${safeIconUrl ? '' : `<i class="fa ${safeIconClass}"></i>`}
+          </div>
+          <div class="game-name">${safeGameName}</div>
+          <div class="game-count">${safeGameCount} 个商品</div>
+        </div>
+      `;
+      }).join('');
+      
+      // 添加“添加新游戏”按钮到网格末尾
+      html += `
+        <div class="game-card add-game-card" onclick="openGameModal()">
+          <div class="game-icon" style="background: transparent; border: 2px dashed var(--border-color);">
+            <i class="fa fa-plus" style="color: var(--text-muted);"></i>
+          </div>
+          <div class="game-name" style="color: var(--text-muted);">添加新游戏</div>
+          <div class="game-count">点击添加</div>
+        </div>
+      `;
+      
+      grid.innerHTML = html;
+    }
+
+    function selectGame(gameId) {
+      const resolvedGameId = decodeURIComponent(String(gameId || ''));
+      currentGame = games.find(g => String(g._id) === resolvedGameId);
+      if (!currentGame) return;
+      
+      document.getElementById('gameSelection').style.display = 'none';
+      document.getElementById('managementView').classList.add('show');
+      document.getElementById('currentGameName').textContent = currentGame.name;
+      
+      loadCategories();
+      loadProducts();
+    }
+
+    function deleteGame(gameId) {
+      const resolvedId = gameId ? decodeURIComponent(String(gameId)) : '';
+      const game = games.find(g => String(g._id) === resolvedId);
+      if (!game) return;
+      if (!confirm(`确定要删除游戏「${game.name}」吗？此操作不可恢复。`)) return;
+      games = games.filter(g => String(g._id) !== resolvedId);
+      localStorage.setItem('zhimai_games', JSON.stringify(games));
+      renderGameGrid();
+    }
+
+    function backToGameSelection() {
+      currentGame = null;
+      currentCategory = '';
+      document.getElementById('gameSelection').style.display = 'block';
+      document.getElementById('managementView').classList.remove('show');
+      renderGameGrid();
+    }
+
+    // ========== 游戏弹窗 ==========
+    async function ensureCategoriesForEditor() {
+      try {
+        const result = await CloudBaseAPI.Product.getCategories();
+        categories = result.data || [];
+      } catch (err) {
+        categories = JSON.parse(localStorage.getItem('zhimai_categories') || '[]');
+      }
+    }
+
+    async function openGameModal(gameId) {
+      await ensureCategoriesForEditor();
+
+      const resolvedGameId = gameId ? decodeURIComponent(String(gameId)) : '';
+      const game = resolvedGameId ? games.find(g => String(g._id) === resolvedGameId) : null;
+
+      document.getElementById('gameForm').reset();
+      document.getElementById('gameId').value = resolvedGameId;
+      document.getElementById('gameIconUrl').value = '';
+      document.getElementById('gameIconPlaceholder').style.display = 'block';
+      document.getElementById('gameIconPreview').style.display = 'none';
+      document.getElementById('gameIconUpload').classList.remove('has-image');
+      document.getElementById('gameModalTitle').textContent = game ? '编辑游戏' : '添加新游戏';
+
+      // 编辑模式：填充现有数据，显示已有分类
+      const initialCategoriesGroup = document.getElementById('initialCategoriesGroup');
+      if (game) {
+        document.getElementById('gameName').value = game.name || '';
+        document.getElementById('gameCode').value = game.code || '';
+        document.getElementById('gameSort').value = game.sort || 0;
+        if (game.iconUrl) {
+          document.getElementById('gameIconUrl').value = game.iconUrl;
+          document.getElementById('gameIconImg').src = game.iconUrl;
+          document.getElementById('gameIconPlaceholder').style.display = 'none';
+          document.getElementById('gameIconPreview').style.display = 'block';
+          document.getElementById('gameIconUpload').classList.add('has-image');
+        }
+        // 编辑模式：显示已有分类列表供编辑
+        if (initialCategoriesGroup) {
+          initialCategoriesGroup.style.display = '';
+          const gameCategories = categories.filter(c => c.game === game.code);
+          const container = document.getElementById('initialCategories');
+          if (gameCategories.length > 0) {
+            container.innerHTML = gameCategories.map(c => `
+              <div class="category-input-row" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <input type="text" class="form-input init-category-name" placeholder="分类名称" style="flex: 1;" value="${escapeHTML(c.name)}" data-category-id="${escapeHTML(String(c._id))}">
+                <button type="button" class="btn btn-secondary" onclick="removeCategoryRow(this)" style="padding: 8px 12px;">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </div>
+            `).join('');
+          } else {
+            container.innerHTML = `
+              <div class="category-input-row" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <input type="text" class="form-input init-category-name" placeholder="分类名称" style="flex: 1;">
+                <button type="button" class="btn btn-secondary" onclick="removeCategoryRow(this)" style="padding: 8px 12px;">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </div>
+            `;
+          }
+        }
+      } else {
+        if (initialCategoriesGroup) initialCategoriesGroup.style.display = '';
+        // 重置初始分类
+        document.getElementById('initialCategories').innerHTML = `
+          <div class="category-input-row" style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <input type="text" class="form-input init-category-name" placeholder="分类名称" style="flex: 1;">
+            <button type="button" class="btn btn-secondary" onclick="removeCategoryRow(this)" style="padding: 8px 12px;">
+              <i class="fa fa-trash"></i>
+            </button>
+          </div>
+        `;
+      }
+
+      document.getElementById('gameModal').classList.add('show');
+    }
+
+    function closeGameModal() {
+      document.getElementById('gameModal').classList.remove('show');
+    }
+
+    // 游戏图标上传
+    async function handleGameIconUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      if (file.size > 2 * 1024 * 1024) {
+        showToast('图片大小不能超过 2MB', 'error');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = e.target.result;
+        
+        // 直接存储 base64 图片（实际项目中应上传到云存储）
+        document.getElementById('gameIconUrl').value = base64;
+        document.getElementById('gameIconImg').src = base64;
+        document.getElementById('gameIconPlaceholder').style.display = 'none';
+        document.getElementById('gameIconPreview').style.display = 'block';
+        document.getElementById('gameIconUpload').classList.add('has-image');
+        
+        showToast('图标上传成功', 'success');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeGameIcon(e) {
+      e.stopPropagation();
+      document.getElementById('gameIconUrl').value = '';
+      document.getElementById('gameIconPlaceholder').style.display = 'block';
+      document.getElementById('gameIconPreview').style.display = 'none';
+      document.getElementById('gameIconUpload').classList.remove('has-image');
+      document.getElementById('gameIconInput').value = '';
+    }
+
+    // 添加/删除分类输入行
+    function addCategoryRow() {
+      const container = document.getElementById('initialCategories');
+      const row = document.createElement('div');
+      row.className = 'category-input-row';
+      row.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px;';
+      row.innerHTML = `
+        <input type="text" class="form-input init-category-name" placeholder="分类名称" style="flex: 1;">
+        <button type="button" class="btn btn-secondary" onclick="removeCategoryRow(this)" style="padding: 8px 12px;">
+          <i class="fa fa-trash"></i>
+        </button>
+      `;
+      container.appendChild(row);
+    }
+
+    function removeCategoryRow(btn) {
+      const rows = document.querySelectorAll('.category-input-row');
+      if (rows.length > 1) {
+        btn.closest('.category-input-row').remove();
+      } else {
+        showToast('至少保留一个分类', 'error');
+      }
+    }
+
+    async function saveGame() {
+      const gameId = document.getElementById('gameId').value;
+      const gameIconUrl = document.getElementById('gameIconUrl').value;
+      const data = {
+        name: document.getElementById('gameName').value,
+        code: document.getElementById('gameCode').value.toLowerCase().replace(/[^a-z0-9_]/g, ''),
+        iconUrl: gameIconUrl,
+        sort: parseInt(document.getElementById('gameSort').value) || 0
+      };
+      
+      if (!data.name || !data.code) {
+        showToast('请填写必填项', 'error');
+        return;
+      }
+      
+      if (!gameId && !gameIconUrl) {
+        showToast('请上传游戏图标', 'error');
+        return;
+      }
+      
+      try {
+        // 获取初始分类
+        const categoryNames = Array.from(document.querySelectorAll('.init-category-name'))
+          .map(input => input.value.trim())
+          .filter(name => name);
+        
+        if (gameId) {
+          const index = games.findIndex(g => g._id === gameId);
+          if (index > -1) {
+            // 保留原有图标，如果没有上传新图标
+            if (!gameIconUrl) {
+              data.iconUrl = games[index].iconUrl;
+            }
+            games[index] = { ...games[index], ...data };
+            
+            // 同步更新分类
+            const categoryInputs = Array.from(document.querySelectorAll('.init-category-name'));
+            const keepCategoryIds = new Set();
+            
+            categoryInputs.forEach((input, idx) => {
+              const catId = input.getAttribute('data-category-id');
+              const catName = input.value.trim();
+              if (!catName) return;
+              
+              if (catId) {
+                // 更新已有分类名称
+                const catIndex = categories.findIndex(c => String(c._id) === catId);
+                if (catIndex > -1) {
+                  categories[catIndex].name = catName;
+                  categories[catIndex].sort = idx;
+                  categories[catIndex].game = data.code;
+                } else {
+                  categories.push({
+                    _id: catId,
+                    name: catName,
+                    icon: 'fa-folder',
+                    sort: idx,
+                    game: data.code
+                  });
+                }
+                keepCategoryIds.add(catId);
+              } else {
+                // 新增分类
+                const newCat = {
+                  _id: 'cat_' + Date.now() + '_' + idx,
+                  name: catName,
+                  icon: 'fa-folder',
+                  sort: idx,
+                  game: data.code
+                };
+                categories.push(newCat);
+                keepCategoryIds.add(String(newCat._id));
+              }
+            });
+            
+            // 删除被移除的分类（该游戏下不在保留列表中的分类）
+            categories = categories.filter(c => {
+              if (c.game !== data.code) return true;
+              if (!c._id) return true;
+              // 如果没有data-category-id的输入（全新分类），保留所有原有分类
+              if (keepCategoryIds.size === 0 && categoryInputs.every(i => !i.getAttribute('data-category-id'))) return true;
+              return keepCategoryIds.has(String(c._id));
+            });
+            
+            localStorage.setItem('zhimai_categories', JSON.stringify(categories));
+          }
+        } else {
+          data._id = 'game_' + Date.now();
+          games.push(data);
+          
+          // 创建初始分类
+          categoryNames.forEach((name, idx) => {
+            const catData = {
+              _id: 'cat_' + Date.now() + '_' + idx,
+              name: name,
+              icon: 'fa-folder',
+              sort: idx,
+              game: data.code
+            };
+            categories.push(catData);
+          });
+          localStorage.setItem('zhimai_categories', JSON.stringify(categories));
+        }
+        
+        saveGamesLocal();
+        closeGameModal();
+        renderGameGrid();
+        const categoryFeedback = categoryNames.length > 0 ? `，已同步 ${categoryNames.length} 个分类` : '';
+        showToast((gameId ? '游戏更新成功' : '游戏添加成功') + categoryFeedback, 'success');
+      } catch (err) {
+        showToast('保存失败', 'error');
+      }
+    }
+
+    // ========== 分类管理 ==========
+    async function loadCategories() {
+      try {
+        const result = await CloudBaseAPI.Product.getCategories();
+        categories = result.data || [];
+      } catch (err) {
+        categories = JSON.parse(localStorage.getItem('zhimai_categories') || '[]');
+      }
+      renderCategoryList();
+    }
+
+    function renderCategoryList() {
+      const list = document.getElementById('categoryList');
+      // 只显示当前游戏的分类
+      const gameCategories = categories.filter(c => c.game === currentGame.code);
+      
+      // 计算每个分类的商品数量
+      const categoryCounts = {};
+      products.forEach(p => {
+        if (p.game === currentGame.code) {
+          categoryCounts[p.category] = (categoryCounts[p.category] || 0) + 1;
+        }
+      });
+
+      let html = `
+        <div class="category-item ${currentCategory === '' ? 'active' : ''}" onclick="selectCategory('')">
+          <div class="category-info">
+            <div class="category-icon-small"><i class="fa fa-th-large"></i></div>
+            <div class="category-name-small">全部商品</div>
+          </div>
+          <span class="category-count-badge">${products.filter(p => p.game === currentGame.code).length}</span>
+        </div>
+      `;
+      
+      html += gameCategories.map(cat => {
+        const rawCategoryId = String(cat._id || '');
+        const safeCategoryId = encodeURIComponent(rawCategoryId);
+        const iconClass = /^fa-[a-z0-9-]+$/i.test(String(cat.icon || '').trim()) ? String(cat.icon).trim() : 'fa-folder';
+        const safeCategoryIcon = escapeHTML(iconClass);
+        const safeCategoryName = escapeHTML(cat.name || '');
+        const safeCategoryCount = Number(categoryCounts[rawCategoryId] || 0);
+        return `
+        <div class="category-item ${currentCategory === rawCategoryId ? 'active' : ''}" onclick="selectCategory('${safeCategoryId}')">
+          <div class="category-info">
+            <div class="category-icon-small"><i class="fa ${safeCategoryIcon}"></i></div>
+            <div class="category-name-small">${safeCategoryName}</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="category-count-badge">${safeCategoryCount}</span>
+            <div class="category-actions" onclick="event.stopPropagation()">
+              <button class="btn-icon-small" onclick="editCategory('${safeCategoryId}')" title="编辑">
+                <i class="fa fa-edit"></i>
+              </button>
+              <button class="btn-icon-small delete" onclick="deleteCategory('${safeCategoryId}')" title="删除">
+                <i class="fa fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      }).join('');
+      
+      list.innerHTML = html;
+    }
+
+    function selectCategory(categoryId) {
+      const resolvedCategoryId = decodeURIComponent(String(categoryId || ''));
+      currentCategory = resolvedCategoryId;
+      renderCategoryList();
+      
+      const cat = categories.find(c => String(c._id) === resolvedCategoryId);
+      document.getElementById('currentCategoryName').textContent = cat ? `- ${cat.name}` : '- 全部商品';
+      
+      renderProductTable();
+    }
+
+    // ========== 分类弹窗 ==========
+    function openCategoryModal() {
+      document.getElementById('categoryForm').reset();
+      document.getElementById('categoryId').value = '';
+      document.getElementById('categoryModalTitle').textContent = '添加分类';
+      document.getElementById('categoryModal').classList.add('show');
+    }
+
+    function closeCategoryModal() {
+      document.getElementById('categoryModal').classList.remove('show');
+    }
+
+    async function saveCategory() {
+      const categoryId = document.getElementById('categoryId').value;
+      const data = {
+        name: document.getElementById('categoryName').value,
+        icon: document.getElementById('categoryIcon').value,
+        sort: parseInt(document.getElementById('categorySort').value) || 0,
+        game: currentGame.code
+      };
+      
+      if (!data.name) {
+        showToast('请填写分类名称', 'error');
+        return;
+      }
+      
+      try {
+        if (categoryId) {
+          await CloudBaseAPI.Product.updateCategory({ categoryId, ...data });
+        } else {
+          await CloudBaseAPI.Product.createCategory(data);
+        }
+        
+        closeCategoryModal();
+        loadCategories();
+        showToast(categoryId ? '分类更新成功' : '分类添加成功', 'success');
+      } catch (err) {
+        // 本地存储备用
+        if (categoryId) {
+          const index = categories.findIndex(c => c._id === categoryId);
+          if (index > -1) categories[index] = { ...categories[index], ...data };
+        } else {
+          data._id = 'cat_' + Date.now();
+          categories.push(data);
+        }
+        localStorage.setItem('zhimai_categories', JSON.stringify(categories));
+        closeCategoryModal();
+        renderCategoryList();
+        showToast(categoryId ? '分类更新成功' : '分类添加成功', 'success');
+      }
+    }
+
+    async function editCategory(categoryId) {
+      const resolvedCategoryId = decodeURIComponent(String(categoryId || ''));
+      const cat = categories.find(c => String(c._id) === resolvedCategoryId);
+      if (!cat) return;
+      
+      document.getElementById('categoryId').value = resolvedCategoryId;
+      document.getElementById('categoryName').value = cat.name;
+      document.getElementById('categoryIcon').value = cat.icon || 'fa-folder';
+      document.getElementById('categorySort').value = cat.sort || 0;
+      document.getElementById('categoryModalTitle').textContent = '编辑分类';
+      document.getElementById('categoryModal').classList.add('show');
+    }
+
+    async function deleteCategory(categoryId) {
+      const resolvedCategoryId = decodeURIComponent(String(categoryId || ''));
+      if (!confirm('确定要删除该分类吗？')) return;
+      
+      try {
+        await CloudBaseAPI.Product.deleteCategory({ categoryId: resolvedCategoryId });
+        loadCategories();
+        loadProducts();
+        showToast('分类已删除', 'success');
+      } catch (err) {
+        categories = categories.filter(c => String(c._id) !== resolvedCategoryId);
+        localStorage.setItem('zhimai_categories', JSON.stringify(categories));
+        renderCategoryList();
+        showToast('分类已删除', 'success');
+      }
+    }
+
+    // ========== 商品管理 ==========
+    async function loadProducts() {
+      try {
+        const result = await CloudBaseAPI.Product.list('', 1, 100);
+        products = result.data.list || [];
+        rebuildRealSalesLookup();
+        renderCategoryList(); // 更新分类计数
+        renderProductTable();
+      } catch (err) {
+        products = JSON.parse(localStorage.getItem('zhimai_products') || '[]');
+        rebuildRealSalesLookup();
+        renderCategoryList();
+        renderProductTable();
+      }
+    }
+
+    function escapeHTML(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function sanitizeImageUrl(value, fallback = 'https://via.placeholder.com/50') {
+      const raw = String(value == null ? '' : value).trim();
+      if (!raw) return fallback;
+      if (/^(https?:\/\/|data:image\/|\.{0,2}\/|\/)/i.test(raw)) return raw;
+      return fallback;
+    }
+
+    function getOrdersForSalesSync() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem('zhimai_orders') || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (err) {
+        return [];
+      }
+    }
+
+    function isOrderCountedForSales(order) {
+      const status = String(order?.status || '').trim().toLowerCase();
+      if (status === 'paid' || status === 'processing' || status === 'completed') return true;
+      const statusText = String(order?.statusText || '');
+      return (
+        statusText.includes('已支付') ||
+        statusText.includes('待处理') ||
+        statusText.includes('处理中') ||
+        statusText.includes('已完成')
+      );
+    }
+
+    function getOrderQuantity(order) {
+      const qty = Number(order?.quantity ?? order?.qty ?? 1);
+      return Number.isFinite(qty) && qty > 0 ? qty : 1;
+    }
+
+    function rebuildRealSalesLookup() {
+      const orders = getOrdersForSalesSync();
+      const lookup = new Map();
+
+      orders.forEach(order => {
+        if (!isOrderCountedForSales(order)) return;
+        const qty = getOrderQuantity(order);
+        const idCandidates = Array.from(new Set([order?.productId, order?.productID, order?.product_id]
+          .map(item => String(item || '').trim())
+          .filter(Boolean)));
+
+        idCandidates.forEach(id => {
+          lookup.set(id, Number(lookup.get(id) || 0) + qty);
+        });
+      });
+
+      realSalesLookup = lookup;
+    }
+
+    function getNextProductBusinessId() {
+      const used = products
+        .map(item => Number(item?.id))
+        .filter(value => Number.isFinite(value) && value > 0);
+      return used.length > 0 ? Math.max(...used) + 1 : 10000;
+    }
+
+    function getProductRecordKey(product) {
+      return String(product?._id || product?.id || '').trim();
+    }
+
+    function getSelectedProductIds() {
+      return Array.from(document.querySelectorAll('.row-checkbox:checked'))
+        .map(cb => String(cb.value || '').trim())
+        .filter(Boolean);
+    }
+
+    function syncSelectAllCheckbox() {
+      const selectAll = document.getElementById('selectAll');
+      if (!selectAll) return;
+      const allRows = Array.from(document.querySelectorAll('.row-checkbox'));
+      const checkedRows = allRows.filter(cb => cb.checked);
+      selectAll.indeterminate = checkedRows.length > 0 && checkedRows.length < allRows.length;
+      selectAll.checked = allRows.length > 0 && checkedRows.length === allRows.length;
+    }
+
+    function updateBatchDeleteUI() {
+      const tableContainer = document.querySelector('.table-container');
+      tableContainer?.classList.toggle('batch-delete-mode', isBatchDeleteMode);
+
+      const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+      const cancelBtn = document.getElementById('cancelBatchDeleteBtn');
+      if (batchDeleteBtn) {
+        batchDeleteBtn.innerHTML = isBatchDeleteMode
+          ? '<i class="fa fa-check"></i> 确认批量删除'
+          : '<i class="fa fa-trash"></i> 批量删除';
+      }
+      if (cancelBtn) {
+        cancelBtn.style.display = isBatchDeleteMode ? 'inline-flex' : 'none';
+      }
+
+      const selectAll = document.getElementById('selectAll');
+      if (selectAll) {
+        if (!isBatchDeleteMode) {
+          selectAll.checked = false;
+          selectAll.indeterminate = false;
+        }
+      }
+    }
+
+    function cancelBatchDeleteMode() {
+      isBatchDeleteMode = false;
+      document.querySelectorAll('.row-checkbox').forEach(cb => { cb.checked = false; });
+      updateBatchDeleteUI();
+      renderProductTable();
+    }
+
+    function renderProductTable() {
+      const tbody = document.getElementById('productTableBody');
+      let filtered = products.filter(p => p.game === currentGame.code);
+
+      // 按分类筛选
+      if (currentCategory) {
+        filtered = filtered.filter(p => p.category === currentCategory);
+      }
+
+      // 按状态筛选
+      const status = document.getElementById('statusFilter').value;
+      if (status) {
+        filtered = filtered.filter(p => p.status === status);
+      }
+
+      // 搜索筛选
+      const keyword = document.getElementById('searchInput').value.toLowerCase();
+      if (keyword) {
+        filtered = filtered.filter(p => 
+          p.name.toLowerCase().includes(keyword) || 
+          (p._id && p._id.toLowerCase().includes(keyword)) ||
+          String(p.id || '').toLowerCase().includes(keyword)
+        );
+      }
+
+      // 按 sort 字段升序排列（数字越小越靠前）
+      filtered.sort((a, b) => {
+        const sortA = Number.isFinite(Number(a.sort)) ? Number(a.sort) : 0;
+        const sortB = Number.isFinite(Number(b.sort)) ? Number(b.sort) : 0;
+        return sortA - sortB;
+      });
+
+      const gameCategories = categories.filter(c => c.game === currentGame.code);
+      const canInlineCategoryEdit = false;
+      const canInlineSortEdit = currentCategory !== '';
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr><td colspan="12">
+            <div class="empty-state">
+              <i class="fa fa-box-open"></i>
+              <h3>暂无商品数据</h3>
+              <p>点击右上角“添加商品”按钮创建新商品</p>
+            </div>
+          </td></tr>
+        `;
+        updateBatchDeleteUI();
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((p, index) => {
+        const rawId = getProductRecordKey(p);
+        const safeId = escapeHTML(rawId);
+        const safeIdForAction = encodeURIComponent(rawId);
+        const safeName = escapeHTML(p.name);
+        const safeCategory = escapeHTML(getCategoryName(p.category));
+        const safeImage = sanitizeImageUrl(p.image);
+        const safeStatus = String(p.status) === 'active' ? 'active' : 'inactive';
+        const safeStatusText = safeStatus === 'active' ? '上架中' : '已下架';
+        const safePrice = Number.isFinite(Number(p.price)) ? Number(p.price) : 0;
+        const safeCost = Number.isFinite(Number(p.cost)) ? Number(p.cost) : 0;
+        const rawProfit = Number(p.profit ?? p.unitProfit ?? p.productProfit);
+        const resolvedProfit = Number.isFinite(rawProfit) ? rawProfit : (safePrice - safeCost);
+        const safeProfit = resolvedProfit.toFixed(2);
+        const safeSort = Number.isFinite(Number(p.sort)) ? Number(p.sort) : 0;
+        const safeStock = Number.isFinite(Number(p.stock)) ? Number(p.stock) : 0;
+        const safeBusinessId = escapeHTML(String(p.id ?? '--'));
+        const productIdCandidates = [p._id, p.id]
+          .map(item => String(item || '').trim())
+          .filter(Boolean);
+        let safeSales = 0;
+        productIdCandidates.forEach(id => {
+          if (realSalesLookup.has(id)) {
+            safeSales = Number(realSalesLookup.get(id) || 0);
+          }
+        });
+        const safeCategoryId = escapeHTML(String(p.category || ''));
+
+        const categoryCell = canInlineCategoryEdit && gameCategories.length > 0
+          ? `
+              <select class="inline-category-select" data-product-id="${safeId}" data-current-category="${safeCategoryId}">
+                ${gameCategories.map(cat => {
+                  const catId = String(cat._id || '');
+                  const safeCatId = escapeHTML(catId);
+                  const safeCatName = escapeHTML(cat.name || '');
+                  const selected = catId === String(p.category || '') ? 'selected' : '';
+                  return `<option value="${safeCatId}" ${selected}>${safeCatName}</option>`;
+                }).join('')}
+              </select>
+            `
+          : safeCategory;
+        const sortCell = canInlineSortEdit
+          ? `<input type="number" class="inline-sort-input" data-product-id="${safeId}" data-current-sort="${safeSort}" value="${safeSort}" min="0" step="1">`
+          : safeSort;
+
+        return `
+          <tr>
+            <td class="checkbox-col"><input type="checkbox" class="row-checkbox" value="${safeId}"></td>
+            <td class="id-col">${safeBusinessId}</td>
+            <td class="image-col">
+              <img src="${safeImage}" class="product-img" alt="${safeName}">
+            </td>
+            <td class="name-col">
+              <div class="product-name-cell">${safeName}</div>
+            </td>
+            <td class="category-col">${categoryCell}</td>
+            <td class="price-col">¥${safePrice}</td>
+            <td class="profit-col">¥${safeProfit}</td>
+            <td class="sort-col">${sortCell}</td>
+            <td class="stock-col">${safeStock}</td>
+            <td class="sales-col">${safeSales}</td>
+            <td class="status-col">
+              <span class="status-badge ${safeStatus}">
+                <span class="status-dot"></span>
+                <span class="status-text">${safeStatusText}</span>
+              </span>
+            </td>
+            <td class="action-col">
+              <div class="action-btns">
+                <button class="action-btn" onclick="editProduct('${safeIdForAction}')" title="编辑">
+                  <i class="fa fa-edit"></i>
+                </button>
+                <button class="action-btn" onclick="toggleProductStatus('${safeIdForAction}')" title="${safeStatus === 'active' ? '下架' : '上架'}">
+                  <i class="fa ${safeStatus === 'active' ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
+                </button>
+                <button class="action-btn delete" onclick="deleteProduct('${safeIdForAction}')" title="删除">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      const selectAll = document.getElementById('selectAll');
+      if (selectAll) {
+        selectAll.checked = false;
+        selectAll.indeterminate = false;
+        selectAll.onchange = () => {
+          if (!isBatchDeleteMode) return;
+          document.querySelectorAll('.row-checkbox').forEach(cb => {
+            cb.checked = selectAll.checked;
+          });
+          syncSelectAllCheckbox();
+        };
+      }
+
+      document.querySelectorAll('.row-checkbox').forEach(cb => {
+        cb.addEventListener('change', syncSelectAllCheckbox);
+      });
+
+      if (canInlineCategoryEdit) {
+        tbody.querySelectorAll('.inline-category-select').forEach(select => {
+          select.addEventListener('change', async (event) => {
+            const target = event.currentTarget;
+            const productId = String(target.dataset.productId || '').trim();
+            const previousCategory = String(target.dataset.currentCategory || '').trim();
+            const nextCategory = String(target.value || '').trim();
+            if (!productId || !nextCategory || nextCategory === previousCategory) return;
+            const ok = await updateProductCategoryInline(productId, nextCategory);
+            if (ok) {
+              target.dataset.currentCategory = nextCategory;
+            } else {
+              target.value = previousCategory;
+            }
+          });
+        });
+      }
+
+      if (canInlineSortEdit) {
+        tbody.querySelectorAll('.inline-sort-input').forEach(input => {
+          input.addEventListener('change', async (event) => {
+            const target = event.currentTarget;
+            const productId = String(target.dataset.productId || '').trim();
+            const previousSort = Number(target.dataset.currentSort || 0);
+            const nextSort = Number(target.value);
+
+            if (!Number.isInteger(nextSort) || nextSort < 0) {
+              showToast('排序必须是大于等于 0 的整数', 'error');
+              target.value = String(previousSort);
+              return;
+            }
+            if (nextSort === previousSort) return;
+
+            const ok = await updateProductSortInline(productId, nextSort);
+            if (ok) {
+              target.dataset.currentSort = String(nextSort);
+            } else {
+              target.value = String(previousSort);
+            }
+          });
+
+          input.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              event.currentTarget.blur();
+            }
+          });
+        });
+      }
+
+      updateBatchDeleteUI();
+    }
+
+    function getCategoryName(categoryId) {
+      const cat = categories.find(c => c._id === categoryId);
+      return cat ? cat.name : '-';
+    }
+
+    function formatDate(date) {
+      if (!date) return '-';
+      const d = new Date(date);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function searchProducts() {
+      currentPage = 1;
+      renderProductTable();
+    }
+
+    async function updateProductCategoryInline(productId, categoryId) {
+      const resolvedProductId = String(productId || '').trim();
+      const resolvedCategoryId = String(categoryId || '').trim();
+      if (!resolvedProductId || !resolvedCategoryId) return false;
+
+      try {
+        if (typeof CloudBaseAPI !== 'undefined' && CloudBaseAPI.Product) {
+          await CloudBaseAPI.Product.update({ productId: resolvedProductId, category: resolvedCategoryId });
+        }
+      } catch (err) {}
+
+      const index = products.findIndex(item => getProductRecordKey(item) === resolvedProductId);
+      if (index === -1) {
+        showToast('商品不存在', 'error');
+        return false;
+      }
+
+      products[index].category = resolvedCategoryId;
+      localStorage.setItem('zhimai_products', JSON.stringify(products));
+      renderCategoryList();
+      renderProductTable();
+      showToast('商品分类已更新', 'success');
+      return true;
+    }
+
+    async function updateProductSortInline(productId, sortValue) {
+      const resolvedProductId = String(productId || '').trim();
+      const resolvedSort = Number(sortValue);
+      if (!resolvedProductId || !Number.isInteger(resolvedSort) || resolvedSort < 0) {
+        showToast('排序值无效', 'error');
+        return false;
+      }
+
+      try {
+        if (typeof CloudBaseAPI !== 'undefined' && CloudBaseAPI.Product) {
+          await CloudBaseAPI.Product.update({ productId: resolvedProductId, sort: resolvedSort });
+        }
+      } catch (err) {}
+
+      const index = products.findIndex(item => getProductRecordKey(item) === resolvedProductId);
+      if (index === -1) {
+        showToast('商品不存在', 'error');
+        return false;
+      }
+
+      products[index].sort = resolvedSort;
+      localStorage.setItem('zhimai_products', JSON.stringify(products));
+      renderProductTable();
+      showToast('商品排序已更新', 'success');
+      return true;
+    }
+
+    // 搜索框回车事件
+    document.getElementById('searchInput')?.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        searchProducts();
+      }
+    });
+
+    // ========== 商品弹窗 ==========
+    function openProductModal() {
+      if (!currentGame) {
+        showToast('请先选择游戏', 'error');
+        return;
+      }
+      
+      document.getElementById('productForm').reset();
+      document.getElementById('productId').value = '';
+      document.getElementById('modalTitle').textContent = '添加商品';
+      document.getElementById('imageUrl').value = '';
+      document.getElementById('productBusinessId').value = getNextProductBusinessId();
+      document.getElementById('uploadPlaceholder').style.display = 'block';
+      document.getElementById('imagePreview').style.display = 'none';
+      document.getElementById('uploadArea').classList.remove('has-image');
+      
+      // 填充分类选项
+      const categorySelect = document.getElementById('productCategory');
+      const gameCategories = categories.filter(c => c.game === currentGame.code);
+      
+      if (gameCategories.length === 0) {
+        categorySelect.innerHTML = '<option value="">暂无分类，请先添加</option>';
+      } else {
+        categorySelect.innerHTML = '<option value="">请选择分类</option>' + 
+          gameCategories.map(c => 
+            `<option value="${c._id}">${c.name}</option>`
+          ).join('');
+      }
+      
+      document.getElementById('productModal').classList.add('show');
+    }
+
+    function closeProductModal() {
+      document.getElementById('productModal').classList.remove('show');
+    }
+
+    async function handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      if (file.size > 2 * 1024 * 1024) {
+        showToast('图片大小不能超过 2MB', 'error');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = e.target.result.split(',')[1];
+        
+        try {
+          showToast('正在上传图片...', 'info');
+          const result = await CloudBaseAPI.callFunction('product', {
+            action: 'uploadImage',
+            data: { fileContent: base64, fileName: file.name }
+          });
+          
+          document.getElementById('imageUrl').value = result.data.url;
+          document.getElementById('previewImg').src = result.data.url;
+          document.getElementById('uploadPlaceholder').style.display = 'none';
+          document.getElementById('imagePreview').style.display = 'block';
+          document.getElementById('uploadArea').classList.add('has-image');
+          
+          showToast('图片上传成功', 'success');
+        } catch (err) {
+          showToast('图片上传失败', 'error');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeImage(e) {
+      e.stopPropagation();
+      document.getElementById('imageUrl').value = '';
+      document.getElementById('uploadPlaceholder').style.display = 'block';
+      document.getElementById('imagePreview').style.display = 'none';
+      document.getElementById('uploadArea').classList.remove('has-image');
+      document.getElementById('imageInput').value = '';
+    }
+
+    async function saveProduct() {
+      const productId = document.getElementById('productId').value;
+      const businessId = Number(document.getElementById('productBusinessId').value);
+      if (!Number.isInteger(businessId) || businessId <= 0) {
+        showToast('请输入有效且唯一的商品ID', 'error');
+        return;
+      }
+
+      const hasDuplicateId = products.some(item => {
+        const sameRecord = getProductRecordKey(item) === String(productId || '');
+        return !sameRecord && Number(item?.id) === businessId;
+      });
+      if (hasDuplicateId) {
+        showToast('商品ID已存在，请更换', 'error');
+        return;
+      }
+
+      const data = {
+        id: businessId,
+        name: document.getElementById('productName').value,
+        category: document.getElementById('productCategory').value,
+        price: parseFloat(document.getElementById('productPrice').value),
+        profit: Number(document.getElementById('productProfit').value) || 0,
+        sort: parseInt(document.getElementById('productSort').value) || 0,
+        stock: parseInt(document.getElementById('productStock').value) || 0,
+        desc: document.getElementById('productDesc').value,
+        detail: document.getElementById('productDetail').value,
+        image: document.getElementById('imageUrl').value,
+        status: document.getElementById('productStatus').checked ? 'active' : 'inactive',
+        game: currentGame.code
+      };
+      data.profit = Math.max(0, Number(data.profit) || 0);
+      data.cost = (Number(data.price) || 0) - data.profit;
+      
+      if (!data.name || !data.category || !data.price) {
+        showToast('请填写必填项', 'error');
+        return;
+      }
+      
+      try {
+        document.getElementById('saveBtn').disabled = true;
+        document.getElementById('saveBtn').textContent = '保存中...';
+        
+        if (productId) {
+          await CloudBaseAPI.Product.update({ productId, ...data });
+        } else {
+          await CloudBaseAPI.Product.create(data);
+        }
+        
+        closeProductModal();
+        loadProducts();
+        showToast(productId ? '商品更新成功' : '商品创建成功', 'success');
+      } catch (err) {
+        // 本地存储备用
+        if (productId) {
+          const index = products.findIndex(p => getProductRecordKey(p) === productId);
+          if (index > -1) products[index] = { ...products[index], ...data };
+        } else {
+          data._id = 'prod_' + Date.now();
+          data.createdAt = new Date().toISOString();
+          products.push(data);
+        }
+        localStorage.setItem('zhimai_products', JSON.stringify(products));
+        closeProductModal();
+        renderProductTable();
+        renderCategoryList();
+        showToast(productId ? '商品更新成功' : '商品创建成功', 'success');
+      } finally {
+        document.getElementById('saveBtn').disabled = false;
+        document.getElementById('saveBtn').textContent = '保存';
+      }
+    }
+
+    async function editProduct(productId) {
+      productId = decodeURIComponent(String(productId || ''));
+      const p = products.find(prod => getProductRecordKey(prod) === productId);
+      if (!p) {
+        showToast('商品不存在', 'error');
+        return;
+      }
+      
+      // 重置表单
+      document.getElementById('productForm').reset();
+      document.getElementById('productId').value = productId;
+      document.getElementById('productName').value = p.name || '';
+      document.getElementById('productBusinessId').value = p.id || '';
+      document.getElementById('productPrice').value = p.price || '';
+      const editPrice = Number(p.price) || 0;
+      const editCost = Number.isFinite(Number(p.cost)) ? Number(p.cost) : 0;
+      const editRawProfit = Number(p.profit ?? p.unitProfit ?? p.productProfit);
+      const editProfit = Number.isFinite(editRawProfit) ? editRawProfit : (editPrice - editCost);
+      document.getElementById('productProfit').value = editProfit;
+      document.getElementById('productSort').value = p.sort || 0;
+      document.getElementById('productStock').value = p.stock || 0;
+      document.getElementById('productDesc').value = p.desc || '';
+      document.getElementById('productDetail').value = p.detail || '';
+      document.getElementById('productStatus').checked = p.status === 'active';
+      
+      // 填充分类选项并选中
+      const categorySelect = document.getElementById('productCategory');
+      const gameCategories = categories.filter(c => c.game === currentGame.code);
+      categorySelect.innerHTML = '<option value="">请选择分类</option>' + 
+        gameCategories.map(c => 
+          `<option value="${c._id}" ${c._id === p.category ? 'selected' : ''}>${c.name}</option>`
+        ).join('');
+      
+      // 设置图片预览
+      if (p.image) {
+        document.getElementById('imageUrl').value = p.image;
+        document.getElementById('previewImg').src = p.image;
+        document.getElementById('uploadPlaceholder').style.display = 'none';
+        document.getElementById('imagePreview').style.display = 'block';
+        document.getElementById('uploadArea').classList.add('has-image');
+      } else {
+        document.getElementById('imageUrl').value = '';
+        document.getElementById('uploadPlaceholder').style.display = 'block';
+        document.getElementById('imagePreview').style.display = 'none';
+        document.getElementById('uploadArea').classList.remove('has-image');
+      }
+      
+      document.getElementById('modalTitle').textContent = '编辑商品';
+      document.getElementById('productModal').classList.add('show');
+    }
+
+    async function toggleProductStatus(productId) {
+      productId = decodeURIComponent(String(productId || ''));
+      const p = products.find(prod => getProductRecordKey(prod) === productId);
+      if (!p) {
+        showToast('商品不存在', 'error');
+        return;
+      }
+      
+      const newStatus = p.status === 'active' ? 'inactive' : 'active';
+      const actionText = newStatus === 'active' ? '上架' : '下架';
+      
+      if (!confirm(`确定要${actionText}该商品吗？`)) return;
+      
+      try {
+        // 尝试调用云函数
+        if (typeof CloudBaseAPI !== 'undefined' && CloudBaseAPI.Product) {
+          await CloudBaseAPI.Product.update({ productId, status: newStatus });
+        }
+        p.status = newStatus;
+        await loadProducts();
+        showToast(`商品已${actionText}`, 'success');
+      } catch (err) {
+        // 本地更新
+        p.status = newStatus;
+        localStorage.setItem('zhimai_products', JSON.stringify(products));
+        renderProductTable();
+        showToast(`商品已${actionText}`, 'success');
+      }
+    }
+
+    async function deleteProduct(productId) {
+      productId = decodeURIComponent(String(productId || ''));
+      if (!confirm('确定要删除该商品吗？')) return;
+      
+      try {
+        await CloudBaseAPI.Product.delete(productId);
+        loadProducts();
+        showToast('商品已删除', 'success');
+      } catch (err) {
+      products = products.filter(p => getProductRecordKey(p) !== productId);
+        localStorage.setItem('zhimai_products', JSON.stringify(products));
+        renderProductTable();
+        renderCategoryList();
+        showToast('商品已删除', 'success');
+      }
+    }
+
+    // 批量操作
+    function batchExport() {
+      showToast('导出功能开发中...', 'info');
+    }
+
+    async function performBatchDelete(selectedIds) {
+      const normalizedIds = selectedIds.map(id => String(id || '').trim()).filter(Boolean);
+      if (normalizedIds.length === 0) return;
+
+      try {
+        if (typeof CloudBaseAPI !== 'undefined' && CloudBaseAPI.Product) {
+          for (const id of normalizedIds) {
+            await CloudBaseAPI.Product.delete(id);
+          }
+        } else {
+          throw new Error('cloud unavailable');
+        }
+      } catch (err) {}
+
+      products = products.filter(p => !normalizedIds.includes(getProductRecordKey(p)));
+      localStorage.setItem('zhimai_products', JSON.stringify(products));
+      renderCategoryList();
+    }
+
+    async function batchDelete() {
+      if (!isBatchDeleteMode) {
+        isBatchDeleteMode = true;
+        updateBatchDeleteUI();
+        renderProductTable();
+        showToast('请选择要删除的商品，然后再次点击“确认批量删除”', 'info');
+        return;
+      }
+
+      const selected = getSelectedProductIds();
+      if (selected.length === 0) {
+        showToast('请先选择要删除的商品', 'error');
+        return;
+      }
+
+      if (!confirm(`已选择 ${selected.length} 个商品，确认删除吗？`)) return;
+      if (!confirm('二次确认：删除后不可恢复，确定继续删除？')) return;
+
+      await performBatchDelete(selected);
+      cancelBatchDeleteMode();
+      showToast(`已删除 ${selected.length} 个商品`, 'success');
+    }
+
+    // 显示提示
+    function showToast(message, type = 'success') {
+      let container = document.querySelector('.toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+      }
+
+      const iconMap = {
+        success: 'check-circle',
+        error: 'times-circle',
+        info: 'info-circle',
+        warning: 'exclamation-triangle'
+      };
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<i class="fa fa-${iconMap[type] || iconMap.info}"></i><span>${escapeHTML(String(message || ''))}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 300);
+      }, 2700);
+    }
+  </script>
+</body>
+</html>

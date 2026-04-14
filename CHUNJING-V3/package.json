@@ -1,0 +1,28 @@
+{
+  "name": "zhimai-esports",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "skills:install": "bash install-all-skills.sh",
+    "skills:check": "npm run check:codebase && npm run check:schema && npm run check:security && npm run check:ui && npm run check:boundaries",
+    "skills:report": "npm run report:all",
+    "check:codebase": "echo \"📍 Skill 1: 分析代码所有权...\" && node tools/scripts/check-codebase.js",
+    "check:schema": "echo \"📍 Skill 2: 验证数据结构...\" && node tools/scripts/check-schema.js",
+    "check:refactor": "echo \"📍 Skill 3: 检查重构风险...\" && node tools/scripts/check-refactor.js",
+    "check:duplicates": "echo \"📍 Skill 4: 检测重复页面...\" && node tools/scripts/check-duplicates.js",
+    "check:encoding": "echo \"📍 Skill 5: 检查字符编码...\" && node tools/scripts/check-encoding.js",
+    "check:security": "echo \"[Skill 6] Security check...\" && eslint eslint.config.js tools/scripts/check-security.js js/payment-password.js js/cloudbase.js && node tools/scripts/check-security.js",
+    "check:ui": "echo \"[Skill 7] UI consistency check...\" && stylelint \"css/**/*.css\" \"admin/css/**/*.css\" || echo \"Stylelint issues found; continue report.\" && node tools/scripts/check-ui.js",
+    "check:boundaries": "echo \"[Skill 8] Architecture boundaries...\" && depcruise js admin/js --exclude \"^node_modules|^tmp|^test-results\"",
+    "report:all": "npm run check:codebase && npm run check:schema && npm run check:refactor && npm run check:duplicates && npm run check:encoding && npm run check:security && npm run check:ui && npm run check:boundaries"
+  },
+  "devDependencies": {
+    "ajv": "^8.18.0",
+    "chardet": "^2.1.1",
+    "dependency-cruiser": "^17.3.10",
+    "eslint": "^10.2.0",
+    "iconv-lite": "^0.7.2",
+    "stylelint": "^17.6.0",
+    "stylelint-config-standard": "^40.0.0"
+  }
+}

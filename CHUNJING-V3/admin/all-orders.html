@@ -1,0 +1,627 @@
+<!-- LEGACY/FROZEN PAGE: Reference-only page. Do NOT add new features here. Active order-management mainline owners: orders.html, order-pending.html, order-processing.html, order-completed.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>全体订单管理 - 织麦电竞后台</title>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <style>
+    .order-filters {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .filter-select,
+    .filter-input {
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 13px;
+      background: var(--card-bg);
+      color: var(--text-primary);
+    }
+
+    .order-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+    }
+
+    .order-tab {
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: var(--transition);
+      color: var(--text-secondary);
+      position: relative;
+    }
+
+    .order-tab:hover {
+      background: rgba(99, 102, 241, 0.05);
+      color: var(--primary);
+    }
+
+    .order-tab.active {
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .order-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -13px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--primary);
+    }
+
+    .order-tab .badge {
+      margin-left: 6px;
+      padding: 2px 8px;
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border-radius: 10px;
+      font-size: 11px;
+    }
+
+    .data-table {
+      width: 100%;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .data-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .data-table th {
+      background: rgba(99, 102, 241, 0.05);
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .data-table tr:hover {
+      background: rgba(99, 102, 241, 0.02);
+    }
+
+    .order-id {
+      font-family: monospace;
+      font-size: 13px;
+      color: var(--primary);
+      cursor: pointer;
+    }
+
+    .order-id:hover {
+      text-decoration: underline;
+    }
+
+    .product-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .product-thumb {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: var(--content-bg);
+    }
+
+    .product-details {
+      flex: 1;
+    }
+
+    .product-name {
+      font-size: 14px;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .product-spec {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .customer-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .customer-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .customer-details {
+      flex: 1;
+    }
+
+    .customer-name {
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .customer-phone {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .price {
+      font-weight: 600;
+      color: #ef4444;
+    }
+
+    .status-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      display: inline-block;
+    }
+
+    .status-badge.pending { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .status-badge.paid { background: rgba(99, 102, 241, 0.15); color: #6366f1; }
+    .status-badge.shipped { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    .status-badge.completed { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+    .status-badge.cancelled { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+    .status-badge.refunding { background: rgba(107, 114, 128, 0.15); color: #6b7280; }
+
+    .action-btns {
+      display: flex;
+      gap: 6px;
+    }
+
+    .action-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .action-btn.view { background: rgba(99, 102, 241, 0.1); color: var(--primary); }
+    .action-btn.view:hover { background: var(--primary); color: #fff; }
+    .action-btn.edit { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+    .action-btn.edit:hover { background: #f59e0b; color: #fff; }
+    .action-btn.delete { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    .action-btn.delete:hover { background: #ef4444; color: #fff; }
+
+    .batch-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      margin-top: 20px;
+    }
+
+    .batch-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .batch-left label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .batch-left input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+    }
+
+    .batch-right {
+      display: flex;
+      gap: 8px;
+    }
+
+    @media (max-width: 1200px) {
+      .data-table {
+        overflow-x: auto;
+      }
+
+      .data-table table {
+        min-width: 1000px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 顶部导航 -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="menu-toggle" id="menuToggle">
+            <i class="fa fa-bars"></i>
+          </button>
+          <h1 class="page-title">全体订单管理</h1>
+        </div>
+        <div class="header-right">
+          <div class="search-box">
+            <i class="fa fa-search"></i>
+            <input type="text" placeholder="搜索订单号/商品/客户...">
+          </div>
+          <div class="user-dropdown" id="userDropdown">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin" alt="avatar" class="user-avatar">
+            <div class="header-user-info"><span>管理员</span><span class="header-user-role">超管</span></div>
+            <i class="fa fa-chevron-down" style="font-size: 12px; color: var(--text-muted);"></i>
+            <div class="dropdown-menu" id="dropdownMenu">
+              <a href="#"><i class="fa fa-user"></i> 个人中心</a>
+              <a href="#" id="logoutBtn"><i class="fa fa-sign-out-alt"></i> 退出登录</a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- 页面内容 -->
+      <div class="content-wrapper">
+        <div class="page-content">
+        <!-- 筛选条件 -->
+        <div class="order-filters">
+          <div class="filter-group">
+            <span class="filter-label">订单类型：</span>
+            <select class="filter-select">
+              <option value="">全部类型</option>
+              <option value="product">商品订单</option>
+              <option value="boost">代练订单</option>
+              <option value="play">陪玩订单</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">下单时间：</span>
+            <input type="date" class="filter-input">
+            <span style="color: var(--text-muted);">至</span>
+            <input type="date" class="filter-input">
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">价格区间：</span>
+            <input type="number" class="filter-input" placeholder="最低价" style="width: 100px;">
+            <span style="color: var(--text-muted);">-</span>
+            <input type="number" class="filter-input" placeholder="最高价" style="width: 100px;">
+          </div>
+          <button class="btn btn-primary" style="padding: 8px 16px; font-size: 13px;">
+            <i class="fa fa-filter"></i> ɸѡ
+          </button>
+          <button class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px;">
+            <i class="fa fa-download"></i> 导出
+          </button>
+        </div>
+
+        <!-- 状态标签 -->
+        <div class="order-tabs">
+          <div class="order-tab active">全部订单 <span class="badge">2,456</span></div>
+          <div class="order-tab">待付款 <span class="badge">23</span></div>
+          <div class="order-tab">待发货 <span class="badge">45</span></div>
+          <div class="order-tab">待收货 <span class="badge">67</span></div>
+          <div class="order-tab">已完成</div>
+          <div class="order-tab">已取消</div>
+          <div class="order-tab">退款中 <span class="badge">8</span></div>
+        </div>
+
+        <!-- 订单表格 -->
+        <div class="data-table">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 40px;"><input type="checkbox"></th>
+                <th>订单号</th>
+                <th>商品信息</th>
+                <th>客户信息</th>
+                <th>订单金额</th>
+                <th>订单状态</th>
+                <th>下单时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="order-id">DD20240329001</span></td>
+                <td>
+                  <div class="product-info">
+                    <div class="product-thumb" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; color: #fff;">
+                      <i class="fa fa-gamepad"></i>
+                    </div>
+                    <div class="product-details">
+                      <div class="product-name">青铜→白银代练服务</div>
+                      <div class="product-spec">代练 | 预计24小时</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="customer-info">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user1" alt="" class="customer-avatar">
+                    <div class="customer-details">
+                      <div class="customer-name">张三</div>
+                      <div class="customer-phone">138****8888</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="price">¥299.00</span></td>
+                <td><span class="status-badge paid">已付款</span></td>
+                <td>2024-03-29 14:30:25</td>
+                <td>
+                  <div class="action-btns">
+                    <button class="action-btn view" title="查看"><i class="fa fa-eye"></i></button>
+                    <button class="action-btn edit" title="编辑"><i class="fa fa-edit"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="order-id">DD20240329002</span></td>
+                <td>
+                  <div class="product-info">
+                    <div class="product-thumb" style="background: linear-gradient(135deg, #f59e0b, #fbbf24); display: flex; align-items: center; justify-content: center; color: #fff;">
+                      <i class="fa fa-trophy"></i>
+                    </div>
+                    <div class="product-details">
+                      <div class="product-name">黄金→铂金代练服务</div>
+                      <div class="product-spec">代练 | 预计48小时</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="customer-info">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user2" alt="" class="customer-avatar">
+                    <div class="customer-details">
+                      <div class="customer-name">李四</div>
+                      <div class="customer-phone">139****6666</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="price">¥599.00</span></td>
+                <td><span class="status-badge pending">待付款</span></td>
+                <td>2024-03-29 10:15:33</td>
+                <td>
+                  <div class="action-btns">
+                    <button class="action-btn view" title="查看"><i class="fa fa-eye"></i></button>
+                    <button class="action-btn edit" title="编辑"><i class="fa fa-edit"></i></button>
+                    <button class="action-btn delete" title="取消"><i class="fa fa-times"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="order-id">DD20240328015</span></td>
+                <td>
+                  <div class="product-info">
+                    <div class="product-thumb" style="background: linear-gradient(135deg, #10b981, #34d399); display: flex; align-items: center; justify-content: center; color: #fff;">
+                      <i class="fa fa-microphone"></i>
+                    </div>
+                    <div class="product-details">
+                      <div class="product-name">语音陪玩1小时</div>
+                      <div class="product-spec">陪玩 | 小姐姐</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="customer-info">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user3" alt="" class="customer-avatar">
+                    <div class="customer-details">
+                      <div class="customer-name">王五</div>
+                      <div class="customer-phone">137****9999</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="price">¥88.00</span></td>
+                <td><span class="status-badge completed">已完成</span></td>
+                <td>2024-03-28 22:00:15</td>
+                <td>
+                  <div class="action-btns">
+                    <button class="action-btn view" title="查看"><i class="fa fa-eye"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="order-id">DD20240328018</span></td>
+                <td>
+                  <div class="product-info">
+                    <div class="product-thumb" style="background: linear-gradient(135deg, #ec4899, #f472b6); display: flex; align-items: center; justify-content: center; color: #fff;">
+                      <i class="fa fa-star"></i>
+                    </div>
+                    <div class="product-details">
+                      <div class="product-name">排位保护卡x10</div>
+                      <div class="product-spec">道具 | 虚拟商品</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="customer-info">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user4" alt="" class="customer-avatar">
+                    <div class="customer-details">
+                      <div class="customer-name">赵六</div>
+                      <div class="customer-phone">136****7777</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="price">¥29.00</span></td>
+                <td><span class="status-badge shipped">已发货</span></td>
+                <td>2024-03-28 18:45:22</td>
+                <td>
+                  <div class="action-btns">
+                    <button class="action-btn view" title="查看"><i class="fa fa-eye"></i></button>
+                    <button class="action-btn edit" title="编辑"><i class="fa fa-edit"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="order-id">DD20240328020</span></td>
+                <td>
+                  <div class="product-info">
+                    <div class="product-thumb" style="background: linear-gradient(135deg, #6b7280, #9ca3af); display: flex; align-items: center; justify-content: center; color: #fff;">
+                      <i class="fa fa-undo"></i>
+                    </div>
+                    <div class="product-details">
+                      <div class="product-name">周常任务代打</div>
+                      <div class="product-spec">代练 | 全包</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="customer-info">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user5" alt="" class="customer-avatar">
+                    <div class="customer-details">
+                      <div class="customer-name">钱七</div>
+                      <div class="customer-phone">135****5555</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="price">¥199.00</span></td>
+                <td><span class="status-badge refunding">退款中</span></td>
+                <td>2024-03-28 15:20:10</td>
+                <td>
+                  <div class="action-btns">
+                    <button class="action-btn view" title="查看"><i class="fa fa-eye"></i></button>
+                    <button class="action-btn edit" title="处理退款"><i class="fa fa-hand-holding-usd"></i></button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 批量操作 -->
+        <div class="batch-actions">
+          <div class="batch-left">
+            <label><input type="checkbox"> ȫѡ</label>
+            <span style="color: var(--text-muted); font-size: 13px;">已选 0 项</span>
+          </div>
+          <div class="batch-right">
+            <button class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px;">批量发货</button>
+            <button class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px;">批量取消</button>
+            <button class="btn btn-danger" style="padding: 8px 16px; font-size: 13px; background: #ef4444; color: #fff;">批量删除</button>
+          </div>
+        </div>
+
+        <!-- 分页 -->
+        <div class="pagination">
+          <button class="page-btn" disabled><i class="fa fa-chevron-left"></i></button>
+          <button class="page-btn active">1</button>
+          <button class="page-btn">2</button>
+          <button class="page-btn">3</button>
+          <button class="page-btn">4</button>
+          <button class="page-btn">5</button>
+          <span class="page-btn" style="border: none; cursor: default;">...</span>
+          <button class="page-btn">50</button>
+          <button class="page-btn"><i class="fa fa-chevron-right"></i></button>
+        </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    // 检查登录状态
+    if (localStorage.getItem('zhimai_admin_logged_in') !== 'true') {
+      window.location.href = 'login.html';
+    }
+
+    // 退出登录
+    document.getElementById('logoutBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      localStorage.removeItem('zhimai_admin_logged_in');
+      localStorage.removeItem('zhimai_admin_user');
+      window.location.href = 'login.html';
+    });
+
+    // 下拉菜单
+    document.getElementById('userDropdown').addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.getElementById('dropdownMenu').classList.toggle('show');
+    });
+
+    document.addEventListener('click', function() {
+      document.getElementById('dropdownMenu').classList.remove('show');
+    });
+
+    // 订单标签切换
+    document.querySelectorAll('.order-tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.order-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // 侧边栏切换
+    document.getElementById('sidebarToggle').addEventListener('click', function() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    });
+
+    document.getElementById('menuToggle').addEventListener('click', function() {
+      document.getElementById('sidebar').classList.toggle('show');
+    });
+
+    // 子菜单切换
+    document.querySelectorAll('.nav-item.has-submenu > .nav-link').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const parent = this.parentElement;
+        parent.classList.toggle('open');
+      });
+    });
+  </script>
+</body>
+</html>

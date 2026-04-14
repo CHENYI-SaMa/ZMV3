@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>已完成订单 - 织麦电竞后台</title>
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <div class="admin-container">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <header class="top-header">
+        <div class="header-left">
+          <button class="sidebar-toggle" id="sidebarToggle"><i class="fa fa-bars"></i></button>
+          <span class="page-title">已完成订单</span>
+        </div>
+        <div class="header-right">
+          <div class="header-actions">
+            <div class="user-dropdown" id="userDropdown">
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin" alt="avatar" class="user-avatar">
+              <div class="header-user-info"><span class="user-name" id="adminName">管理员</span><span class="header-user-role">超管</span></div>
+              <i class="fa fa-chevron-down" style="font-size:12px;color:var(--text-muted);"></i>
+              <div class="dropdown-menu" id="dropdownMenu">
+                <a href="#"><i class="fa fa-user"></i> 个人中心</a>
+                <div style="border-top:1px solid var(--border-color);margin:8px 0;"></div>
+                <a href="#" id="logoutBtn"><i class="fa fa-sign-out-alt"></i> 退出登录</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="content-wrapper">
+        <div style="background:rgba(82,196,26,0.1);border:1px solid rgba(82,196,26,0.3);border-radius:8px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+          <i class="fa fa-check-circle" style="color:#52c41a;font-size:18px;"></i>
+          <div>
+            <strong style="color:#52c41a;">已完成</strong>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <div class="filter-left">
+            <input type="text" class="filter-input" id="filterSearch" placeholder="搜索订单号、用户">
+            <select class="filter-select" id="filterDate">
+              <option value="">全部时间</option>
+              <option value="day">今日</option>
+              <option value="week">本周</option>
+              <option value="month">本月</option>
+              <option value="quarter">本季</option>
+              <option value="year">本年</option>
+            </select>
+            <button class="btn btn-primary" onclick="applyFilter()"><i class="fa fa-search"></i> 搜索</button>
+            <button class="btn btn-outline" onclick="resetFilter()"><i class="fa fa-undo"></i> 重置</button>
+          </div>
+          <div class="filter-right">
+            <button class="btn btn-outline" onclick="exportCompleted()">
+              <i class="fa fa-download"></i> 导出数据
+            </button>
+          </div>
+        </div>
+
+        <div class="data-card">
+          <div class="table-header">
+            <span class="table-title">已完成订单列表</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>订单号</th>
+                  <th>用户</th>
+                  <th>商品</th>
+                  <th>金额</th>
+                  <th>支付方式</th>
+                  <th>完成时间</th>
+                  <th>用时</th>
+                  <th width="120">操作</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="pagination"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal" id="detailModal">
+    <div class="modal-overlay" onclick="closeModal('detailModal')"></div>
+    <div class="modal-content" style="max-width:600px;">
+      <div class="modal-header">
+        <h3 class="modal-title">订单详情</h3>
+        <button class="modal-close" onclick="closeModal('detailModal')"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="modal-body" id="detailBody"></div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('detailModal')">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    if (localStorage.getItem('zhimai_admin_logged_in') !== 'true') window.location.href = 'login.html';
+    document.getElementById('logoutBtn').addEventListener('click', e => {
+      e.preventDefault();
+      localStorage.removeItem('zhimai_admin_logged_in');
+      window.location.href = 'login.html';
+    });
+    document.getElementById('userDropdown').addEventListener('click', e => {
+      e.stopPropagation();
+      document.getElementById('dropdownMenu').classList.toggle('show');
+    });
+    document.addEventListener('click', () => document.getElementById('dropdownMenu').classList.remove('show'));
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    });
+
+    const adminInfo = JSON.parse(localStorage.getItem('zhimai_admin_user') || '{}');
+    if (adminInfo.username) document.getElementById('adminName').textContent = adminInfo.username;
+
+    let allOrders = [];
+    let filteredOrders = [];
+    let currentPage = 1;
+    const pageSize = 15;
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function escapeJsSingleQuote(value) {
+      return String(value ?? '')
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'");
+    }
+
+    function sanitizeImageUrl(value, fallback) {
+      const raw = String(value || '').trim();
+      if (!raw) return fallback;
+      if (/^(https?:\/\/|data:image\/|\/|\.{1,2}\/)/i.test(raw)) {
+        return raw;
+      }
+      return fallback;
+    }
+
+    function getDashboardPeriodRange(period, baseDate = new Date()) {
+      const now = new Date(baseDate);
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const day = now.getDate();
+      let start;
+      let end;
+
+      switch (period) {
+        case 'day':
+          start = new Date(year, month, day);
+          end = new Date(year, month, day + 1);
+          break;
+        case 'week': {
+          const weekDay = (now.getDay() + 6) % 7;
+          start = new Date(year, month, day - weekDay);
+          end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7);
+          break;
+        }
+        case 'quarter': {
+          const quarterStartMonth = Math.floor(month / 3) * 3;
+          start = new Date(year, quarterStartMonth, 1);
+          end = new Date(year, quarterStartMonth + 3, 1);
+          break;
+        }
+        case 'year':
+          start = new Date(year, 0, 1);
+          end = new Date(year + 1, 0, 1);
+          break;
+        case 'month':
+        default:
+          start = new Date(year, month, 1);
+          end = new Date(year, month + 1, 1);
+          break;
+      }
+
+      return { start, end };
+    }
+
+    function isDateInDashboardRange(date, range) {
+      return !!date && date >= range.start && date < range.end;
+    }
+
+    function loadOrders() {
+      const orders = dataManager.getOrders();
+      allOrders = orders.filter(o => o.status === 'completed').sort((a, b) =>
+        new Date(b.completedAt || b.createdAt) - new Date(a.completedAt || a.createdAt)
+      );
+      applyFilter();
+    }
+
+    function applyFilter() {
+      const search = document.getElementById('filterSearch').value.trim().toLowerCase();
+      const dateFilter = document.getElementById('filterDate').value;
+      const now = new Date();
+      const periodRange = dateFilter ? getDashboardPeriodRange(dateFilter, now) : null;
+      filteredOrders = allOrders.filter(o => {
+        if (search && !o.id.toLowerCase().includes(search) && !o.username.toLowerCase().includes(search)) return false;
+        if (periodRange) {
+          const t = new Date(o.completedAt || o.createdAt);
+          if (!isDateInDashboardRange(t, periodRange)) return false;
+        }
+        return true;
+      });
+      currentPage = 1;
+      renderTable();
+    }
+
+    function resetFilter() {
+      document.getElementById('filterSearch').value = '';
+      document.getElementById('filterDate').value = '';
+      applyFilter();
+    }
+
+    function calcDuration(order) {
+      const start = new Date(order.createdAt);
+      const end = new Date(order.completedAt || order.createdAt);
+      const h = Math.floor((end - start) / 3600000);
+      if (h < 1) return '< 1小时';
+      if (h < 24) return `${h}小时`;
+      return `${Math.floor(h / 24)}天${h % 24}小时`;
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      const start = (currentPage - 1) * pageSize;
+      const pageData = filteredOrders.slice(start, start + pageSize);
+      const payMap = { wechat: '微信', alipay: '支付宝', balance: '余额' };
+      tbody.textContent = '';
+
+      if (!pageData.length) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 8;
+        td.style.textAlign = 'center';
+        td.style.padding = '48px';
+        td.style.color = 'var(--text-muted)';
+        const icon = document.createElement('i');
+        icon.className = 'fa fa-check-circle';
+        icon.style.cssText = 'font-size:32px;display:block;margin-bottom:8px;color:var(--success);';
+        td.appendChild(icon);
+        td.appendChild(document.createTextNode('暂无已完成订单'));
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        document.getElementById('pagination').textContent = '';
+        return;
+      }
+
+      pageData.forEach((o) => {
+        const tr = document.createElement('tr');
+
+        const tdOrderId = document.createElement('td');
+        const orderStrong = document.createElement('strong');
+        orderStrong.style.color = '#52c41a';
+        orderStrong.textContent = o.id || '--';
+        tdOrderId.appendChild(orderStrong);
+        tr.appendChild(tdOrderId);
+
+        const tdUser = document.createElement('td');
+        const userName = document.createElement('div');
+        userName.textContent = o.username || '--';
+        const userId = document.createElement('small');
+        userId.style.color = 'var(--text-muted)';
+        userId.textContent = o.userId || '--';
+        tdUser.appendChild(userName);
+        tdUser.appendChild(userId);
+        tr.appendChild(tdUser);
+
+        const tdProduct = document.createElement('td');
+        const productWrap = document.createElement('div');
+        productWrap.style.cssText = 'display:flex;align-items:center;gap:8px;';
+        const productImage = document.createElement('img');
+        productImage.src = sanitizeImageUrl(
+          o.productImage,
+          'https://via.placeholder.com/36x28/333/999?text=%E5%95%86%E5%93%81'
+        );
+        productImage.style.cssText = 'width:36px;height:28px;object-fit:cover;border-radius:4px;';
+        const productText = document.createElement('span');
+        const rawProductName = String(o.productName || '--');
+        productText.textContent = rawProductName.length > 18 ? `${rawProductName.substring(0, 18)}...` : rawProductName;
+        productWrap.appendChild(productImage);
+        productWrap.appendChild(productText);
+        tdProduct.appendChild(productWrap);
+        tr.appendChild(tdProduct);
+
+        const tdAmount = document.createElement('td');
+        tdAmount.className = 'price';
+        tdAmount.textContent = `¥${Number(o.totalAmount || 0).toFixed(2)}`;
+        tr.appendChild(tdAmount);
+
+        const tdPayment = document.createElement('td');
+        tdPayment.textContent = payMap[o.paymentMethod] || '--';
+        tr.appendChild(tdPayment);
+
+        const tdCompletedAt = document.createElement('td');
+        tdCompletedAt.textContent = new Date(o.completedAt || o.createdAt).toLocaleString('zh-CN');
+        tr.appendChild(tdCompletedAt);
+
+        const tdDuration = document.createElement('td');
+        tdDuration.style.color = 'var(--text-secondary)';
+        tdDuration.textContent = calcDuration(o);
+        tr.appendChild(tdDuration);
+
+        const tdActions = document.createElement('td');
+        const viewBtn = document.createElement('button');
+        viewBtn.type = 'button';
+        viewBtn.className = 'btn-icon btn-edit';
+        viewBtn.title = '查看详情';
+        viewBtn.addEventListener('click', () => viewDetail(o.id));
+        const viewIcon = document.createElement('i');
+        viewIcon.className = 'fa fa-eye';
+        viewBtn.appendChild(viewIcon);
+        tdActions.appendChild(viewBtn);
+        tr.appendChild(tdActions);
+
+        tbody.appendChild(tr);
+      });
+
+      renderPagination(filteredOrders.length);
+    }
+
+    function renderPagination(total) {
+      const pages = Math.ceil(total / pageSize);
+      const pagination = document.getElementById('pagination');
+      pagination.textContent = '';
+      if (pages <= 1) return;
+
+      const totalSpan = document.createElement('span');
+      totalSpan.style.color = 'var(--text-secondary)';
+      totalSpan.textContent = `共 ${total} 条`;
+      pagination.appendChild(totalSpan);
+
+      for (let i = 1; i <= pages; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.type = 'button';
+        pageBtn.className = `page-btn${i === currentPage ? ' active' : ''}`;
+        pageBtn.textContent = String(i);
+        pageBtn.addEventListener('click', () => gotoPage(i));
+        pagination.appendChild(pageBtn);
+      }
+    }
+
+    function gotoPage(p) { currentPage = p; renderTable(); }
+
+    function viewDetail(orderId) {
+      const orders = dataManager.getOrders();
+      const o = orders.find(order => order.id === orderId);
+      if (!o) return;
+      const payMap = { wechat: '微信支付', alipay: '支付宝支付', balance: '余额支付' };
+      const detailBody = document.getElementById('detailBody');
+      detailBody.textContent = '';
+
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'display:grid;gap:12px;';
+
+      const row1 = document.createElement('div');
+      row1.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:12px;';
+      const orderNoBlock = document.createElement('div');
+      const orderNoLabel = document.createElement('span');
+      orderNoLabel.style.color = 'var(--text-secondary)';
+      orderNoLabel.textContent = '订单号：';
+      const orderNoStrong = document.createElement('strong');
+      orderNoStrong.textContent = o.id || '--';
+      orderNoBlock.appendChild(orderNoLabel);
+      orderNoBlock.appendChild(orderNoStrong);
+      row1.appendChild(orderNoBlock);
+      const statusBlock = document.createElement('div');
+      const statusLabel = document.createElement('span');
+      statusLabel.style.color = 'var(--text-secondary)';
+      statusLabel.textContent = '状态：';
+      const statusBadge = document.createElement('span');
+      statusBadge.className = 'status-badge completed';
+      statusBadge.textContent = '已完成';
+      statusBlock.appendChild(statusLabel);
+      statusBlock.appendChild(statusBadge);
+      row1.appendChild(statusBlock);
+      wrap.appendChild(row1);
+
+      const row2 = document.createElement('div');
+      row2.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:12px;';
+      const userBlock = document.createElement('div');
+      const userLabel = document.createElement('span');
+      userLabel.style.color = 'var(--text-secondary)';
+      userLabel.textContent = '用户：';
+      userBlock.appendChild(userLabel);
+      userBlock.appendChild(document.createTextNode(o.username || '--'));
+      row2.appendChild(userBlock);
+      const amountBlock = document.createElement('div');
+      const amountLabel = document.createElement('span');
+      amountLabel.style.color = 'var(--text-secondary)';
+      amountLabel.textContent = '金额：';
+      const amountPrice = document.createElement('span');
+      amountPrice.className = 'price';
+      amountPrice.textContent = `¥${Number(o.totalAmount || 0).toFixed(2)}`;
+      amountBlock.appendChild(amountLabel);
+      amountBlock.appendChild(amountPrice);
+      row2.appendChild(amountBlock);
+      wrap.appendChild(row2);
+
+      function appendLine(label, value) {
+        const line = document.createElement('div');
+        const lineLabel = document.createElement('span');
+        lineLabel.style.color = 'var(--text-secondary)';
+        lineLabel.textContent = `${label}：`;
+        line.appendChild(lineLabel);
+        line.appendChild(document.createTextNode(value));
+        wrap.appendChild(line);
+      }
+
+      appendLine('商品', o.productName || '--');
+      appendLine('支付方式', payMap[o.paymentMethod] || '--');
+      appendLine('下单时间', new Date(o.createdAt).toLocaleString('zh-CN'));
+      appendLine('完成时间', new Date(o.completedAt || o.createdAt).toLocaleString('zh-CN'));
+      if (o.gameAccount) appendLine('游戏账号', o.gameAccount);
+      if (o.remark) appendLine('备注', o.remark);
+
+      detailBody.appendChild(wrap);
+      document.getElementById('detailModal').classList.add('active');
+    }
+
+    function exportCompleted() {
+      showToast('导出功能开发中...', 'info');
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+    function showToast(msg, type = 'info') {
+      const existing = document.querySelector('.zm-toast');
+      if (existing) existing.remove();
+      const colors = { success: '#10b981', warning: '#f59e0b', error: '#ef4444', info: '#3b82f6' };
+      const toast = document.createElement('div');
+      toast.style.cssText = `position:fixed;top:20px;right:20px;background:${colors[type]};color:#fff;padding:12px 20px;border-radius:8px;z-index:9999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.3);`;
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    loadOrders();
+  </script>
+</body>
+</html>

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>分类管理 - 织麦电竞后台</title>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <style>
+    .category-tree {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .category-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+      transition: background 0.2s;
+    }
+    
+    .category-item:hover {
+      background: rgba(255,255,255,0.05);
+    }
+    
+    .category-item:last-child {
+      border-bottom: none;
+    }
+    
+    .category-level-1 {
+      padding-left: 16px;
+    }
+    
+    .category-level-2 {
+      padding-left: 48px;
+    }
+    
+    .category-level-3 {
+      padding-left: 80px;
+    }
+    
+    .category-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      font-size: 1.2rem;
+    }
+    
+    .category-info {
+      flex: 1;
+    }
+    
+    .category-name {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    
+    .category-meta {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    
+    .category-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .category-actions button {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+    }
+    
+    .btn-add-sub {
+      background: var(--success);
+    }
+    
+    .btn-edit {
+      background: var(--warning);
+    }
+    
+    .btn-delete {
+      background: var(--danger);
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+    }
+    
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+    
+    /* 模态框样式 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    
+    .modal-overlay.active {
+      display: flex;
+    }
+    
+    .modal-content {
+      background: var(--card-bg);
+      border-radius: 16px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    
+    .modal-body {
+      padding: 24px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--input-bg);
+      color: var(--text-primary);
+      font-size: 1rem;
+    }
+    
+    .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+    
+    .icon-preview {
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 顶部导航 -->
+      <header class="top-header">
+        <button class="menu-toggle" id="menuToggle">
+          <i class="fa fa-bars"></i>
+        </button>
+        <h1 class="page-title">分类管理</h1>
+        <div class="nav-actions">
+          <button class="btn btn-primary" onclick="openModal()">
+            <i class="fa fa-plus"></i> 新建分类
+          </button>
+        </div>
+      </header>
+
+      <!-- 页面内容 -->
+      <div class="content-wrapper">
+        <!-- 分类列表 -->
+        <div class="category-tree" id="categoryTree">
+          <div class="empty-state">
+            <i class="fa fa-spinner fa-spin"></i>
+            <p>加载中...</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 分类编辑模态框 -->
+  <div class="modal-overlay" id="categoryModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">新建分类</h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="categoryForm">
+          <input type="hidden" id="categoryId">
+          <input type="hidden" id="parentId">
+          
+          <div class="form-group">
+            <label>分类名称 *</label>
+            <input type="text" id="categoryName" placeholder="请输入分类名称" required>
+          </div>
+          
+          <div class="form-group">
+            <label>上级分类</label>
+            <select id="parentCategory">
+              <option value="">无（作为一级分类）</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>图标类名（FontAwesome）</label>
+            <input type="text" id="categoryIcon" placeholder="例如：fa-gamepad">
+            <div class="icon-preview" id="iconPreview">
+              <i class="fa fa-folder"></i>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>排序权重</label>
+            <input type="number" id="categorySort" placeholder="数字越小越靠前" value="0">
+          </div>
+          
+          <div class="form-group">
+            <label>分类描述</label>
+            <textarea id="categoryDesc" placeholder="请输入分类描述（可选）"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveCategory()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 加载侧边栏 -->
+  <script src="js/sidebar.js"></script>
+  <script src="js/admin.js"></script>
+  
+  <script>
+    if (typeof ensureAdminAuth === 'function' && !ensureAdminAuth()) {
+      throw new Error('管理员未登录');
+    }
+
+    const CATEGORY_STORAGE_KEY = 'zhimai_categories';
+    let categories = [];
+    let editingId = null;
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      loadCategories();
+      
+      // 图标输入实时预览
+      document.getElementById('categoryIcon').addEventListener('input', (e) => {
+        const icon = e.target.value || 'fa-folder';
+        document.getElementById('iconPreview').innerHTML = `<i class="fa ${icon}"></i>`;
+      });
+    });
+
+    // 加载分类列表
+    async function loadCategories() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(CATEGORY_STORAGE_KEY) || '[]');
+        categories = Array.isArray(parsed) ? parsed : [];
+        renderCategories();
+        updateParentSelect();
+      } catch (err) {
+        categories = [];
+        showError('加载分类失败: ' + err.message);
+      }
+    }
+
+    // 渲染分类树
+    function renderCategories() {
+      const container = document.getElementById('categoryTree');
+      
+      if (categories.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="fa fa-folder-open"></i>
+            <p>暂无分类，点击右上角新建</p>
+          </div>
+        `;
+        return;
+      }
+
+      // 构建树形结构
+      const tree = buildTree(categories);
+      container.innerHTML = renderTree(tree);
+    }
+
+    // 构建树
+    function buildTree(list, parentId = null) {
+      return list
+        .filter(item => item.parentId === parentId)
+        .sort((a, b) => (a.sort || 0) - (b.sort || 0))
+        .map(item => ({
+          ...item,
+          children: buildTree(list, item._id || item.id)
+        }));
+    }
+
+    // 渲染树
+    function renderTree(tree, level = 1) {
+      return tree.map(cat => `
+        <div class="category-item category-level-${level}">
+          <div class="category-icon">
+            <i class="fa ${cat.icon || 'fa-folder'}"></i>
+          </div>
+          <div class="category-info">
+            <div class="category-name">${cat.name}</div>
+            <div class="category-meta">
+              ${cat.description || '暂无描述'} · 排序: ${cat.sort || 0}
+            </div>
+          </div>
+          <div class="category-actions">
+            <button class="btn btn-add-sub" onclick="openModal('${cat._id || cat.id}')">
+              <i class="fa fa-plus"></i> 子分类
+            </button>
+            <button class="btn btn-edit" onclick="editCategory('${cat._id || cat.id}')">
+              <i class="fa fa-edit"></i> 编辑
+            </button>
+            <button class="btn btn-delete" onclick="deleteCategory('${cat._id || cat.id}')">
+              <i class="fa fa-trash"></i> 删除
+            </button>
+          </div>
+        </div>
+        ${cat.children.length > 0 ? renderTree(cat.children, level + 1) : ''}
+      `).join('');
+    }
+
+    // 更新上级分类选择框
+    function updateParentSelect() {
+      const select = document.getElementById('parentCategory');
+      const options = ['<option value="">无（作为一级分类）</option>'];
+      
+      categories.forEach(cat => {
+        options.push(`<option value="${cat._id || cat.id}">${cat.name}</option>`);
+      });
+      
+      select.innerHTML = options.join('');
+    }
+
+    // 打开模态框
+    function openModal(parentId = null) {
+      editingId = null;
+      document.getElementById('categoryForm').reset();
+      document.getElementById('categoryId').value = '';
+      document.getElementById('modalTitle').textContent = parentId ? '新建子分类' : '新建分类';
+      document.getElementById('iconPreview').innerHTML = '<i class="fa fa-folder"></i>';
+      
+      if (parentId) {
+        document.getElementById('parentCategory').value = parentId;
+      }
+      
+      document.getElementById('categoryModal').classList.add('active');
+    }
+
+    // 关闭模态框
+    function closeModal() {
+      document.getElementById('categoryModal').classList.remove('active');
+    }
+
+    // 编辑分类
+    function editCategory(id) {
+      const cat = categories.find(c => (c._id || c.id) === id);
+      if (!cat) return;
+
+      editingId = id;
+      document.getElementById('categoryId').value = id;
+      document.getElementById('categoryName').value = cat.name;
+      document.getElementById('categoryIcon').value = cat.icon || '';
+      document.getElementById('categorySort').value = cat.sort || 0;
+      document.getElementById('categoryDesc').value = cat.description || '';
+      document.getElementById('parentCategory').value = cat.parentId || '';
+      document.getElementById('modalTitle').textContent = '编辑分类';
+      
+      const icon = cat.icon || 'fa-folder';
+      document.getElementById('iconPreview').innerHTML = `<i class="fa ${icon}"></i>`;
+      
+      document.getElementById('categoryModal').classList.add('active');
+    }
+
+    // 保存分类
+    async function saveCategory() {
+      const name = document.getElementById('categoryName').value.trim();
+      const icon = document.getElementById('categoryIcon').value.trim();
+      const sort = parseInt(document.getElementById('categorySort').value, 10) || 0;
+      const description = document.getElementById('categoryDesc').value.trim();
+      const parentId = document.getElementById('parentCategory').value || null;
+
+      if (!name) {
+        alert('请输入分类名称');
+        return;
+      }
+
+      try {
+        if (editingId) {
+          const index = categories.findIndex(c => (c._id || c.id) === editingId);
+          if (index === -1) throw new Error('分类不存在');
+          categories[index] = {
+            ...categories[index],
+            name,
+            icon,
+            sort,
+            description,
+            parentId
+          };
+        } else {
+          const newId = 'cat_' + Date.now();
+          categories.unshift({
+            _id: newId,
+            name,
+            icon,
+            sort,
+            description,
+            parentId
+          });
+        }
+
+        localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(categories));
+        closeModal();
+        loadCategories();
+        showToast(editingId ? '分类更新成功' : '分类创建成功');
+      } catch (err) {
+        alert('保存失败: ' + err.message);
+      }
+    }
+
+    // 删除分类
+    async function deleteCategory(id) {
+      if (!confirm('确定要删除这个分类吗？')) return;
+
+      try {
+        categories = categories.filter(c => (c._id || c.id) !== id);
+        localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(categories));
+        loadCategories();
+        showToast('分类已删除');
+      } catch (err) {
+        alert('删除失败: ' + err.message);
+      }
+    }
+
+    // 显示错误
+    function showError(msg) {
+      document.getElementById('categoryTree').innerHTML = `
+        <div class="empty-state">
+          <i class="fa fa-exclamation-circle"></i>
+          <p>${msg}</p>
+        </div>
+      `;
+    }
+
+    // 显示提示
+    function showToast(msg) {
+      // 复用 admin.css 中的 toast 样式
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+  </script>
+</body>
+</html>

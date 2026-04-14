@@ -1,0 +1,574 @@
+/* =========================================
+   文件名: css/order.css
+   文件说明: 织麦电竞 · 订单相关页面样式
+   功能描述:
+     - 确认订单页面样式（order.html）
+     - 商品详情页面样式（product-detail.html）
+     - 订单表单、价格计算、优惠券选择样式
+     - 响应式布局适配
+   ========================================= */
+
+/* --- 页面基础 --- */
+.order-page {
+  min-height: 100vh;
+  padding: 120px 0 80px;
+  background: var(--bg-dark);
+}
+
+/* --- 页面标题 --- */
+.order-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.order-title {
+  font-size: 2.5rem;
+  font-weight: 900;
+  margin-bottom: 12px;
+  background: var(--gradient);
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.order-subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+/* --- 步骤指示器 --- */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 64px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.step-num {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-muted);
+  transition: var(--transition);
+}
+
+.step.active .step-num {
+  background: var(--gradient);
+  border-color: transparent;
+  color: #fff;
+}
+
+.step-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.step.active .step-label {
+  color: var(--text-primary);
+}
+
+.step-line {
+  width: 80px;
+  height: 2px;
+  background: var(--border);
+  margin: 0 16px;
+  position: relative;
+  top: -14px;
+}
+
+/* --- 小标题 --- */
+.section-title-sm {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-title-sm::before {
+  content: '';
+  width: 4px;
+  height: 24px;
+  background: var(--gradient);
+  border-radius: 2px;
+}
+
+/* --- 游戏选择卡片 --- */
+.game-selection {
+  margin-bottom: 64px;
+}
+
+.game-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.game-select-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: var(--transition);
+  overflow: hidden;
+}
+
+.game-select-card:hover {
+  border-color: rgb(108 99 255 / 40%);
+  transform: translateY(-2px);
+}
+
+.game-select-card.active {
+  border-color: var(--primary);
+  background: var(--bg-card2);
+}
+
+.game-logo {
+  width: 48px;
+  height: 48px;
+  background: rgb(108 99 255 / 15%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: var(--primary-light);
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+.game-gradient {
+  position: absolute;
+  inset: 0 80px;
+  background: linear-gradient(90deg, transparent 0%, rgb(108 99 255 / 10%) 50%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.game-select-card:hover .game-gradient,
+.game-select-card.active .game-gradient {
+  opacity: 1;
+}
+
+.game-name {
+  font-size: 1rem;
+  font-weight: 700;
+  flex: 1;
+  text-align: right;
+  z-index: 2;
+}
+
+.game-check {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 1.2rem;
+  color: var(--primary);
+  opacity: 0;
+  transform: scale(0.8);
+  transition: var(--transition);
+}
+
+.game-select-card.active .game-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* --- 表单区域 --- */
+.order-form-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 40px;
+}
+
+.order-form {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group-full {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-family: var(--font);
+  transition: var(--transition);
+  outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--primary);
+}
+
+.form-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* --- 表单分组标题 --- */
+.form-section {
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.form-section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+}
+
+/* --- 价格估算 --- */
+.price-estimate {
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.price-value {
+  font-size: 2rem;
+  font-weight: 900;
+  background: var(--gradient);
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.price-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+/* --- 提交按钮 --- */
+.form-actions {
+  display: flex;
+  justify-content: center;
+  padding-top: 16px;
+}
+
+.btn-large {
+  padding: 16px 48px;
+  font-size: 1.1rem;
+}
+
+/* --- 成功提示 --- */
+.order-success {
+  text-align: center;
+  padding: 60px 20px;
+  animation: fadeInUp 0.5s ease;
+}
+
+.order-success i {
+  font-size: 4rem;
+  background: var(--gradient);
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 24px;
+  display: block;
+}
+
+.order-success h3 {
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+}
+
+.order-success p {
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+}
+
+/* =========================================
+   响应式
+   ========================================= */
+@media (width <= 1024px) {
+  .game-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (width <= 768px) {
+  .order-page {
+    padding: 80px 0 100px;
+  }
+
+  .order-title {
+    font-size: 1.8rem;
+  }
+
+  .step-line {
+    width: 40px;
+  }
+
+  .game-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .order-form-section {
+    padding: 24px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-group-full {
+    grid-column: 1;
+  }
+}
+
+@media (width <= 480px) {
+  .order-header {
+    margin-bottom: 32px;
+  }
+
+  .order-title {
+    font-size: 1.5rem;
+  }
+
+  .order-subtitle {
+    font-size: 0.85rem;
+  }
+  
+  /* 步骤指示器 */
+  .step-indicator {
+    margin-bottom: 40px;
+    gap: 8px;
+  }
+
+  .step-num {
+    width: 36px;
+    height: 36px;
+    font-size: 0.85rem;
+  }
+
+  .step-label {
+    font-size: 0.7rem;
+  }
+
+  .step-line {
+    width: 24px;
+    margin: 0 8px;
+    top: -10px;
+  }
+  
+  /* 游戏选择 */
+  .game-selection {
+    margin-bottom: 40px;
+  }
+
+  .section-title-sm {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+  }
+
+  .section-title-sm::before {
+    height: 20px;
+  }
+
+  .game-cards {
+    gap: 12px;
+  }
+
+  .game-select-card {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .game-logo {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    border-radius: 10px;
+  }
+
+  .game-name {
+    font-size: 0.9rem;
+  }
+
+  .game-check {
+    top: 8px;
+    right: 8px;
+    font-size: 1rem;
+  }
+  
+  /* 表单 */
+  .order-form-section {
+    padding: 20px;
+  }
+
+  .order-form {
+    gap: 24px;
+  }
+
+  .form-grid {
+    gap: 16px;
+  }
+
+  .form-group label {
+    font-size: 0.85rem;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 12px 14px;
+    font-size: 0.9rem;
+  }
+
+  .form-hint {
+    font-size: 0.7rem;
+  }
+  
+  /* 表单分组 */
+  .form-section {
+    padding-top: 20px;
+  }
+
+  .form-section-title {
+    font-size: 1rem;
+    margin-bottom: 16px;
+  }
+  
+  /* 价格估算 */
+  .price-estimate {
+    padding: 20px;
+  }
+
+  .price-row {
+    font-size: 0.9rem;
+  }
+
+  .price-value {
+    font-size: 1.6rem;
+  }
+
+  .price-hint {
+    font-size: 0.7rem;
+  }
+  
+  /* 提交按钮 */
+  .form-actions {
+    padding-top: 8px;
+  }
+
+  .btn-large {
+    padding: 14px 36px;
+    font-size: 1rem;
+    width: 100%;
+  }
+  
+  /* 成功提示 */
+  .order-success {
+    padding: 40px 20px;
+  }
+
+  .order-success i {
+    font-size: 3rem;
+  }
+
+  .order-success h3 {
+    font-size: 1.2rem;
+  }
+
+  .order-success p {
+    font-size: 0.85rem;
+  }
+}
+
+@media (width <= 360px) {
+  .step-indicator {
+    gap: 4px;
+  }
+
+  .step-num {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+
+  .step-label {
+    font-size: 0.65rem;
+  }
+
+  .step-line {
+    width: 16px;
+  }
+
+  .game-select-card {
+    padding: 12px 14px;
+  }
+
+  .game-logo {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .game-name {
+    font-size: 0.85rem;
+  }
+}

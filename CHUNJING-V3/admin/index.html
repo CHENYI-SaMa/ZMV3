@@ -1,0 +1,2454 @@
+<!DOCTYPE html>
+<!--
+  文件: admin/index.html
+  页面名称: 后台管理 - 仪表盘
+  功能说明: 展示核心统计、销售趋势、订单状态与快捷操作
+-->
+<html lang="zh-CN">
+<head>
+  <script>
+    (function () {
+      const isAdminLoggedIn = localStorage.getItem('zhimai_admin_logged_in') === 'true';
+      if (!isAdminLoggedIn) {
+        window.location.replace('login.html');
+      }
+    })();
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>织麦电竞 - 后台管理系统</title>
+  <link rel="stylesheet" href="/admin/css/admin.css">
+<script src="/admin/js/sidebar.js"></script>
+<script src="/admin/js/admin.js"></script>
+<script src="/js/data.js"></script>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="admin-container">
+    <!-- 侧边-->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 顶部导航 -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="sidebar-toggle" id="sidebarToggle">
+            <i class="fa fa-bars"></i>
+          </button>
+          <span class="page-title">仪表盘</span>
+        </div>
+        <div class="header-right">
+          <div class="header-actions">
+            <div class="user-dropdown" id="userDropdown">
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin" alt="avatar" class="user-avatar">
+              <div class="header-user-info"><span class="user-name">管理员</span><span class="header-user-role">超管</span></div>
+              <i class="fa fa-chevron-down" style="font-size: 12px; color: var(--text-muted);"></i>
+              <div class="dropdown-menu" id="dropdownMenu">
+                <a href="#"><i class="fa fa-user"></i> 个人中心</a>
+                <a href="#"><i class="fa fa-cog"></i> 账号设置</a>
+                <div style="border-top: 1px solid var(--border-color); margin: 8px 0;"></div>
+                <a href="#" id="logoutBtn"><i class="fa fa-sign-out-alt"></i> 退出登录</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- 内容区域 -->
+      <div class="content-wrapper">
+        <!-- 统计卡片 -->
+        <div class="stats-summary-block" id="statsSummaryBlock">
+          <div class="stats-summary-toolbar">
+            <span class="stats-summary-title">数据总览</span>
+            <div class="stats-period-control">
+              <label for="statsPeriod">统计周期</label>
+              <select id="statsPeriod" class="stats-period-select">
+                <option value="day" selected>日</option>
+                <option value="week">周</option>
+                <option value="month">月</option>
+                <option value="quarter">季</option>
+                <option value="year">年</option>
+              </select>
+              <label for="revenueStatusFilter">营收状态</label>
+              <select id="revenueStatusFilter" class="stats-period-select">
+                <option value="all" selected>全部</option>
+                <option value="paid">已支付</option>
+                <option value="completed">已完成</option>
+              </select>
+            </div>
+          </div>
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-icon primary">
+                <i class="fa fa-yen-sign"></i>
+              </div>
+              <div class="stat-info">
+                <span class="stat-num" id="statRevenue">¥0.00</span>
+                <span class="stat-label">营业额</span>
+                <span class="stat-secondary" id="statRevenueScope">仅统计已支付、处理中、已完成</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon success">
+                <i class="fa fa-shopping-cart"></i>
+              </div>
+              <div class="stat-info">
+                <span class="stat-num" id="statOrders">0</span>
+                <span class="stat-label">订单</span>
+                <span class="stat-secondary">与营业额同口径</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon warning">
+                <i class="fa fa-users"></i>
+              </div>
+              <div class="stat-info">
+                <span class="stat-num" id="statMembersTotal">0</span>
+                <span class="stat-label">会员总数</span>
+                <span class="stat-secondary" id="statMembersNew">新增 +0</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon info">
+                <i class="fa fa-chart-line"></i>
+              </div>
+              <div class="stat-info">
+                <span class="stat-num" id="statProfit">--</span>
+                <span class="stat-label">利润</span>
+                <span class="stat-secondary" id="statProfitScope">商品利润 × 订单数量</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 图表区域 -->
+        <div class="charts-row">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>销售趋势</h3>
+              <div class="chart-actions">
+                <button class="overview-compare-btn" id="trendOverviewCompareBtn" type="button" title="切换总览对比模式">
+                  <i class="fa fa-columns"></i>
+                  <span>总览对比</span>
+                </button>
+                <div class="chart-tabs">
+                  <button class="tab-btn active" data-period="day">日</button>
+                  <button class="tab-btn" data-period="week">周</button>
+                  <button class="tab-btn" data-period="month">月</button>
+                  <button class="tab-btn" data-period="quarter">季</button>
+                  <button class="tab-btn" data-period="year">年</button>
+                </div>
+              </div>
+            </div>
+            <div class="chart-body" id="salesChartMainBody">
+              <div class="chart-container">
+                <canvas id="salesChart"></canvas>
+              </div>
+            </div>
+            <div class="yearly-demo-panel" id="yearlyDemoPanel" hidden>
+              <div class="yearly-demo-header">
+                <div class="yearly-demo-title-wrap">
+                  <strong id="yearlyDemoTitle">总览对比</strong>
+                </div>
+                <div class="yearly-demo-view-switch">
+                  <button class="yearly-demo-view-btn active" type="button" data-view="line">折线图</button>
+                  <button class="yearly-demo-view-btn" type="button" data-view="bar">柱状图</button>
+                </div>
+              </div>
+              <div class="yearly-compare-trend-grid">
+                <div class="yearly-compare-trend-card">
+                  <div class="yearly-compare-trend-head">
+                <span class="yearly-compare-trend-title" id="compareTrendATitle">时间趋势</span>
+                    <div class="yearly-compare-trend-tools">
+                      <div class="yearly-side-picker" id="yearlySidePickerA">
+                        <div class="yearly-calendar-trigger" id="yearlyCalendarTriggerA">
+                          <i class="fa fa-calendar"></i>
+                          <span class="yearly-calendar-text" id="yearlyDayPickerTextA">选择日期</span>
+                          <input class="yearly-day-native-input" id="yearlyDayPicker" type="date">
+                        </div>
+                        <select class="yearly-demo-picker yearly-side-period-picker" id="yearlyPeriodPickerA" hidden></select>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="yearly-compare-trend-canvas">
+                    <canvas id="compareChartA"></canvas>
+                  </div>
+                </div>
+                <div class="yearly-compare-trend-card">
+                  <div class="yearly-compare-trend-head">
+                <span class="yearly-compare-trend-title" id="compareTrendBTitle">时间趋势</span>
+                    <div class="yearly-compare-trend-tools">
+                      <div class="yearly-side-picker" id="yearlySidePickerB">
+                        <div class="yearly-calendar-trigger" id="yearlyCalendarTriggerB">
+                          <i class="fa fa-calendar"></i>
+                          <span class="yearly-calendar-text" id="yearlyDayPickerTextB">选择日期</span>
+                          <input class="yearly-day-native-input" id="yearlyDayPickerB" type="date">
+                        </div>
+                        <select class="yearly-demo-picker yearly-side-period-picker" id="yearlyPeriodPickerB" hidden></select>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="yearly-compare-trend-canvas">
+                    <canvas id="compareChartB"></canvas>
+                  </div>
+                </div>
+              </div>
+              <div class="yearly-compare-grid">
+                <div class="yearly-compare-card">
+                  <div class="yearly-compare-card-time" id="compareYearATime">--</div>
+                  <div class="yearly-compare-card-metrics">
+                    <div class="yearly-compare-item">
+                      <span>营业额</span>
+                      <strong id="compareYearARevenue">¥0.00</strong>
+                    </div>
+                    <div class="yearly-compare-item">
+                      <span>订单量</span>
+                      <strong id="compareYearAOrders">0</strong>
+                    </div>
+                    <div class="yearly-compare-item">
+                      <span>利润</span>
+                      <strong id="compareYearAProfit">¥0.00</strong>
+                    </div>
+                  </div>
+                </div>
+                <div class="yearly-compare-card">
+                  <div class="yearly-compare-card-time" id="compareYearBTime">--</div>
+                  <div class="yearly-compare-card-metrics">
+                    <div class="yearly-compare-item">
+                      <span>营业额</span>
+                      <strong id="compareYearBRevenue">¥0.00</strong>
+                    </div>
+                    <div class="yearly-compare-item">
+                      <span>订单量</span>
+                      <strong id="compareYearBOrders">0</strong>
+                    </div>
+                    <div class="yearly-compare-item">
+                      <span>利润</span>
+                      <strong id="compareYearBProfit">¥0.00</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="yearly-compare-summary">
+                <div class="yearly-compare-summary-title" id="compareSummaryTitle">对比数据（A - B）</div>
+                <div class="yearly-compare-summary-grid">
+                  <div class="yearly-compare-summary-card">
+                    <span>营业额差值</span>
+                    <strong id="compareDiffRevenue">¥0.00</strong>
+                    <small id="compareDiffRevenueRate">同比差 --</small>
+                  </div>
+                  <div class="yearly-compare-summary-card">
+                    <span>订单量差值</span>
+                    <strong id="compareDiffOrders">0</strong>
+                    <small id="compareDiffOrdersRate">同比差 --</small>
+                  </div>
+                  <div class="yearly-compare-summary-card">
+                    <span>利润差值</span>
+                    <strong id="compareDiffProfit">¥0.00</strong>
+                    <small id="compareDiffProfitRate">同比差 --</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chart-card" id="orderStatusChartCard">
+            <div class="chart-header">
+              <h3>订单状态分布</h3>
+            </div>
+            <div class="chart-body">
+              <div class="chart-container" style="height: 260px;">
+                <canvas id="orderStatusChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 快捷操作 & 最新订单-->
+        <div class="charts-row" id="dashboardBottomRow" style="grid-template-columns: 1fr 2fr;">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>快捷操作</h3>
+            </div>
+            <div class="chart-body">
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                <a href="products-categories.html" class="quick-action">
+                  <i class="fa fa-plus" style="color: var(--success);"></i>
+                  <span>添加商品</span>
+                </a>
+                <a href="orders.html" class="quick-action">
+                  <i class="fa fa-list" style="color: var(--primary);"></i>
+                  <span>订单管理</span>
+                </a>
+                <a href="members.html" class="quick-action">
+                  <i class="fa fa-users" style="color: var(--info);"></i>
+                  <span>会员管理</span>
+                </a>
+                <a href="coupons.html" class="quick-action">
+                  <i class="fa fa-ticket" style="color: var(--warning);"></i>
+                  <span>优惠券</span>
+                </a>
+              </div>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-header">
+              <h3>最新订单</h3>
+              <a href="orders.html" style="font-size: 13px; color: var(--primary);">查看全部</a>
+            </div>
+            <div class="chart-body" style="padding: 0;">
+              <table class="data-table latest-orders-table" style="border: none;">
+                <thead>
+                  <tr>
+                    <th>订单</th>
+                    <th>商品</th>
+                    <th>金额</th>
+                    <th>状态</th>
+                    <th>时间</th>
+                  </tr>
+                </thead>
+                <tbody id="latestOrders">
+                  <!-- 动态加载 -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script>
+
+    const DASHBOARD_PERIOD_DEFAULT = 'day';
+    const DASHBOARD_VALID_ORDER_STATUSES = new Set(['paid', 'processing', 'completed']);
+    const DASHBOARD_PERIOD_OPTIONS = ['day', 'week', 'month', 'quarter', 'year'];
+    const DASHBOARD_REVENUE_STATUS_DEFAULT = 'all';
+    const DASHBOARD_REVENUE_STATUS_OPTIONS = ['all', 'paid', 'completed'];
+    const DASHBOARD_REVENUE_STATUS_TEXT = {
+      all: '已支付、处理中、已完成',
+      paid: '已支付',
+      completed: '已完成'
+    };
+    let dashboardCurrentPeriod = DASHBOARD_PERIOD_DEFAULT;
+    let dashboardRevenueStatus = DASHBOARD_REVENUE_STATUS_DEFAULT;
+    let dashboardOrders = [];
+    let dashboardUsers = [];
+    let dashboardProductProfitLookup = new Map();
+    let salesChartInstance = null;
+    const DASHBOARD_REALTIME_YEAR = new Date().getFullYear();
+    const DASHBOARD_DEMO_GRANULARITY_DEFAULT = 'day';
+    const DASHBOARD_DEMO_GRANULARITY_TEXT = {
+      day: '日',
+      week: '周',
+      month: '月',
+      quarter: '季',
+      year: '年'
+    };
+    const DASHBOARD_DEFAULT_COMPARE_YEAR_A = DASHBOARD_REALTIME_YEAR;
+    const DASHBOARD_DEFAULT_COMPARE_YEAR_B = DASHBOARD_REALTIME_YEAR - 1;
+    let dashboardCompareYearA = DASHBOARD_DEFAULT_COMPARE_YEAR_A;
+    let dashboardCompareYearB = DASHBOARD_DEFAULT_COMPARE_YEAR_B;
+    let dashboardDemoGranularity = DASHBOARD_DEMO_GRANULARITY_DEFAULT;
+    let dashboardCompareMode = false;
+    let dashboardDemoChartView = 'line';
+    let dashboardDemoDateValueA = `${DASHBOARD_REALTIME_YEAR}-04-09`;
+    let dashboardDemoDateValueB = `${DASHBOARD_REALTIME_YEAR - 1}-04-09`;
+    let dashboardDemoWeekValueA = 15;
+    let dashboardDemoWeekValueB = 15;
+    let dashboardDemoMonthValueA = 4;
+    let dashboardDemoMonthValueB = 4;
+    let dashboardDemoQuarterValueA = 2;
+    let dashboardDemoQuarterValueB = 2;
+    let compareChartAInstance = null;
+    let compareChartBInstance = null;
+
+    function getDashboardCompareAvailableYears() {
+      const years = new Set([DASHBOARD_REALTIME_YEAR, DASHBOARD_REALTIME_YEAR - 1]);
+      dashboardOrders.forEach((order) => {
+        const date = order?.createdAtDate;
+        if (date instanceof Date && !Number.isNaN(date.getTime())) {
+          years.add(date.getFullYear());
+        }
+      });
+      return Array.from(years).sort((a, b) => a - b);
+    }
+
+    function getDashboardCompareYearBoundary() {
+      const years = getDashboardCompareAvailableYears();
+      return {
+        years,
+        min: years[0],
+        max: years[years.length - 1]
+      };
+    }
+
+    function clampDashboardDemoYear(year) {
+      const parsed = Number(year);
+      const { min, max } = getDashboardCompareYearBoundary();
+      if (!Number.isFinite(parsed)) return max;
+      return Math.min(max, Math.max(min, Math.floor(parsed)));
+    }
+
+    function getDayOfYear(date) {
+      const start = new Date(date.getFullYear(), 0, 1);
+      const diff = date - start;
+      return Math.floor(diff / 86400000) + 1;
+    }
+
+    function pad2(value) {
+      return String(value).padStart(2, '0');
+    }
+
+    function getISOWeekRange(year, week) {
+      const safeWeek = Math.max(1, Math.min(52, Number(week) || 1));
+      const jan4 = new Date(Date.UTC(year, 0, 4));
+      const jan4Day = jan4.getUTCDay() || 7;
+      const week1Monday = new Date(jan4);
+      week1Monday.setUTCDate(jan4.getUTCDate() - jan4Day + 1);
+      const start = new Date(week1Monday);
+      start.setUTCDate(week1Monday.getUTCDate() + ((safeWeek - 1) * 7));
+      const end = new Date(start);
+      end.setUTCDate(start.getUTCDate() + 6);
+      return {
+        start,
+        end,
+        label: `${start.getUTCMonth() + 1}.${pad2(start.getUTCDate())}-${end.getUTCMonth() + 1}.${pad2(end.getUTCDate())}`
+      };
+    }
+
+    function getDashboardDemoDateValueByContext(year, side = 'a') {
+      if (side === 'b') return dashboardDemoDateValueB;
+      if (side === 'a') return dashboardDemoDateValueA;
+      if (year === dashboardCompareYearB && year !== dashboardCompareYearA) return dashboardDemoDateValueB;
+      return dashboardDemoDateValueA;
+    }
+
+    function syncDashboardDemoDateValues() {
+      const dateA = new Date(dashboardDemoDateValueA);
+      const dateB = new Date(dashboardDemoDateValueB);
+      if (Number.isNaN(dateA.getTime())) {
+        dashboardDemoDateValueA = `${dashboardCompareYearA}-04-09`;
+      }
+      if (Number.isNaN(dateB.getTime())) {
+        dashboardDemoDateValueB = `${dashboardCompareYearB}-04-09`;
+      }
+    }
+
+    function formatDashboardDateDisplay(dateText) {
+      const date = new Date(dateText);
+      if (Number.isNaN(date.getTime())) return '--/--/--';
+      return `${date.getFullYear()}/${pad2(date.getMonth() + 1)}/${pad2(date.getDate())}`;
+    }
+
+    function parseDashboardPeriodPickerValue(granularity, rawValue) {
+      const value = String(rawValue || '').trim();
+      if (!value) return null;
+      if (granularity === 'year') {
+        const year = clampDashboardDemoYear(value);
+        return { year, period: year };
+      }
+      if (granularity === 'week') {
+        const match = value.match(/^(\d{4})-W(\d{1,2})$/);
+        if (!match) return null;
+        return {
+          year: clampDashboardDemoYear(match[1]),
+          period: clampDashboardDemoPeriodValue('week', match[2])
+        };
+      }
+      if (granularity === 'month') {
+        const match = value.match(/^(\d{4})-M(\d{1,2})$/);
+        if (!match) return null;
+        return {
+          year: clampDashboardDemoYear(match[1]),
+          period: clampDashboardDemoPeriodValue('month', match[2])
+        };
+      }
+      if (granularity === 'quarter') {
+        const match = value.match(/^(\d{4})-Q(\d{1,2})$/);
+        if (!match) return null;
+        return {
+          year: clampDashboardDemoYear(match[1]),
+          period: clampDashboardDemoPeriodValue('quarter', match[2])
+        };
+      }
+      return null;
+    }
+
+    function openDashboardDatePicker(inputEl) {
+      if (!inputEl) return;
+      if (typeof inputEl.showPicker === 'function') {
+        try {
+          inputEl.showPicker();
+          return;
+        } catch (e) {
+          // ignore and fallback
+        }
+      }
+      try {
+        inputEl.focus({ preventScroll: true });
+      } catch (e) {
+        inputEl.focus();
+      }
+      inputEl.click();
+    }
+
+    function clampDashboardDemoPeriodValue(granularity, value) {
+      const parsed = Math.floor(Number(value) || 0);
+      if (granularity === 'week') return Math.max(1, Math.min(52, parsed || 1));
+      if (granularity === 'month') return Math.max(1, Math.min(12, parsed || 1));
+      if (granularity === 'quarter') return Math.max(1, Math.min(4, parsed || 1));
+      if (granularity === 'year') return clampDashboardDemoYear(parsed || DASHBOARD_REALTIME_YEAR);
+      return parsed;
+    }
+
+    function getDashboardDemoPeriodValue(side, granularity) {
+      if (granularity === 'week') return side === 'b' ? dashboardDemoWeekValueB : dashboardDemoWeekValueA;
+      if (granularity === 'month') return side === 'b' ? dashboardDemoMonthValueB : dashboardDemoMonthValueA;
+      if (granularity === 'quarter') return side === 'b' ? dashboardDemoQuarterValueB : dashboardDemoQuarterValueA;
+      return side === 'b' ? dashboardCompareYearB : dashboardCompareYearA;
+    }
+
+    function setDashboardDemoPeriodValue(side, granularity, value) {
+      const safeValue = clampDashboardDemoPeriodValue(granularity, value);
+      if (granularity === 'week') {
+        if (side === 'b') {
+          dashboardDemoWeekValueB = safeValue;
+        } else {
+          dashboardDemoWeekValueA = safeValue;
+        }
+      } else if (granularity === 'month') {
+        if (side === 'b') {
+          dashboardDemoMonthValueB = safeValue;
+        } else {
+          dashboardDemoMonthValueA = safeValue;
+        }
+      } else if (granularity === 'quarter') {
+        if (side === 'b') {
+          dashboardDemoQuarterValueB = safeValue;
+        } else {
+          dashboardDemoQuarterValueA = safeValue;
+        }
+      }
+      return safeValue;
+    }
+
+    function getDashboardDemoTimeLabel(year, granularity, side = 'a') {
+      if (granularity === 'day') {
+        const selected = new Date(getDashboardDemoDateValueByContext(year, side));
+        const month = Number.isNaN(selected.getTime()) ? 4 : (selected.getMonth() + 1);
+        const day = Number.isNaN(selected.getTime()) ? 9 : selected.getDate();
+        const mm = pad2(month);
+        const dd = pad2(day);
+        return `${year}-${mm}-${dd}`;
+      }
+      if (granularity === 'week') {
+        const weekValue = getDashboardDemoPeriodValue(side, 'week');
+        const weekRange = getISOWeekRange(year, weekValue);
+        return `${year}年第${weekValue}周（${weekRange.label}）`;
+      }
+      if (granularity === 'month') {
+        return `${year}年${getDashboardDemoPeriodValue(side, 'month')}月`;
+      }
+      if (granularity === 'quarter') {
+        return `${year}年第${getDashboardDemoPeriodValue(side, 'quarter')}季度`;
+      }
+      return `${year}年全年`;
+    }
+
+    function getDashboardTrendTitleText(year, granularity, side = 'a') {
+      const safeYear = clampDashboardDemoYear(year);
+      if (granularity === 'day') {
+        const selected = new Date(getDashboardDemoDateValueByContext(safeYear, side));
+        const fallbackDate = new Date(safeYear, 3, 9);
+        const safeDate = Number.isNaN(selected.getTime()) ? fallbackDate : selected;
+        return `${safeYear}年${pad2(safeDate.getMonth() + 1)}月${pad2(safeDate.getDate())}日`;
+      }
+      if (granularity === 'week') {
+        return `${safeYear}年第${getDashboardDemoPeriodValue(side, 'week')}周趋势`;
+      }
+      if (granularity === 'month') {
+        return `${safeYear}年第${getDashboardDemoPeriodValue(side, 'month')}月趋势`;
+      }
+      if (granularity === 'quarter') {
+        return `${safeYear}年第${getDashboardDemoPeriodValue(side, 'quarter')}季度趋势`;
+      }
+      return `${safeYear}年趋势`;
+    }
+
+    function getDashboardCompareRange(year, granularity, side = 'a') {
+      const safeYear = clampDashboardDemoYear(year);
+      if (granularity === 'day') {
+        const selected = new Date(getDashboardDemoDateValueByContext(safeYear, side));
+        const fallbackDate = new Date(safeYear, 3, 9);
+        const safeDate = Number.isNaN(selected.getTime()) ? fallbackDate : selected;
+        const start = new Date(safeYear, safeDate.getMonth(), safeDate.getDate(), 0, 0, 0, 0);
+        const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1, 0, 0, 0, 0);
+        return { start, end };
+      }
+      if (granularity === 'week') {
+        const weekValue = getDashboardDemoPeriodValue(side, 'week');
+        const weekRange = getISOWeekRange(safeYear, weekValue);
+        const start = new Date(weekRange.start.getUTCFullYear(), weekRange.start.getUTCMonth(), weekRange.start.getUTCDate(), 0, 0, 0, 0);
+        const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7, 0, 0, 0, 0);
+        return { start, end };
+      }
+      if (granularity === 'month') {
+        const monthValue = getDashboardDemoPeriodValue(side, 'month');
+        const start = new Date(safeYear, monthValue - 1, 1, 0, 0, 0, 0);
+        const end = new Date(safeYear, monthValue, 1, 0, 0, 0, 0);
+        return { start, end };
+      }
+      if (granularity === 'quarter') {
+        const quarterValue = getDashboardDemoPeriodValue(side, 'quarter');
+        const startMonth = (quarterValue - 1) * 3;
+        const start = new Date(safeYear, startMonth, 1, 0, 0, 0, 0);
+        const end = new Date(safeYear, startMonth + 3, 1, 0, 0, 0, 0);
+        return { start, end };
+      }
+      return {
+        start: new Date(safeYear, 0, 1, 0, 0, 0, 0),
+        end: new Date(safeYear + 1, 0, 1, 0, 0, 0, 0)
+      };
+    }
+
+    function getDashboardCompareScopedOrders() {
+      const revenueStatus = normalizeDashboardRevenueStatus(dashboardRevenueStatus);
+      return (Array.isArray(dashboardOrders) ? dashboardOrders : [])
+        .filter(isValidDashboardOrder)
+        .filter(order => isOrderMatchRevenueStatus(order, revenueStatus));
+    }
+
+    function summarizeDashboardOrders(orders) {
+      const safeOrders = Array.isArray(orders) ? orders : [];
+      const revenue = safeOrders.reduce((sum, order) => sum + Number(order.totalAmount || 0), 0);
+      const profit = safeOrders.reduce((sum, order) => {
+        const unitProfit = getDashboardOrderUnitProfit(order, dashboardProductProfitLookup);
+        const quantity = getDashboardOrderQuantity(order);
+        return sum + (unitProfit * quantity);
+      }, 0);
+      return {
+        revenue: Number(revenue.toFixed(2)),
+        orders: Math.floor(safeOrders.length),
+        profit: Number(profit.toFixed(2))
+      };
+    }
+
+    function getDashboardYearDemoRecord(year, granularity, side = 'a') {
+      const safeGranularity = DASHBOARD_DEMO_GRANULARITY_TEXT[granularity] ? granularity : DASHBOARD_DEMO_GRANULARITY_DEFAULT;
+      const safeYear = clampDashboardDemoYear(year);
+      const range = getDashboardCompareRange(safeYear, safeGranularity, side);
+      const recordOrders = getDashboardCompareScopedOrders()
+        .filter(order => isDateInDashboardRange(order.createdAtDate, range));
+      const summary = summarizeDashboardOrders(recordOrders);
+      return {
+        timeLabel: getDashboardDemoTimeLabel(safeYear, safeGranularity, side),
+        revenue: summary.revenue,
+        orders: summary.orders,
+        profit: summary.profit
+      };
+    }
+
+    function formatSignedValue(value, digits = 0, suffix = '') {
+      const num = Number(value || 0);
+      const sign = num > 0 ? '+' : num < 0 ? '-' : '';
+      return `${sign}${Math.abs(num).toFixed(digits)}${suffix}`;
+    }
+
+    function updateDashboardYearSwitchUI() {
+      const overviewBtn = document.getElementById('trendOverviewCompareBtn');
+      const compareYearALabel = document.getElementById('compareYearALabel');
+      const compareYearBLabel = document.getElementById('compareYearBLabel');
+      const compareYearAPrevBtn = document.getElementById('compareYearAPrevBtn');
+      const compareYearANextBtn = document.getElementById('compareYearANextBtn');
+      const compareYearBPrevBtn = document.getElementById('compareYearBPrevBtn');
+      const compareYearBNextBtn = document.getElementById('compareYearBNextBtn');
+      const trendATitle = document.getElementById('compareTrendATitle');
+      const trendBTitle = document.getElementById('compareTrendBTitle');
+      const dayPicker = document.getElementById('yearlyDayPicker');
+      const dayPickerB = document.getElementById('yearlyDayPickerB');
+      const dayPickerTextA = document.getElementById('yearlyDayPickerTextA');
+      const dayPickerTextB = document.getElementById('yearlyDayPickerTextB');
+
+      if (overviewBtn) overviewBtn.classList.toggle('active', dashboardCompareMode);
+      if (compareYearALabel) compareYearALabel.textContent = `${dashboardCompareYearA}年`;
+      if (compareYearBLabel) compareYearBLabel.textContent = `${dashboardCompareYearB}年`;
+      const yearBoundary = getDashboardCompareYearBoundary();
+      if (compareYearAPrevBtn) compareYearAPrevBtn.disabled = dashboardCompareYearA <= yearBoundary.min;
+      if (compareYearANextBtn) compareYearANextBtn.disabled = dashboardCompareYearA >= yearBoundary.max;
+      if (compareYearBPrevBtn) compareYearBPrevBtn.disabled = dashboardCompareYearB <= yearBoundary.min;
+      if (compareYearBNextBtn) compareYearBNextBtn.disabled = dashboardCompareYearB >= yearBoundary.max;
+      if (trendATitle) trendATitle.textContent = getDashboardTrendTitleText(dashboardCompareYearA, dashboardDemoGranularity, 'a');
+      if (trendBTitle) trendBTitle.textContent = getDashboardTrendTitleText(dashboardCompareYearB, dashboardDemoGranularity, 'b');
+      if (dayPicker) dayPicker.value = dashboardDemoDateValueA;
+      if (dayPickerB) dayPickerB.value = dashboardDemoDateValueB;
+      if (dayPickerTextA) dayPickerTextA.textContent = formatDashboardDateDisplay(dashboardDemoDateValueA);
+      if (dayPickerTextB) dayPickerTextB.textContent = formatDashboardDateDisplay(dashboardDemoDateValueB);
+    }
+
+    function buildDashboardCompareBuckets(year, granularity, side = 'a') {
+      const safeYear = clampDashboardDemoYear(year);
+      const buckets = [];
+      if (granularity === 'day') {
+        const range = getDashboardCompareRange(safeYear, 'day', side);
+        for (let hour = 0; hour < 24; hour++) {
+          const start = new Date(range.start.getFullYear(), range.start.getMonth(), range.start.getDate(), hour, 0, 0, 0);
+          const end = new Date(start.getFullYear(), start.getMonth(), start.getDate(), hour + 1, 0, 0, 0);
+          buckets.push({ label: `${pad2(hour)}:00`, start, end });
+        }
+        return buckets;
+      }
+      if (granularity === 'week') {
+        const range = getDashboardCompareRange(safeYear, 'week', side);
+        const labels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+        for (let i = 0; i < 7; i++) {
+          const start = new Date(range.start.getFullYear(), range.start.getMonth(), range.start.getDate() + i, 0, 0, 0, 0);
+          const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1, 0, 0, 0, 0);
+          buckets.push({ label: labels[i], start, end });
+        }
+        return buckets;
+      }
+      if (granularity === 'month') {
+        const monthValue = getDashboardDemoPeriodValue(side, 'month');
+        const monthDays = new Date(safeYear, monthValue, 0).getDate();
+        for (let i = 0; i < 5; i++) {
+          const startDay = (i * 7) + 1;
+          const boundedStartDay = Math.min(startDay, monthDays + 1);
+          const nextStartDay = i === 4 ? (monthDays + 1) : Math.min(monthDays + 1, startDay + 7);
+          const start = new Date(safeYear, monthValue - 1, boundedStartDay, 0, 0, 0, 0);
+          const end = new Date(safeYear, monthValue - 1, nextStartDay, 0, 0, 0, 0);
+          buckets.push({ label: `第${i + 1}周`, start, end });
+        }
+        return buckets;
+      }
+      if (granularity === 'quarter') {
+        const quarterValue = getDashboardDemoPeriodValue(side, 'quarter');
+        const startMonth = (quarterValue - 1) * 3;
+        for (let i = 0; i < 3; i++) {
+          const month = startMonth + i;
+          const start = new Date(safeYear, month, 1, 0, 0, 0, 0);
+          const end = new Date(safeYear, month + 1, 1, 0, 0, 0, 0);
+          buckets.push({ label: `${month + 1}月`, start, end });
+        }
+        return buckets;
+      }
+      for (let month = 0; month < 12; month++) {
+        const start = new Date(safeYear, month, 1, 0, 0, 0, 0);
+        const end = new Date(safeYear, month + 1, 1, 0, 0, 0, 0);
+        buckets.push({ label: `${month + 1}月`, start, end });
+      }
+      return buckets;
+    }
+
+    function buildDashboardCompareSeries(year, granularity, side = 'a') {
+      const safeGranularity = DASHBOARD_DEMO_GRANULARITY_TEXT[granularity] ? granularity : DASHBOARD_DEMO_GRANULARITY_DEFAULT;
+      const safeYear = clampDashboardDemoYear(year);
+      const range = getDashboardCompareRange(safeYear, safeGranularity, side);
+      const scopedOrders = getDashboardCompareScopedOrders()
+        .filter(order => isDateInDashboardRange(order.createdAtDate, range));
+      const buckets = buildDashboardCompareBuckets(safeYear, safeGranularity, side);
+      const revenue = [];
+      const profit = [];
+      const orderCount = [];
+
+      buckets.forEach((bucket) => {
+        const bucketOrders = scopedOrders.filter(order => isDateInDashboardRange(order.createdAtDate, bucket));
+        const summary = summarizeDashboardOrders(bucketOrders);
+        revenue.push(summary.revenue);
+        profit.push(summary.profit);
+        orderCount.push(summary.orders);
+      });
+
+      return {
+        labels: buckets.map((bucket) => bucket.label),
+        revenue,
+        profit,
+        orderCount
+      };
+    }
+
+    function renderSingleCompareChart(canvasId, series, yearLabel, instanceRefName) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const isBar = dashboardDemoChartView === 'bar';
+      const chartType = isBar ? 'bar' : 'line';
+      const previous = instanceRefName === 'a' ? compareChartAInstance : compareChartBInstance;
+      if (previous) previous.destroy();
+
+      const next = new Chart(canvas, {
+        type: chartType,
+        data: {
+          labels: series.labels,
+          datasets: [{
+            label: `${yearLabel}营业额`,
+            data: series.revenue,
+            borderColor: '#6366f1',
+            backgroundColor: isBar ? 'rgba(99, 102, 241, 0.75)' : 'rgba(99, 102, 241, 0.12)',
+            fill: !isBar,
+            tension: isBar ? 0 : 0.35,
+            borderWidth: 2,
+            yAxisID: 'y'
+          }, {
+            label: `${yearLabel}利润`,
+            data: series.profit,
+            borderColor: '#f59e0b',
+            backgroundColor: isBar ? 'rgba(245, 158, 11, 0.75)' : 'rgba(245, 158, 11, 0.12)',
+            fill: !isBar,
+            tension: isBar ? 0 : 0.35,
+            borderWidth: 2,
+            yAxisID: 'y'
+          }, {
+            label: `${yearLabel}订单量`,
+            data: series.orderCount,
+            borderColor: '#10b981',
+            backgroundColor: isBar ? 'rgba(16, 185, 129, 0.75)' : 'rgba(16, 185, 129, 0.12)',
+            fill: !isBar,
+            tension: isBar ? 0 : 0.35,
+            borderWidth: 2,
+            yAxisID: 'y1'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { intersect: false, mode: 'index' },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: { color: '#94a3b8', usePointStyle: true, padding: 14, boxWidth: 8 }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(51, 65, 85, 0.4)', drawBorder: false },
+              ticks: { color: '#64748b', maxRotation: 0, autoSkip: true }
+            },
+            y: {
+              position: 'left',
+              grid: { color: 'rgba(51, 65, 85, 0.4)', drawBorder: false },
+              ticks: { color: '#64748b', callback: (value) => `¥${value}` }
+            },
+            y1: {
+              position: 'right',
+              grid: { display: false },
+              ticks: { color: '#64748b' }
+            }
+          }
+        }
+      });
+
+      if (instanceRefName === 'a') {
+        compareChartAInstance = next;
+      } else {
+        compareChartBInstance = next;
+      }
+    }
+
+    function renderDashboardCompareCharts() {
+      const seriesA = buildDashboardCompareSeries(dashboardCompareYearA, dashboardDemoGranularity, 'a');
+      const seriesB = buildDashboardCompareSeries(dashboardCompareYearB, dashboardDemoGranularity, 'b');
+      renderSingleCompareChart('compareChartA', seriesA, `${dashboardCompareYearA}年`, 'a');
+      renderSingleCompareChart('compareChartB', seriesB, `${dashboardCompareYearB}年`, 'b');
+    }
+
+    function getDashboardCompareSideYear(side) {
+      return side === 'b' ? dashboardCompareYearB : dashboardCompareYearA;
+    }
+
+    function getDashboardSidePickerElements(side) {
+      if (side === 'b') {
+        return {
+          dayTrigger: document.getElementById('yearlyCalendarTriggerB'),
+          dayPicker: document.getElementById('yearlyDayPickerB'),
+          periodPicker: document.getElementById('yearlyPeriodPickerB')
+        };
+      }
+      return {
+        dayTrigger: document.getElementById('yearlyCalendarTriggerA'),
+        dayPicker: document.getElementById('yearlyDayPicker'),
+        periodPicker: document.getElementById('yearlyPeriodPickerA')
+      };
+    }
+
+    function populateDashboardSidePeriodPicker(side) {
+      const { periodPicker } = getDashboardSidePickerElements(side);
+      if (!periodPicker || dashboardDemoGranularity === 'day') return;
+
+      const currentYear = getDashboardCompareSideYear(side);
+      const currentPeriod = getDashboardDemoPeriodValue(side, dashboardDemoGranularity);
+      const years = getDashboardCompareAvailableYears().slice().reverse();
+      if (dashboardDemoGranularity === 'week') {
+        periodPicker.innerHTML = years.map((year) =>
+          Array.from({ length: 52 }, (_, i) => {
+            const week = i + 1;
+            const range = getISOWeekRange(year, week).label;
+            return `<option value="${year}-W${week}">${year}年第${week}周（${range}）</option>`;
+          }).join('')
+        ).join('');
+        periodPicker.value = `${currentYear}-W${currentPeriod}`;
+        return;
+      }
+      if (dashboardDemoGranularity === 'month') {
+        periodPicker.innerHTML = years.map((year) =>
+          Array.from({ length: 12 }, (_, i) => {
+            const month = i + 1;
+            return `<option value="${year}-M${month}">${year}年${month}月</option>`;
+          }).join('')
+        ).join('');
+        periodPicker.value = `${currentYear}-M${currentPeriod}`;
+        return;
+      }
+      if (dashboardDemoGranularity === 'quarter') {
+        periodPicker.innerHTML = years.map((year) =>
+          Array.from({ length: 4 }, (_, i) => {
+            const quarter = i + 1;
+            return `<option value="${year}-Q${quarter}">${year}年第${quarter}季度</option>`;
+          }).join('')
+        ).join('');
+        periodPicker.value = `${currentYear}-Q${currentPeriod}`;
+        return;
+      }
+      periodPicker.innerHTML = years.map((year) => `<option value="${year}">${year}年</option>`).join('');
+      periodPicker.value = String(currentYear);
+    }
+
+    function updateDashboardDemoPickerVisibility() {
+      ['a', 'b'].forEach((side) => {
+        const { dayTrigger, dayPicker, periodPicker } = getDashboardSidePickerElements(side);
+        if (!dayTrigger || !dayPicker || !periodPicker) return;
+
+        const isDay = dashboardDemoGranularity === 'day';
+        dayTrigger.hidden = !isDay;
+        periodPicker.hidden = isDay;
+        dayPicker.value = side === 'b' ? dashboardDemoDateValueB : dashboardDemoDateValueA;
+        populateDashboardSidePeriodPicker(side);
+      });
+    }
+
+    function triggerDashboardCompareRerender() {
+      updateDashboardYearSwitchUI();
+      updateDashboardDemoPickerVisibility();
+      if (dashboardCompareMode) renderDashboardYearlyDemo();
+    }
+
+    function setDashboardCompareMode(enabled) {
+      dashboardCompareMode = !!enabled;
+      document.body.classList.toggle('dashboard-archive-mode', dashboardCompareMode);
+      const panel = document.getElementById('yearlyDemoPanel');
+      if (panel) panel.hidden = !dashboardCompareMode;
+      updateDashboardYearSwitchUI();
+      if (dashboardCompareMode) {
+        renderDashboardYearlyDemo();
+      } else {
+        if (compareChartAInstance) {
+          compareChartAInstance.destroy();
+          compareChartAInstance = null;
+        }
+        if (compareChartBInstance) {
+          compareChartBInstance.destroy();
+          compareChartBInstance = null;
+        }
+      }
+    }
+
+    function renderDashboardYearlyDemo() {
+      const panel = document.getElementById('yearlyDemoPanel');
+      if (!panel) return;
+
+      const recordA = getDashboardYearDemoRecord(dashboardCompareYearA, dashboardDemoGranularity, 'a');
+      const recordB = getDashboardYearDemoRecord(dashboardCompareYearB, dashboardDemoGranularity, 'b');
+      const titleEl = document.getElementById('yearlyDemoTitle');
+      const compareEl = document.getElementById('yearlyDemoCompare');
+      const compareSummaryTitle = document.getElementById('compareSummaryTitle');
+
+      const compareYearATime = document.getElementById('compareYearATime');
+      const compareYearARevenue = document.getElementById('compareYearARevenue');
+      const compareYearAOrders = document.getElementById('compareYearAOrders');
+      const compareYearAProfit = document.getElementById('compareYearAProfit');
+
+      const compareYearBTime = document.getElementById('compareYearBTime');
+      const compareYearBRevenue = document.getElementById('compareYearBRevenue');
+      const compareYearBOrders = document.getElementById('compareYearBOrders');
+      const compareYearBProfit = document.getElementById('compareYearBProfit');
+
+      const compareDiffRevenue = document.getElementById('compareDiffRevenue');
+      const compareDiffOrders = document.getElementById('compareDiffOrders');
+      const compareDiffProfit = document.getElementById('compareDiffProfit');
+      const compareDiffRevenueRate = document.getElementById('compareDiffRevenueRate');
+      const compareDiffOrdersRate = document.getElementById('compareDiffOrdersRate');
+      const compareDiffProfitRate = document.getElementById('compareDiffProfitRate');
+
+      if (titleEl) titleEl.textContent = '总览对比';
+      if (compareEl) compareEl.textContent = `${DASHBOARD_DEMO_GRANULARITY_TEXT[dashboardDemoGranularity]} · A(${dashboardCompareYearA}) vs B(${dashboardCompareYearB})`;
+      if (compareSummaryTitle) compareSummaryTitle.textContent = `对比数据（A:${dashboardCompareYearA} - B:${dashboardCompareYearB}）`;
+
+      if (compareYearATime) compareYearATime.textContent = recordA.timeLabel;
+      if (compareYearARevenue) compareYearARevenue.textContent = `¥${Number(recordA.revenue || 0).toFixed(2)}`;
+      if (compareYearAOrders) compareYearAOrders.textContent = String(Math.floor(Number(recordA.orders) || 0));
+      if (compareYearAProfit) compareYearAProfit.textContent = `¥${Number(recordA.profit || 0).toFixed(2)}`;
+
+      if (compareYearBTime) compareYearBTime.textContent = recordB.timeLabel;
+      if (compareYearBRevenue) compareYearBRevenue.textContent = `¥${Number(recordB.revenue || 0).toFixed(2)}`;
+      if (compareYearBOrders) compareYearBOrders.textContent = String(Math.floor(Number(recordB.orders) || 0));
+      if (compareYearBProfit) compareYearBProfit.textContent = `¥${Number(recordB.profit || 0).toFixed(2)}`;
+
+      const revenueDiff = Number(recordA.revenue || 0) - Number(recordB.revenue || 0);
+      const ordersDiff = Number(recordA.orders || 0) - Number(recordB.orders || 0);
+      const profitDiff = Number(recordA.profit || 0) - Number(recordB.profit || 0);
+
+      const revenueDiffRate = Number(recordB.revenue || 0) === 0 ? null : (revenueDiff / Number(recordB.revenue || 0)) * 100;
+      const ordersDiffRate = Number(recordB.orders || 0) === 0 ? null : (ordersDiff / Number(recordB.orders || 0)) * 100;
+      const profitDiffRate = Number(recordB.profit || 0) === 0 ? null : (profitDiff / Number(recordB.profit || 0)) * 100;
+
+      if (compareDiffRevenue) compareDiffRevenue.textContent = `${revenueDiff >= 0 ? '+' : '-'}¥${Math.abs(revenueDiff).toFixed(2)}`;
+      if (compareDiffOrders) compareDiffOrders.textContent = formatSignedValue(ordersDiff, 0, '');
+      if (compareDiffProfit) compareDiffProfit.textContent = `${profitDiff >= 0 ? '+' : '-'}¥${Math.abs(profitDiff).toFixed(2)}`;
+      if (compareDiffRevenueRate) compareDiffRevenueRate.textContent = `同比差 ${revenueDiffRate === null ? '--' : formatSignedValue(revenueDiffRate, 1, '%')}`;
+      if (compareDiffOrdersRate) compareDiffOrdersRate.textContent = `同比差 ${ordersDiffRate === null ? '--' : formatSignedValue(ordersDiffRate, 1, '%')}`;
+      if (compareDiffProfitRate) compareDiffProfitRate.textContent = `同比差 ${profitDiffRate === null ? '--' : formatSignedValue(profitDiffRate, 1, '%')}`;
+
+      document.querySelectorAll('.yearly-demo-view-btn[data-view]').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.view === dashboardDemoChartView);
+      });
+
+      updateDashboardDemoPickerVisibility();
+      updateDashboardYearSwitchUI();
+      renderDashboardCompareCharts();
+    }
+
+    function setDashboardCompareYear(side, year, options = {}) {
+      const nextYear = clampDashboardDemoYear(year);
+      const syncPair = !!options.syncPair;
+      if (side === 'a') {
+        dashboardCompareYearA = nextYear;
+        if (syncPair) {
+          const { years } = getDashboardCompareYearBoundary();
+          let pairedYear = nextYear - 1;
+          if (!years.includes(pairedYear)) {
+            const alternatives = years.filter((item) => item !== nextYear);
+            pairedYear = alternatives.length ? alternatives[alternatives.length - 1] : nextYear;
+          }
+          dashboardCompareYearB = clampDashboardDemoYear(pairedYear);
+        }
+        dashboardDemoDateValueA = replaceDateYear(dashboardDemoDateValueA, dashboardCompareYearA);
+        if (syncPair) {
+          dashboardDemoDateValueB = replaceDateYear(dashboardDemoDateValueB, dashboardCompareYearB);
+        }
+      } else if (side === 'b') {
+        dashboardCompareYearB = nextYear;
+        dashboardDemoDateValueB = replaceDateYear(dashboardDemoDateValueB, dashboardCompareYearB);
+      } else {
+        return;
+      }
+
+      syncDashboardDemoDateValues();
+      updateDashboardYearSwitchUI();
+      updateDashboardDemoPickerVisibility();
+      if (dashboardCompareMode) {
+        renderDashboardYearlyDemo();
+      }
+    }
+    window.setDashboardCompareYear = setDashboardCompareYear;
+
+    function setDashboardSelectedYear(year) {
+      setDashboardCompareYear('a', year, { syncPair: true });
+      setDashboardCompareMode(true);
+    }
+    window.setDashboardSelectedYear = setDashboardSelectedYear;
+
+    function parseDashboardDate(value) {
+      if (value === null || value === undefined || value === '') return null;
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function getDashboardPeriodRange(period, baseDate = new Date()) {
+      const now = new Date(baseDate);
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const day = now.getDate();
+      let start;
+      let end;
+
+      switch (period) {
+        case 'day':
+          start = new Date(year, month, day);
+          end = new Date(year, month, day + 1);
+          break;
+        case 'week': {
+          const weekDay = (now.getDay() + 6) % 7;
+          start = new Date(year, month, day - weekDay);
+          end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7);
+          break;
+        }
+        case 'quarter': {
+          const quarterStartMonth = Math.floor(month / 3) * 3;
+          start = new Date(year, quarterStartMonth, 1);
+          end = new Date(year, quarterStartMonth + 3, 1);
+          break;
+        }
+        case 'year':
+          start = new Date(year, 0, 1);
+          end = new Date(year + 1, 0, 1);
+          break;
+        case 'month':
+        default:
+          start = new Date(year, month, 1);
+          end = new Date(year, month + 1, 1);
+          break;
+      }
+
+      return { start, end };
+    }
+
+    function isDateInDashboardRange(date, range) {
+      return !!date && date >= range.start && date < range.end;
+    }
+
+    function normalizeDashboardPeriod(period) {
+      const value = String(period || '').trim().toLowerCase();
+      return DASHBOARD_PERIOD_OPTIONS.includes(value) ? value : DASHBOARD_PERIOD_DEFAULT;
+    }
+
+    function normalizeDashboardRevenueStatus(status) {
+      const value = String(status || '').trim().toLowerCase();
+      return DASHBOARD_REVENUE_STATUS_OPTIONS.includes(value)
+        ? value
+        : DASHBOARD_REVENUE_STATUS_DEFAULT;
+    }
+
+    function isOrderMatchRevenueStatus(order, revenueStatus) {
+      const sourceStatus = String(order?.sourceStatus || order?.status || '').trim().toLowerCase();
+      const statusFlow = window.AdminOrderStatusFlow;
+      if (statusFlow && typeof statusFlow.matchRevenueFilter === 'function') {
+        return statusFlow.matchRevenueFilter(sourceStatus, revenueStatus);
+      }
+
+      if (revenueStatus === 'all') {
+        return sourceStatus === 'paid' || sourceStatus === 'processing' || sourceStatus === 'completed';
+      }
+
+      if (revenueStatus === 'paid') {
+        return sourceStatus === 'paid';
+      }
+
+      if (revenueStatus === 'completed') {
+        return sourceStatus === 'completed';
+      }
+
+      return false;
+    }
+
+    function readLocalArray(key) {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function getOrderStatusText(status) {
+      const statusMap = {
+        pending: '待支付',
+        paying: '支付中',
+        paid: '已支付',
+        failed: '支付失败',
+        processing: '处理中',
+        completed: '已完成',
+        cancelled: '已取消',
+        refunded: '已退款'
+      };
+      return statusMap[status] || status || '--';
+    }
+
+    function normalizeDashboardOrder(order) {
+      if (!order || typeof order !== 'object') return null;
+
+      const sourceStatus = String(order.status || '').trim().toLowerCase() || 'pending';
+      const statusFlow = window.AdminOrderStatusFlow;
+      const normalizedStatus = statusFlow && typeof statusFlow.getDisplayStatus === 'function'
+        ? statusFlow.getDisplayStatus(sourceStatus)
+        : sourceStatus;
+      const shouldForceFlowStatusText = sourceStatus === 'paid' || sourceStatus === 'completed';
+      const createdAt = order.createdAt || order.createTime || order.orderTime || order.paidAt || order.updatedAt || '';
+      const totalAmountRaw = order.totalAmount ?? order.amount ?? order.price ?? order.subtotal ?? 0;
+      const totalAmount = Number(totalAmountRaw);
+      const statusText = shouldForceFlowStatusText
+        ? getOrderStatusText(normalizedStatus)
+        : (order.statusText || getOrderStatusText(normalizedStatus));
+
+      return {
+        ...order,
+        status: normalizedStatus || 'pending',
+        sourceStatus,
+        statusText,
+        totalAmount: Number.isFinite(totalAmount) ? totalAmount : 0,
+        createdAt,
+        createdAtDate: parseDashboardDate(createdAt),
+        orderNo: order.orderNo || order.id || order._id || order.orderId || '--',
+        productName: order.productName || order.serviceName || '--'
+      };
+    }
+
+    function normalizeDashboardUser(user) {
+      if (!user || typeof user !== 'object') return null;
+      const createdAt = user.createdAt || user.createTime || user.registerTime || user.registeredAt || user.joinAt || '';
+      return {
+        ...user,
+        createdAtDate: parseDashboardDate(createdAt)
+      };
+    }
+
+    function getDashboardOrdersFromStorage() {
+      return readLocalArray('zhimai_orders')
+        .map(normalizeDashboardOrder)
+        .filter(Boolean)
+        .sort((a, b) => {
+          const timeA = a.createdAtDate ? a.createdAtDate.getTime() : 0;
+          const timeB = b.createdAtDate ? b.createdAtDate.getTime() : 0;
+          return timeB - timeA;
+        });
+    }
+
+    function getDashboardUsersFromStorage() {
+      return readLocalArray('zhimai_users')
+        .map(normalizeDashboardUser)
+        .filter(Boolean);
+    }
+
+    function getDashboardProductProfitLookup() {
+      const products = readLocalArray('zhimai_products');
+      const lookup = new Map();
+
+      products.forEach((product) => {
+        if (!product || typeof product !== 'object') return;
+
+        const rawProfit = Number(product.profit ?? product.unitProfit ?? product.productProfit ?? 0);
+        const profit = Number.isFinite(rawProfit) ? rawProfit : 0;
+        const idCandidates = [product.id, product._id]
+          .map((item) => String(item || '').trim())
+          .filter(Boolean);
+
+        idCandidates.forEach((id) => {
+          if (!lookup.has(id)) {
+            lookup.set(id, profit);
+          }
+        });
+      });
+
+      return lookup;
+    }
+
+    function getDashboardOrderQuantity(order) {
+      const quantity = Number(order?.quantity ?? order?.qty ?? 1);
+      return Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
+    }
+
+    function getDashboardOrderUnitProfit(order, profitLookup) {
+      const explicitProfit = Number(
+        order?.unitProfit
+        ?? order?.productProfit
+        ?? order?.profit
+        ?? order?.profitPerUnit
+      );
+      if (Number.isFinite(explicitProfit) && explicitProfit >= 0) {
+        return explicitProfit;
+      }
+
+      const productIdCandidates = [order?.productId, order?.productID, order?.product_id]
+        .map((item) => String(item || '').trim())
+        .filter(Boolean);
+
+      for (const productId of productIdCandidates) {
+        if (profitLookup.has(productId)) {
+          return Number(profitLookup.get(productId) || 0);
+        }
+      }
+
+      return 0;
+    }
+
+    function isValidDashboardOrder(order) {
+      const status = String(order?.status || '').trim().toLowerCase();
+      if (DASHBOARD_VALID_ORDER_STATUSES.has(status)) return true;
+
+      const statusText = String(order?.statusText || '');
+      return statusText.includes('已支付') || statusText.includes('处理中') || statusText.includes('已完成');
+    }
+
+    function computeDashboardSummary(period) {
+      const range = getDashboardPeriodRange(period);
+      const revenueStatus = normalizeDashboardRevenueStatus(dashboardRevenueStatus);
+      const scopedOrders = dashboardOrders
+        .filter(order => isDateInDashboardRange(order.createdAtDate, range))
+        .filter(order => isOrderMatchRevenueStatus(order, revenueStatus));
+      const revenue = scopedOrders.reduce((sum, order) => sum + Number(order.totalAmount || 0), 0);
+      const profit = scopedOrders.reduce((sum, order) => {
+        const unitProfit = getDashboardOrderUnitProfit(order, dashboardProductProfitLookup);
+        const quantity = getDashboardOrderQuantity(order);
+        return sum + (unitProfit * quantity);
+      }, 0);
+      const totalMembers = dashboardUsers.length;
+      const newMembers = dashboardUsers.filter(user => isDateInDashboardRange(user.createdAtDate, range)).length;
+
+      return {
+        revenue,
+        profit,
+        orderCount: Math.floor(scopedOrders.length),
+        revenueStatus,
+        totalMembers,
+        newMembers
+      };
+    }
+
+    function formatDashboardCurrency(amount) {
+      return `¥${Number(amount || 0).toFixed(2)}`;
+    }
+
+    function renderDashboardSummary() {
+      const summary = computeDashboardSummary(dashboardCurrentPeriod);
+      document.getElementById('statRevenue').textContent = formatDashboardCurrency(summary.revenue);
+      document.getElementById('statOrders').textContent = String(Math.floor(Number(summary.orderCount) || 0));
+      document.getElementById('statMembersTotal').textContent = summary.totalMembers;
+      document.getElementById('statMembersNew').textContent = `新增 +${summary.newMembers}`;
+      document.getElementById('statProfit').textContent = formatDashboardCurrency(summary.profit);
+      const profitScopeElement = document.querySelector('#statProfit')?.closest('.stat-info')?.querySelector('.stat-secondary');
+      if (profitScopeElement) {
+        profitScopeElement.textContent = '商品利润 × 订单数量';
+      }
+      const revenueScopeText = DASHBOARD_REVENUE_STATUS_TEXT[summary.revenueStatus] || DASHBOARD_REVENUE_STATUS_TEXT[DASHBOARD_REVENUE_STATUS_DEFAULT];
+      document.getElementById('statRevenueScope').textContent = `仅统计${revenueScopeText}`;
+    }
+
+    function syncSalesTrendPeriodTabs(period) {
+      document.querySelectorAll('.chart-tabs .tab-btn[data-period]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.period === period);
+      });
+    }
+
+    function mapDashboardPeriodToDemoGranularity(period) {
+      if (period === 'day') return 'day';
+      if (period === 'week') return 'week';
+      if (period === 'month') return 'month';
+      if (period === 'quarter') return 'quarter';
+      return 'year';
+    }
+
+    function setDashboardPeriod(period) {
+      const nextPeriod = normalizeDashboardPeriod(period);
+      dashboardCurrentPeriod = nextPeriod;
+      const nextGranularity = mapDashboardPeriodToDemoGranularity(nextPeriod);
+      if (dashboardDemoGranularity !== nextGranularity) {
+        dashboardDemoGranularity = nextGranularity;
+        if (dashboardCompareMode) {
+          renderDashboardYearlyDemo();
+        } else {
+          updateDashboardDemoPickerVisibility();
+        }
+      }
+
+      const periodSelect = document.getElementById('statsPeriod');
+      if (periodSelect && periodSelect.value !== nextPeriod) {
+        periodSelect.value = nextPeriod;
+      }
+
+      syncSalesTrendPeriodTabs(nextPeriod);
+      renderDashboardSummary();
+      renderSalesChart(dashboardOrders, nextPeriod);
+    }
+    window.setDashboardPeriod = setDashboardPeriod;
+
+    function setDashboardRevenueStatus(status) {
+      const nextStatus = normalizeDashboardRevenueStatus(status);
+      dashboardRevenueStatus = nextStatus;
+
+      const revenueSelect = document.getElementById('revenueStatusFilter');
+      if (revenueSelect && revenueSelect.value !== nextStatus) {
+        revenueSelect.value = nextStatus;
+      }
+
+      renderDashboardSummary();
+    }
+    window.setDashboardRevenueStatus = setDashboardRevenueStatus;
+
+    function bindDashboardPeriodSelector() {
+      const periodSelect = document.getElementById('statsPeriod');
+      if (!periodSelect || periodSelect.dataset.bound === '1') return;
+
+      periodSelect.value = dashboardCurrentPeriod;
+      periodSelect.addEventListener('change', function() {
+        setDashboardPeriod(this.value);
+      });
+      periodSelect.dataset.bound = '1';
+    }
+
+    function bindSalesTrendPeriodTabs() {
+      document.querySelectorAll('.chart-tabs .tab-btn[data-period]').forEach((btn) => {
+        if (btn.dataset.bound === '1') return;
+        btn.addEventListener('click', function() {
+          setDashboardPeriod(this.dataset.period || DASHBOARD_PERIOD_DEFAULT);
+        });
+        btn.dataset.bound = '1';
+      });
+    }
+
+    function bindDashboardRevenueStatusSelector() {
+      const revenueSelect = document.getElementById('revenueStatusFilter');
+      if (!revenueSelect || revenueSelect.dataset.bound === '1') return;
+
+      revenueSelect.value = dashboardRevenueStatus;
+      revenueSelect.addEventListener('change', function() {
+        setDashboardRevenueStatus(this.value);
+      });
+      revenueSelect.dataset.bound = '1';
+    }
+
+    function replaceDateYear(dateText, year) {
+      const selected = new Date(dateText);
+      if (Number.isNaN(selected.getTime())) return `${year}-04-09`;
+      const mm = pad2(selected.getMonth() + 1);
+      const dd = pad2(selected.getDate());
+      return `${year}-${mm}-${dd}`;
+    }
+
+    function initializeDashboardDemoPickers() {
+      const dayPicker = document.getElementById('yearlyDayPicker');
+      const dayPickerB = document.getElementById('yearlyDayPickerB');
+      const periodPickerA = document.getElementById('yearlyPeriodPickerA');
+      const periodPickerB = document.getElementById('yearlyPeriodPickerB');
+      if (!dayPicker || !dayPickerB || !periodPickerA || !periodPickerB) return;
+
+      syncDashboardDemoDateValues();
+      dashboardDemoDateValueA = replaceDateYear(dashboardDemoDateValueA, dashboardCompareYearA);
+      dashboardDemoDateValueB = replaceDateYear(dashboardDemoDateValueB, dashboardCompareYearB);
+      dayPicker.value = dashboardDemoDateValueA;
+      dayPickerB.value = dashboardDemoDateValueB;
+      updateDashboardDemoPickerVisibility();
+    }
+
+    function bindDashboardYearSwitch() {
+      const compareModeBtn = document.getElementById('trendOverviewCompareBtn');
+      if (compareModeBtn && compareModeBtn.dataset.bound !== '1') {
+        compareModeBtn.addEventListener('click', function() {
+          setDashboardCompareMode(!dashboardCompareMode);
+        });
+        compareModeBtn.dataset.bound = '1';
+      }
+
+      const dayPicker = document.getElementById('yearlyDayPicker');
+      const dayPickerB = document.getElementById('yearlyDayPickerB');
+      const calendarTriggerA = document.getElementById('yearlyCalendarTriggerA');
+      const calendarTriggerB = document.getElementById('yearlyCalendarTriggerB');
+      const periodPickerA = document.getElementById('yearlyPeriodPickerA');
+      const periodPickerB = document.getElementById('yearlyPeriodPickerB');
+
+      if (dayPicker && dayPicker.dataset.bound !== '1') {
+        dayPicker.addEventListener('change', function() {
+          if (this.value) {
+            dashboardDemoDateValueA = this.value;
+            const picked = new Date(this.value);
+            if (!Number.isNaN(picked.getTime())) {
+              const nextYear = clampDashboardDemoYear(picked.getFullYear());
+              if (nextYear !== dashboardCompareYearA) {
+                setDashboardCompareYear('a', nextYear);
+                return;
+              }
+            }
+          }
+          dashboardDemoDateValueA = replaceDateYear(dashboardDemoDateValueA, dashboardCompareYearA);
+          triggerDashboardCompareRerender();
+        });
+        dayPicker.dataset.bound = '1';
+      }
+      if (dayPickerB && dayPickerB.dataset.bound !== '1') {
+        dayPickerB.addEventListener('change', function() {
+          if (this.value) {
+            dashboardDemoDateValueB = this.value;
+            const picked = new Date(this.value);
+            if (!Number.isNaN(picked.getTime())) {
+              const nextYear = clampDashboardDemoYear(picked.getFullYear());
+              if (nextYear !== dashboardCompareYearB) {
+                setDashboardCompareYear('b', nextYear);
+                return;
+              }
+            }
+          }
+          dashboardDemoDateValueB = replaceDateYear(dashboardDemoDateValueB, dashboardCompareYearB);
+          triggerDashboardCompareRerender();
+        });
+        dayPickerB.dataset.bound = '1';
+      }
+      if (calendarTriggerA && calendarTriggerA.dataset.bound !== '1') {
+        calendarTriggerA.addEventListener('click', function(e) {
+          if (dashboardDemoGranularity !== 'day') return;
+          if (e.target && e.target.id === 'yearlyDayPicker') return;
+          openDashboardDatePicker(dayPicker);
+        });
+        calendarTriggerA.dataset.bound = '1';
+      }
+      if (calendarTriggerB && calendarTriggerB.dataset.bound !== '1') {
+        calendarTriggerB.addEventListener('click', function(e) {
+          if (dashboardDemoGranularity !== 'day') return;
+          if (e.target && e.target.id === 'yearlyDayPickerB') return;
+          openDashboardDatePicker(dayPickerB);
+        });
+        calendarTriggerB.dataset.bound = '1';
+      }
+      if (periodPickerA && periodPickerA.dataset.bound !== '1') {
+        periodPickerA.addEventListener('change', function() {
+          const parsed = parseDashboardPeriodPickerValue(dashboardDemoGranularity, this.value);
+          if (!parsed) return;
+          if (dashboardDemoGranularity !== 'year') {
+            setDashboardDemoPeriodValue('a', dashboardDemoGranularity, parsed.period);
+          }
+          setDashboardCompareYear('a', parsed.year);
+        });
+        periodPickerA.dataset.bound = '1';
+      }
+      if (periodPickerB && periodPickerB.dataset.bound !== '1') {
+        periodPickerB.addEventListener('change', function() {
+          const parsed = parseDashboardPeriodPickerValue(dashboardDemoGranularity, this.value);
+          if (!parsed) return;
+          if (dashboardDemoGranularity !== 'year') {
+            setDashboardDemoPeriodValue('b', dashboardDemoGranularity, parsed.period);
+          }
+          setDashboardCompareYear('b', parsed.year);
+        });
+        periodPickerB.dataset.bound = '1';
+      }
+
+      document.querySelectorAll('.yearly-demo-view-btn[data-view]').forEach((btn) => {
+        if (btn.dataset.bound === '1') return;
+        btn.addEventListener('click', function() {
+          const view = String(this.dataset.view || 'line');
+          dashboardDemoChartView = view === 'bar' ? 'bar' : 'line';
+          if (dashboardCompareMode) renderDashboardYearlyDemo();
+        });
+        btn.dataset.bound = '1';
+      });
+
+      initializeDashboardDemoPickers();
+      setDashboardCompareYear('a', dashboardCompareYearA, { syncPair: true });
+      setDashboardCompareMode(false);
+    }
+
+    function renderDashboardData(orders) {
+      dashboardOrders = Array.isArray(orders) ? orders : [];
+      dashboardUsers = getDashboardUsersFromStorage();
+      dashboardProductProfitLookup = getDashboardProductProfitLookup();
+      renderLatestOrders(dashboardOrders);
+      renderOrderStatusChart(dashboardOrders);
+      setDashboardPeriod(dashboardCurrentPeriod);
+    }
+
+    fillAdminName('.user-name');
+
+    document.getElementById('logoutBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      adminLogout();
+    });
+    
+    // 下拉菜单切换
+    document.getElementById('userDropdown').addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.getElementById('dropdownMenu').classList.toggle('show');
+    });
+    
+    // 点击其他地方关闭下拉菜单
+    document.addEventListener('click', function() {
+      document.getElementById('dropdownMenu').classList.remove('show');
+    });
+
+    // 加载仪表盘数据
+    async function loadDashboard() {
+      if (typeof ensureAdminAuth === 'function' && !ensureAdminAuth()) {
+        return;
+      }
+      const realOrders = getDashboardOrdersFromStorage();
+      bindDashboardPeriodSelector();
+      bindSalesTrendPeriodTabs();
+      bindDashboardRevenueStatusSelector();
+      bindDashboardYearSwitch();
+      renderDashboardData(realOrders);
+    }
+    
+    // 渲染最新订单
+    function renderLatestOrders(orders) {
+      const latest = orders.slice(0, 5);
+      const tbody = document.getElementById('latestOrders');
+
+      tbody.textContent = '';
+
+      if (latest.length === 0) {
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 5;
+        cell.style.textAlign = 'center';
+        cell.style.padding = '40px';
+        cell.style.color = 'var(--text-muted)';
+        cell.textContent = '暂无订单';
+        row.appendChild(cell);
+        tbody.appendChild(row);
+        return;
+      }
+
+      const ALLOWED_STATUS_CLASS = new Set(['pending', 'paid', 'processing', 'completed', 'cancelled']);
+
+      latest.forEach((order) => {
+        const row = document.createElement('tr');
+
+        const idCell = document.createElement('td');
+        const idText = document.createElement('span');
+        idText.style.color = 'var(--primary)';
+        idText.style.fontWeight = '500';
+        idText.textContent = String(order.orderNo || order.id || '--');
+        idCell.appendChild(idText);
+        row.appendChild(idCell);
+
+        const productCell = document.createElement('td');
+        const rawProductName = String(order.productName || '--');
+        productCell.textContent = rawProductName.length > 15 ? `${rawProductName.substring(0, 15)}...` : rawProductName;
+        row.appendChild(productCell);
+
+        const priceCell = document.createElement('td');
+        priceCell.className = 'price';
+        const amount = Number(order.totalAmount || 0);
+        priceCell.textContent = `¥${Number.isFinite(amount) ? amount.toFixed(2) : '0.00'}`;
+        row.appendChild(priceCell);
+
+        const statusCell = document.createElement('td');
+        const statusBadge = document.createElement('span');
+        const statusClass = ALLOWED_STATUS_CLASS.has(order.status) ? order.status : 'pending';
+        statusBadge.className = `status-badge ${statusClass}`;
+        statusBadge.textContent = String(order.statusText || '待支付');
+        statusCell.appendChild(statusBadge);
+        row.appendChild(statusCell);
+
+        const createdCell = document.createElement('td');
+        createdCell.style.color = 'var(--text-muted)';
+        createdCell.style.fontSize = '12px';
+        if (order.createdAt) {
+          const date = new Date(order.createdAt);
+          createdCell.textContent = Number.isNaN(date.getTime()) ? '--' : date.toLocaleString('zh-CN');
+        } else {
+          createdCell.textContent = '--';
+        }
+        row.appendChild(createdCell);
+
+        tbody.appendChild(row);
+      });
+    }
+    
+    // 渲染销售趋势图（与总览同周期、同有效订单口径）
+    function buildSalesTrendBuckets(period, range) {
+      const buckets = [];
+
+      if (period === 'day') {
+        for (let hour = 0; hour < 24; hour++) {
+          const start = new Date(range.start.getFullYear(), range.start.getMonth(), range.start.getDate(), hour, 0, 0, 0);
+          const end = new Date(start.getTime() + 60 * 60 * 1000);
+          buckets.push({
+            label: `${String(hour).padStart(2, '0')}:00`,
+            start,
+            end
+          });
+        }
+        return buckets;
+      }
+
+      if (period === 'week') {
+        for (let i = 0; i < 7; i++) {
+          const start = new Date(range.start.getFullYear(), range.start.getMonth(), range.start.getDate() + i, 0, 0, 0, 0);
+          const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1, 0, 0, 0, 0);
+          buckets.push({
+            label: start.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' }),
+            start,
+            end
+          });
+        }
+        return buckets;
+      }
+
+      if (period === 'quarter') {
+        for (let i = 0; i < 3; i++) {
+          const start = new Date(range.start.getFullYear(), range.start.getMonth() + i, 1, 0, 0, 0, 0);
+          const end = new Date(start.getFullYear(), start.getMonth() + 1, 1, 0, 0, 0, 0);
+          buckets.push({
+            label: `${start.getMonth() + 1}月`,
+            start,
+            end
+          });
+        }
+        return buckets;
+      }
+
+      if (period === 'year') {
+        for (let i = 0; i < 12; i++) {
+          const start = new Date(range.start.getFullYear(), i, 1, 0, 0, 0, 0);
+          const end = new Date(range.start.getFullYear(), i + 1, 1, 0, 0, 0, 0);
+          buckets.push({
+            label: `${i + 1}月`,
+            start,
+            end
+          });
+        }
+        return buckets;
+      }
+
+      let cursor = new Date(range.start);
+      while (cursor < range.end) {
+        const start = new Date(cursor);
+        const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1, 0, 0, 0, 0);
+        buckets.push({
+          label: `${start.getDate()}日`,
+          start,
+          end
+        });
+        cursor = end;
+      }
+      return buckets;
+    }
+
+    function buildSalesTrendSeries(orders, period) {
+      const normalizedPeriod = normalizeDashboardPeriod(period);
+      const range = getDashboardPeriodRange(normalizedPeriod);
+      const validOrders = (Array.isArray(orders) ? orders : [])
+        .filter(isValidDashboardOrder)
+        .filter(order => isDateInDashboardRange(order.createdAtDate, range));
+      const buckets = buildSalesTrendBuckets(normalizedPeriod, range);
+      const revenue = [];
+      const profit = [];
+      const orderCount = [];
+
+      buckets.forEach(bucket => {
+        let amount = 0;
+        let profitAmount = 0;
+        let count = 0;
+        validOrders.forEach(order => {
+          if (isDateInDashboardRange(order.createdAtDate, bucket)) {
+            amount += Number(order.totalAmount || 0);
+            const unitProfit = getDashboardOrderUnitProfit(order, dashboardProductProfitLookup);
+            const quantity = getDashboardOrderQuantity(order);
+            profitAmount += (unitProfit * quantity);
+            count += 1;
+          }
+        });
+        revenue.push(Number(amount.toFixed(2)));
+        profit.push(Number(profitAmount.toFixed(2)));
+        orderCount.push(Math.floor(count));
+      });
+
+      return {
+        labels: buckets.map(bucket => bucket.label),
+        revenue,
+        profit,
+        orderCount
+      };
+    }
+
+    function renderSalesChart(orders, period = dashboardCurrentPeriod) {
+      const ctx = document.getElementById('salesChart');
+      if (!ctx) return;
+
+      const series = buildSalesTrendSeries(orders, period);
+
+      if (salesChartInstance) {
+        salesChartInstance.destroy();
+      }
+
+      salesChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: series.labels,
+          datasets: [{
+            label: '营业额',
+            data: series.revenue,
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+            fill: true,
+            tension: 0.4,
+            borderWidth: 2,
+            yAxisID: 'y'
+          }, {
+            label: '利润',
+            data: series.profit,
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+            fill: true,
+            tension: 0.4,
+            borderWidth: 2,
+            yAxisID: 'y'
+          }, {
+            label: '订单量',
+            data: series.orderCount,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            fill: true,
+            tension: 0.4,
+            borderWidth: 2,
+            yAxisID: 'y1'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                color: '#94a3b8',
+                usePointStyle: true,
+                padding: 20
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: {
+                color: 'rgba(51, 65, 85, 0.5)',
+                drawBorder: false
+              },
+              ticks: {
+                color: '#64748b'
+              }
+            },
+            y: {
+              position: 'left',
+              grid: {
+                color: 'rgba(51, 65, 85, 0.5)',
+                drawBorder: false
+              },
+              ticks: {
+                color: '#64748b',
+                callback: function(value) {
+                  return `¥${value}`;
+                }
+              }
+            },
+            y1: {
+              position: 'right',
+              grid: {
+                display: false
+              },
+              ticks: {
+                color: '#64748b'
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // 渲染订单状态饼图
+    function renderOrderStatusChart(orders) {
+      const ctx = document.getElementById('orderStatusChart');
+      if (!ctx) return;
+      
+      const statusCount = {
+        pending: orders.filter(o => o.status === 'pending').length,
+        paid: orders.filter(o => o.status === 'paid').length,
+        processing: orders.filter(o => o.status === 'processing').length,
+        completed: orders.filter(o => o.status === 'completed').length,
+        cancelled: orders.filter(o => o.status === 'cancelled').length
+      };
+      
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['待支付', '已支付', '处理中', '已完成', '已取消'],
+          datasets: [{
+            data: [statusCount.pending, statusCount.paid, statusCount.processing, statusCount.completed, statusCount.cancelled],
+            backgroundColor: [
+              '#f59e0b',
+              '#3b82f6',
+              '#6366f1',
+              '#10b981',
+              '#64748b'
+            ],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: '#94a3b8',
+                padding: 20,
+                usePointStyle: true
+              }
+            }
+          },
+          cutout: '70%'
+        }
+      });
+    }
+    
+    // 兼容旧入口：统一走共享周期更新
+    function switchChart(range) {
+      setDashboardPeriod(range);
+    }
+    
+    // 页面加载
+    document.addEventListener('DOMContentLoaded', loadDashboard);
+  </script>
+  
+  <style>
+    .stats-summary-block {
+      margin-bottom: var(--section-gap, 24px);
+    }
+
+    .stats-summary-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: var(--block-gap, 12px);
+    }
+
+    .stats-summary-title {
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .stats-period-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .stats-period-select {
+      height: 30px;
+      min-width: 96px;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-primary);
+      border-radius: var(--radius);
+      padding: 0 10px;
+      font-size: 12px;
+      outline: none;
+    }
+
+    .stats-period-select:focus {
+      border-color: var(--primary);
+    }
+
+    .stat-secondary {
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .chart-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .overview-compare-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 32px;
+      padding: 0 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--content-bg);
+      color: var(--text-secondary);
+      font-size: 12px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .overview-compare-btn:hover {
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .overview-compare-btn.active {
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.2);
+      color: #fff;
+      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.2) inset;
+    }
+
+    .trend-year-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--content-bg);
+    }
+
+    .year-switch-btn {
+      width: 24px;
+      height: 24px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .year-switch-btn:hover:not(:disabled) {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .year-switch-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    .trend-year-label {
+      min-width: 60px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .yearly-demo-panel {
+      margin-top: 12px;
+      border: 1px dashed rgb(99 102 241 / 45%);
+      border-radius: 10px;
+      padding: 14px;
+      background: rgb(99 102 241 / 6%);
+    }
+
+    .yearly-demo-panel[hidden] {
+      display: none !important;
+    }
+
+    .yearly-demo-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .yearly-demo-title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .yearly-demo-title-wrap strong {
+      color: #dbeafe;
+      font-size: 14px;
+    }
+
+    .yearly-demo-title-wrap span {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .yearly-demo-view-switch {
+      display: inline-flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .yearly-demo-view-btn {
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--content-bg);
+      color: var(--text-secondary);
+      padding: 3px 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .yearly-demo-view-btn.active {
+      border-color: #10b981;
+      color: #fff;
+      background: rgba(16, 185, 129, 0.32);
+    }
+
+    .yearly-demo-picker-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .yearly-demo-picker-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .yearly-demo-picker-label {
+      color: var(--text-muted);
+      font-size: 11px;
+      line-height: 1;
+    }
+
+    .yearly-demo-picker {
+      min-width: 150px;
+      height: 32px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--content-bg);
+      color: var(--text-primary);
+      font-size: 12px;
+      padding: 0 10px;
+      outline: none;
+    }
+
+    .yearly-demo-picker:focus {
+      border-color: var(--primary);
+    }
+
+    .yearly-compare-trend-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .yearly-compare-trend-card {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: rgb(15 23 42 / 55%);
+      overflow: hidden;
+    }
+
+    .yearly-compare-trend-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+      gap: 8px;
+    }
+
+    .yearly-compare-trend-title {
+      color: #dbeafe;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .yearly-compare-trend-tools {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .yearly-side-picker {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .yearly-side-picker .yearly-demo-picker {
+      min-width: 148px;
+      height: 28px;
+      border-radius: 6px;
+      font-size: 12px;
+      padding: 0 8px;
+    }
+
+    .yearly-calendar-trigger {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 148px;
+      height: 28px;
+      padding: 0 10px;
+      border: 1px solid rgba(96, 165, 250, 0.75);
+      border-radius: 6px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #dbeafe;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .yearly-calendar-trigger[hidden] {
+      display: none !important;
+    }
+
+    .yearly-calendar-trigger i {
+      color: #93c5fd;
+      font-size: 13px;
+    }
+
+    .yearly-calendar-text {
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+
+    .yearly-day-native-input {
+      position: absolute;
+      inset: auto;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .yearly-calendar-trigger:focus-within {
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.45) inset;
+    }
+
+    .yearly-compare-trend-canvas {
+      height: 240px;
+      padding: 10px;
+    }
+
+    .trend-year-switch-compact {
+      padding: 2px 6px;
+      gap: 6px;
+    }
+
+    .trend-year-switch-compact .year-switch-btn {
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+    }
+
+    .trend-year-switch-compact .trend-year-label {
+      min-width: 56px;
+      font-size: 12px;
+    }
+
+    .yearly-compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .yearly-compare-card {
+      background: rgb(15 23 42 / 55%);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .yearly-compare-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .yearly-compare-card-title {
+      color: #dbeafe;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .yearly-compare-card-time {
+      color: #93c5fd;
+      font-size: 12px;
+    }
+
+    .yearly-compare-card-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .yearly-compare-item {
+      background: rgb(2 6 23 / 45%);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .yearly-compare-item span {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .yearly-compare-item strong {
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .yearly-compare-summary {
+      border-top: 1px dashed rgb(148 163 184 / 30%);
+      padding-top: 12px;
+    }
+
+    .yearly-compare-summary-title {
+      color: #dbeafe;
+      font-size: 13px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .yearly-compare-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .yearly-compare-summary-card {
+      background: rgb(15 23 42 / 55%);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .yearly-compare-summary-card span {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .yearly-compare-summary-card strong {
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .yearly-compare-summary-card small {
+      color: #93c5fd;
+      font-size: 12px;
+    }
+
+    body.dashboard-archive-mode #statsSummaryBlock,
+    body.dashboard-archive-mode #orderStatusChartCard,
+    body.dashboard-archive-mode #dashboardBottomRow {
+      display: none;
+    }
+
+    body.dashboard-archive-mode #salesChartMainBody {
+      display: none;
+    }
+
+    body.dashboard-archive-mode .charts-row {
+      grid-template-columns: 1fr;
+    }
+
+    body.dashboard-archive-mode .yearly-demo-panel {
+      margin-top: 0;
+    }
+
+    .quick-action {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 24px;
+      background: var(--content-bg);
+      border-radius: var(--radius);
+      transition: var(--transition);
+      border: 1px solid var(--border-color);
+    }
+    
+    .quick-action:hover {
+      background: var(--card-hover);
+      transform: translateY(-2px);
+      border-color: var(--primary);
+    }
+    
+    .quick-action i {
+      font-size: 24px;
+    }
+    
+    .quick-action span {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    @media (max-width: 768px) {
+      .stats-summary-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .chart-actions {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .yearly-demo-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .yearly-compare-trend-head {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .yearly-compare-trend-tools {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .yearly-side-picker {
+        width: 100%;
+      }
+
+      .yearly-side-picker .yearly-demo-picker {
+        min-width: 0;
+        width: 100%;
+      }
+
+      .yearly-calendar-trigger {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .yearly-compare-trend-grid,
+      .yearly-compare-grid,
+      .yearly-compare-summary-grid,
+      .yearly-compare-card-metrics {
+        grid-template-columns: 1fr;
+      }
+
+      .yearly-compare-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</body>
+</html>
+
+
+
+
+
+

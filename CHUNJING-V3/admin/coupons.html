@@ -1,0 +1,1029 @@
+<!--
+  文件名: admin/coupons.html
+  页面名称: 后台管理 - 优惠券管理
+  功能说明: 优惠券管理页面，支持创建、编辑、发放优惠券
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>优惠券管理 - 织麦电竞后台</title>
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <div class="admin-container">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <header class="top-header">
+        <div class="header-left">
+          <button class="sidebar-toggle" id="sidebarToggle">
+            <i class="fa fa-bars"></i>
+          </button>
+          <span class="page-title">优惠券管理</span>
+        </div>
+        <div class="header-right">
+          <div class="header-actions">
+            <div class="user-dropdown" id="userDropdown">
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin" alt="avatar" class="user-avatar">
+              <div class="header-user-info"><span class="user-name">管理员</span><span class="header-user-role">超管</span></div>
+              <i class="fa fa-chevron-down" style="font-size: 12px; color: var(--text-muted);"></i>
+              <div class="dropdown-menu" id="dropdownMenu">
+                <a href="#"><i class="fa fa-user"></i> 个人中心</a>
+                <a href="#" id="logoutBtn"><i class="fa fa-sign-out-alt"></i> 退出登录</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="content-wrapper">
+        <!-- 统计卡片 -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-icon primary">
+              <i class="fa fa-ticket"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-num" id="totalCoupons">0</span>
+              <span class="stat-label">优惠券总数</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon success">
+              <i class="fa fa-check-circle"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-num" id="activeCoupons">0</span>
+              <span class="stat-label">进行中</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon warning">
+              <i class="fa fa-clock"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-num" id="expiredCoupons">0</span>
+              <span class="stat-label">已过期</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon info">
+              <i class="fa fa-gift"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-num" id="usedCoupons">0</span>
+              <span class="stat-label">已使用</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 筛选栏 -->
+        <div class="filter-bar">
+          <div class="filter-left">
+            <div class="filter-item">
+              <select class="filter-select" id="filterStatus">
+                <option value="">全部状态</option>
+                <option value="active">进行中</option>
+                <option value="expired">已过期</option>
+                <option value="upcoming">未开始</option>
+              </select>
+            </div>
+            <div class="filter-item">
+              <select class="filter-select" id="filterType">
+                <option value="">全部类型</option>
+                <option value="discount">折扣券</option>
+                <option value="cash">代金券</option>
+                <option value="full">满减券</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="applyFilter()">
+              <i class="fa fa-search"></i> 搜索
+            </button>
+            <button class="btn btn-outline" onclick="resetFilter()">
+              <i class="fa fa-undo"></i> 重置
+            </button>
+          </div>
+          <div class="filter-right">
+            <button class="btn btn-success" onclick="openAddModal()">
+              <i class="fa fa-plus"></i> 创建优惠券
+            </button>
+          </div>
+        </div>
+
+        <!-- 数据表格 -->
+        <div class="data-card">
+          <div class="table-header">
+            <span class="table-title">优惠券列表</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>优惠券信息</th>
+                  <th>类型</th>
+                  <th>面额/折扣</th>
+                  <th>使用条件</th>
+                  <th>有效期</th>
+                  <th>库存</th>
+                  <th>已使用</th>
+                  <th>状态</th>
+                  <th width="120">操作</th>
+                </tr>
+              </thead>
+              <tbody id="couponTableBody">
+                <!-- 动态加载 -->
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination" id="pagination"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 创建/编辑优惠券弹窗 -->
+  <div class="modal" id="couponModal">
+    <div class="modal-overlay" onclick="closeModal()"></div>
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">创建优惠券</h3>
+        <button class="modal-close" onclick="closeModal()">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form class="edit-form" id="couponForm">
+          <div class="form-group">
+            <label>优惠券名称</label>
+            <input type="text" class="form-input" id="couponName" placeholder="例如：新用户专享券">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>优惠券类型</label>
+              <select class="form-select" id="couponType" onchange="onTypeChange()">
+                <option value="discount">折扣券</option>
+                <option value="cash">代金券</option>
+                <option value="full">满减券</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label id="valueLabel">折扣比例 (%)</label>
+              <input type="number" class="form-input" id="couponValue" placeholder="例如：8">
+            </div>
+          </div>
+          <div class="form-row" id="conditionRow">
+            <div class="form-group">
+              <label>最低消费金额（元）</label>
+              <input type="number" class="form-input" id="minAmount" placeholder="例如：100">
+            </div>
+            <div class="form-group">
+              <label>最高优惠金额（元）</label>
+              <input type="number" class="form-input" id="maxDiscount" placeholder="例如：50">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>发放数量</label>
+              <input type="number" class="form-input" id="totalCount" placeholder="例如：1000">
+            </div>
+            <div class="form-group">
+              <label>每人限领</label>
+              <input type="number" class="form-input" id="limitPerUser" value="1">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>开始时间</label>
+              <input type="datetime-local" class="form-input" id="startTime">
+            </div>
+            <div class="form-group">
+              <label>结束时间</label>
+              <input type="datetime-local" class="form-input" id="endTime">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>状态</label>
+              <select class="form-select" id="couponStatus">
+                <option value="auto">自动（按时间）</option>
+                <option value="active">进行中</option>
+                <option value="upcoming">未开始</option>
+                <option value="expired">已过期</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>库存说明</label>
+              <input type="text" class="form-input" value="库存=发放数量-已使用；库存不足时禁止发送" disabled>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveCoupon()">
+          <i class="fa fa-save"></i> 保存
+        </button>
+      </div>
+    </div>
+  </div>
+<script src="../js/data.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+  if (localStorage.getItem('zhimai_admin_logged_in') !== 'true') {
+    window.location.href = 'login.html';
+  }
+
+  document.getElementById('logoutBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    localStorage.removeItem('zhimai_admin_logged_in');
+    localStorage.removeItem('zhimai_admin_user');
+    window.location.href = 'login.html';
+  });
+
+  document.getElementById('userDropdown').addEventListener('click', function(e) {
+    e.stopPropagation();
+    document.getElementById('dropdownMenu').classList.toggle('show');
+  });
+
+  document.addEventListener('click', function() {
+    document.getElementById('dropdownMenu').classList.remove('show');
+  });
+
+  const COUPON_STORAGE_KEY = 'zhimai_coupons';
+  const USER_COUPON_STORAGE_KEY = 'zhimai_user_coupons';
+  const LEGACY_TEST_COUPON_IDS = new Set(['TEST_CLAIM_001']);
+
+  let coupons = [];
+  let rawCoupons = [];
+  let currentPage = 1;
+  const pageSize = 10;
+  let currentCoupons = [];
+  let editingId = null;
+
+  const typeMap = { discount: '折扣券', cash: '代金券', full: '满减券' };
+  const statusMap = { active: '进行中', expired: '已过期', upcoming: '未开始' };
+
+  function readJSON(key, fallbackValue) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallbackValue;
+    } catch (error) {
+      return fallbackValue;
+    }
+  }
+
+  function writeJSON(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+
+  function normalizeCouponType(rawType) {
+    if (rawType === 'percent' || rawType === 'discount') return 'discount';
+    if (rawType === 'cash') return 'cash';
+    return 'full';
+  }
+
+  function toRawCouponType(uiType) {
+    if (uiType === 'discount') return 'percent';
+    if (uiType === 'cash') return 'cash';
+    return 'fixed';
+  }
+
+  function formatDiscountPercent(value) {
+    const numericValue = Number(value) || 0;
+    const displayValue = Number.isInteger(numericValue) ? numericValue : Number(numericValue.toFixed(2));
+    return `-${displayValue}%`;
+  }
+
+  function formatCouponValueText(coupon) {
+    if (coupon.type === 'discount') {
+      return formatDiscountPercent(coupon.value);
+    }
+    return `¥${coupon.value}`;
+  }
+
+  function normalizeStatusValue(rawStatus) {
+    const normalized = typeof rawStatus === 'string' ? rawStatus.toLowerCase() : rawStatus;
+    if (normalized === 'expired' || normalized === 0) return 'expired';
+    if (normalized === 'upcoming' || normalized === 2) return 'upcoming';
+    return 'active';
+  }
+
+  function formatDateOnly(value) {
+    return value ? String(value).split('T')[0] : '';
+  }
+
+  function normalizeUserCoupons() {
+    const raw = readJSON(USER_COUPON_STORAGE_KEY, []);
+    if (Array.isArray(raw)) {
+      return raw;
+    }
+    if (!raw || typeof raw !== 'object') {
+      return [];
+    }
+
+    const flattened = [];
+    Object.entries(raw).forEach(([userId, couponList]) => {
+      if (!Array.isArray(couponList)) return;
+      couponList.forEach((item, index) => {
+        flattened.push({
+          id: item.id || `UC_LEGACY_${userId}_${index}_${Date.now()}`,
+          userId: String(item.userId || userId),
+          couponId: String(item.couponId || item.id || ''),
+          name: item.name || '',
+          type: item.type || 'fixed',
+          value: Number(item.value || 0),
+          minOrder: Number(item.minOrder || item.minAmount || 0),
+          status: item.status || (item.used ? 'used' : 'unused'),
+          claimedAt: item.claimedAt || item.receivedAt || new Date().toISOString(),
+          expireAt: item.expireAt || item.endDate || '',
+          desc: item.desc || ''
+        });
+      });
+    });
+
+    return flattened;
+  }
+
+  function buildUsedCountMap(userCoupons) {
+    const usedCountMap = {};
+    userCoupons.forEach((item) => {
+      const couponId = String(item.couponId || item.id || '');
+      if (!couponId) return;
+      usedCountMap[couponId] = (usedCountMap[couponId] || 0) + 1;
+    });
+    return usedCountMap;
+  }
+
+  function deriveStatus(rawStatus, startDate, endDate, statusMode = 'auto') {
+    if (statusMode === 'manual') {
+      return normalizeStatusValue(rawStatus);
+    }
+
+    const now = new Date();
+    const start = startDate ? new Date(`${startDate}T00:00:00`) : null;
+    const end = endDate ? new Date(`${endDate}T23:59:59`) : null;
+
+    if (end && end < now) return 'expired';
+    if (start && start > now) return 'upcoming';
+
+    return normalizeStatusValue(rawStatus);
+  }
+
+  function getRawCoupons() {
+    const stored = readJSON(COUPON_STORAGE_KEY, []);
+    if (!Array.isArray(stored)) return [];
+    const filtered = stored.filter(coupon => coupon && !LEGACY_TEST_COUPON_IDS.has(String(coupon.id)));
+    if (filtered.length !== stored.length) {
+      writeJSON(COUPON_STORAGE_KEY, filtered);
+    }
+    return filtered;
+  }
+
+  function saveRawCoupons() {
+    writeJSON(COUPON_STORAGE_KEY, rawCoupons);
+  }
+
+  function toDisplayCoupon(rawCoupon, index, usedCountMap) {
+    const id = String(rawCoupon.id || `CP${String(index + 1).padStart(3, '0')}`);
+    const totalCount = Number(rawCoupon.totalCount ?? rawCoupon.total ?? 0) || 0;
+    const fallbackUsed = Number(rawCoupon.usedCount ?? rawCoupon.used ?? 0) || 0;
+    const realUsed = usedCountMap[id] || 0;
+    const usedCount = realUsed > 0 ? realUsed : fallbackUsed;
+    const remainingCount = Math.max(totalCount - usedCount, 0);
+    const startTime = formatDateOnly(rawCoupon.startTime || rawCoupon.startDate);
+    const endTime = formatDateOnly(rawCoupon.endTime || rawCoupon.endDate);
+    const statusMode = rawCoupon.statusMode === 'manual' ? 'manual' : 'auto';
+
+    return {
+      id,
+      name: rawCoupon.name || `优惠券${index + 1}`,
+      type: normalizeCouponType(rawCoupon.type),
+      value: Number(rawCoupon.value || 0),
+      minAmount: Number(rawCoupon.minAmount ?? rawCoupon.minOrder ?? 0) || 0,
+      maxDiscount: Number(rawCoupon.maxDiscount ?? rawCoupon.value ?? 0) || 0,
+      totalCount,
+      usedCount,
+      remainingCount,
+      startTime,
+      endTime,
+      rawStatus: rawCoupon.status,
+      statusMode,
+      status: deriveStatus(rawCoupon.status, startTime, endTime, statusMode)
+    };
+  }
+
+  function loadCoupons() {
+    const filterStatus = document.getElementById('filterStatus').value;
+    const filterType = document.getElementById('filterType').value;
+    const userCoupons = normalizeUserCoupons();
+    const usedCountMap = buildUsedCountMap(userCoupons);
+
+    writeJSON(USER_COUPON_STORAGE_KEY, userCoupons);
+    rawCoupons = getRawCoupons();
+    coupons = rawCoupons.map((coupon, index) => toDisplayCoupon(coupon, index, usedCountMap));
+
+    currentCoupons = coupons.filter(coupon => {
+      if (filterStatus && coupon.status !== filterStatus) return false;
+      if (filterType && coupon.type !== filterType) return false;
+      return true;
+    });
+
+    updateStats();
+    renderTable();
+  }
+
+  function updateStats() {
+    document.getElementById('totalCoupons').textContent = coupons.length;
+    document.getElementById('activeCoupons').textContent = coupons.filter(coupon => coupon.status === 'active').length;
+    document.getElementById('expiredCoupons').textContent = coupons.filter(coupon => coupon.status === 'expired').length;
+    document.getElementById('usedCoupons').textContent = coupons.reduce((sum, coupon) => sum + coupon.usedCount, 0);
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('couponTableBody');
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    const pageData = currentCoupons.slice(start, end);
+
+    if (pageData.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 48px; color: var(--text-muted);">暂无优惠券</td></tr>';
+      renderPagination();
+      return;
+    }
+
+    tbody.innerHTML = pageData.map(coupon => {
+      const typeText = typeMap[coupon.type] || coupon.type;
+      const statusText = statusMap[coupon.status] || '进行中';
+      const valueText = formatCouponValueText(coupon);
+
+      return `
+        <tr>
+          <td>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 42px; height: 42px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px;">
+                <i class="fa fa-ticket"></i>
+              </div>
+              <div>
+                <div style="font-weight: 500; color: var(--text-primary);">${coupon.name}</div>
+                <div style="font-size: 12px; color: var(--text-muted);">${coupon.id}</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="type-badge ${coupon.type}">${typeText}</span></td>
+          <td style="font-weight: 600; color: var(--primary-light);">${valueText}</td>
+          <td style="color: var(--text-muted);">满¥${coupon.minAmount}可用</td>
+          <td style="color: var(--text-muted); font-size: 13px;">
+            <div>${coupon.startTime || '-'}</div>
+            <div>至 ${coupon.endTime || '-'}</div>
+          </td>
+          <td class="coupon-metric metric-stock">${coupon.remainingCount} / ${coupon.totalCount}</td>
+          <td class="coupon-metric metric-used">${coupon.usedCount}</td>
+          <td class="coupon-status"><span class="status-badge ${coupon.status}">${statusText}</span></td>
+          <td class="coupon-actions">
+            <div class="coupon-action-group">
+              <button class="btn-icon" onclick="sendCouponToUser('${coupon.id}')" title="发送给用户">
+                <i class="fa fa-paper-plane"></i>
+              </button>
+              <button class="btn-icon" onclick="editCoupon('${coupon.id}')" title="编辑">
+                <i class="fa fa-edit"></i>
+              </button>
+              <button class="btn-icon danger" onclick="deleteCoupon('${coupon.id}')" title="删除">
+                <i class="fa fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    renderPagination();
+  }
+
+  function renderPagination() {
+    const totalPages = Math.ceil(currentCoupons.length / pageSize);
+    const pagination = document.getElementById('pagination');
+
+    if (totalPages <= 1) {
+      pagination.innerHTML = '';
+      return;
+    }
+
+    let html = `<span class="pagination-info">共 ${currentCoupons.length} 条记录，第 ${currentPage}/${totalPages} 页</span>`;
+    html += '<div class="pagination-btns">';
+    html += `<button class="btn btn-sm btn-outline" ${currentPage === 1 ? 'disabled' : ''} onclick="goPage(${currentPage - 1})">上一页</button>`;
+
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+        html += `<button class="btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-outline'}" onclick="goPage(${i})">${i}</button>`;
+      } else if (i === currentPage - 2 || i === currentPage + 2) {
+        html += '<span style="color: var(--text-muted);">...</span>';
+      }
+    }
+
+    html += `<button class="btn btn-sm btn-outline" ${currentPage === totalPages ? 'disabled' : ''} onclick="goPage(${currentPage + 1})">下一页</button>`;
+    html += '</div>';
+    pagination.innerHTML = html;
+  }
+
+  function goPage(page) {
+    currentPage = page;
+    renderTable();
+  }
+
+  function applyFilter() {
+    currentPage = 1;
+    loadCoupons();
+  }
+
+  function resetFilter() {
+    document.getElementById('filterStatus').value = '';
+    document.getElementById('filterType').value = '';
+    currentPage = 1;
+    loadCoupons();
+  }
+
+  function onTypeChange() {
+    const type = document.getElementById('couponType').value;
+    const label = document.getElementById('valueLabel');
+    const valueInput = document.getElementById('couponValue');
+    if (type === 'discount') {
+      label.textContent = '减免比例 (%)';
+      valueInput.placeholder = '例如：20（表示-20%）';
+    } else {
+      label.textContent = '优惠金额 (元)';
+      valueInput.placeholder = '例如：50';
+    }
+  }
+
+  function openAddModal() {
+    editingId = null;
+    document.getElementById('modalTitle').textContent = '创建优惠券';
+    document.getElementById('couponForm').reset();
+    document.getElementById('couponStatus').value = 'auto';
+    onTypeChange();
+    document.getElementById('couponModal').classList.add('active');
+  }
+
+  function editCoupon(id) {
+    const coupon = coupons.find(item => item.id === id);
+    if (!coupon) return;
+
+    editingId = id;
+    document.getElementById('modalTitle').textContent = '编辑优惠券';
+    document.getElementById('couponName').value = coupon.name;
+    document.getElementById('couponType').value = coupon.type;
+    document.getElementById('couponValue').value = coupon.value;
+    document.getElementById('minAmount').value = coupon.minAmount;
+    document.getElementById('maxDiscount').value = coupon.maxDiscount;
+    document.getElementById('totalCount').value = coupon.totalCount;
+    document.getElementById('limitPerUser').value = 1;
+    document.getElementById('startTime').value = coupon.startTime ? `${coupon.startTime}T00:00` : '';
+    document.getElementById('endTime').value = coupon.endTime ? `${coupon.endTime}T23:59` : '';
+    const editableStatus = coupon.statusMode === 'manual' ? normalizeStatusValue(coupon.rawStatus) : 'auto';
+    document.getElementById('couponStatus').value = editableStatus;
+    onTypeChange();
+    document.getElementById('couponModal').classList.add('active');
+  }
+
+  function closeModal() {
+    document.getElementById('couponModal').classList.remove('active');
+  }
+
+  function generateCouponId() {
+    const existingIds = new Set(rawCoupons.map(coupon => String(coupon.id)));
+    let index = rawCoupons.length + 1;
+    while (existingIds.has(`CP${String(index).padStart(3, '0')}`)) {
+      index += 1;
+    }
+    return `CP${String(index).padStart(3, '0')}`;
+  }
+
+  function currentRawStatus(startDate, endDate) {
+    const status = deriveStatus(1, startDate, endDate);
+    if (status === 'active') return 1;
+    return status;
+  }
+
+  function saveCoupon() {
+    const name = document.getElementById('couponName').value.trim();
+    const type = document.getElementById('couponType').value;
+    const value = Number(document.getElementById('couponValue').value);
+    const minAmount = Number(document.getElementById('minAmount').value) || 0;
+    const maxDiscount = Number(document.getElementById('maxDiscount').value) || value;
+    const totalCount = Math.max(1, Number(document.getElementById('totalCount').value) || 100);
+    const startTimeRaw = document.getElementById('startTime').value;
+    const endTimeRaw = document.getElementById('endTime').value;
+    const startDate = formatDateOnly(startTimeRaw);
+    const endDate = formatDateOnly(endTimeRaw);
+    const selectedStatus = document.getElementById('couponStatus').value;
+    const statusMode = selectedStatus === 'auto' ? 'auto' : 'manual';
+    const persistedStatus = statusMode === 'manual' ? selectedStatus : currentRawStatus(startDate, endDate);
+
+    if (!name) {
+      showToast('请输入优惠券名称', 'error');
+      return;
+    }
+    if (!value || value <= 0) {
+      showToast('请输入正确的优惠值', 'error');
+      return;
+    }
+    if (!startDate || !endDate) {
+      showToast('请选择生效时间', 'error');
+      return;
+    }
+    if (new Date(`${startDate}T00:00:00`) > new Date(`${endDate}T23:59:59`)) {
+      showToast('开始时间不能晚于结束时间', 'error');
+      return;
+    }
+
+    if (editingId) {
+      const index = rawCoupons.findIndex(coupon => String(coupon.id) === String(editingId));
+      if (index === -1) {
+        showToast('优惠券不存在', 'error');
+        return;
+      }
+      const prev = rawCoupons[index];
+      rawCoupons[index] = {
+        ...prev,
+        id: prev.id,
+        name,
+        type: toRawCouponType(type),
+        value,
+        minOrder: minAmount,
+        minAmount,
+        maxDiscount,
+        total: totalCount,
+        totalCount,
+        startDate,
+        startTime: startDate,
+        endDate,
+        endTime: endDate,
+        status: persistedStatus,
+        statusMode,
+        used: Number(prev.used ?? prev.usedCount ?? 0) || 0,
+        usedCount: Number(prev.usedCount ?? prev.used ?? 0) || 0
+      };
+      saveRawCoupons();
+      showToast('优惠券已更新');
+    } else {
+      const newCouponId = generateCouponId();
+      rawCoupons.push({
+        id: newCouponId,
+        name,
+        type: toRawCouponType(type),
+        value,
+        minOrder: minAmount,
+        minAmount,
+        maxDiscount,
+        total: totalCount,
+        totalCount,
+        used: 0,
+        usedCount: 0,
+        startDate,
+        startTime: startDate,
+        endDate,
+        endTime: endDate,
+        status: persistedStatus,
+        statusMode,
+        desc: ''
+      });
+      saveRawCoupons();
+      showToast('优惠券创建成功');
+    }
+
+    closeModal();
+    loadCoupons();
+  }
+
+  function deleteCoupon(id) {
+    if (!confirm('确定要删除该优惠券吗？')) return;
+    rawCoupons = rawCoupons.filter(coupon => String(coupon.id) !== String(id));
+    saveRawCoupons();
+    showToast('优惠券已删除');
+    loadCoupons();
+  }
+
+  function sendCouponToUser(couponId) {
+    const coupon = coupons.find(item => String(item.id) === String(couponId));
+    if (!coupon) return;
+
+    const users = readJSON('zhimai_users', []);
+    if (!Array.isArray(users) || users.length === 0) {
+      showToast('暂无可发送用户', 'error');
+      return;
+    }
+
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.innerHTML = `
+      <div class="modal-overlay" onclick="this.parentElement.remove()"></div>
+      <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+          <h3 class="modal-title">发送优惠券</h3>
+          <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div style="background: rgba(99,102,241,0.05); padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+            <div style="font-weight: 600; margin-bottom: 8px;">${coupon.name}</div>
+            <div style="font-size: 13px; color: var(--text-muted);">
+              ${formatCouponValueText(coupon)} · 满¥${coupon.minAmount}可用
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">选择用户</label>
+            <select class="form-select" id="targetUser" style="margin-bottom: 12px;">
+              <option value="">请选择用户</option>
+              ${users.map(user => `<option value="${user.id}">${user.username || user.phone || user.id} (ID: ${user.id})</option>`).join('')}
+            </select>
+            <input type="text" class="form-input" id="searchUserInput" placeholder="搜索用户ID/手机号" oninput="filterUserOptions(this.value)">
+          </div>
+          <div class="form-group">
+            <label class="form-label">发送数量</label>
+            <input type="number" class="form-input" id="sendCount" value="1" min="1" max="10">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="this.closest('.modal').remove()">取消</button>
+          <button class="btn btn-primary" onclick="confirmSendCoupon('${couponId}')">发送</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  function filterUserOptions(keyword) {
+    const select = document.getElementById('targetUser');
+    if (!select) return;
+
+    const users = readJSON('zhimai_users', []);
+    const lowerKeyword = String(keyword || '').toLowerCase();
+    const filtered = users.filter(user => {
+      const username = String(user.username || '').toLowerCase();
+      const phone = String(user.phone || '').toLowerCase();
+      const idText = String(user.id || '').toLowerCase();
+      return username.includes(lowerKeyword) || phone.includes(lowerKeyword) || idText.includes(lowerKeyword);
+    });
+
+    select.innerHTML = '<option value="">请选择用户</option>' +
+      filtered.map(user => `<option value="${user.id}">${user.username || user.phone || user.id} (ID: ${user.id})</option>`).join('');
+  }
+
+  function confirmSendCoupon(couponId) {
+    const userId = document.getElementById('targetUser')?.value;
+    const count = Number(document.getElementById('sendCount')?.value) || 1;
+    const coupon = coupons.find(item => String(item.id) === String(couponId));
+
+    if (!coupon) {
+      showToast('优惠券不存在', 'error');
+      return;
+    }
+    if (!userId) {
+      showToast('请选择用户', 'error');
+      return;
+    }
+    if (count <= 0) {
+      showToast('发送数量必须大于0', 'error');
+      return;
+    }
+
+    if (coupon.totalCount > 0 && coupon.usedCount + count > coupon.totalCount) {
+      showToast('优惠券剩余数量不足', 'error');
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const userCoupons = normalizeUserCoupons();
+    const userCouponType = coupon.type === 'discount' ? 'percent' : (coupon.type === 'cash' ? 'cash' : 'fixed');
+
+    for (let i = 0; i < count; i += 1) {
+      userCoupons.push({
+        id: `UC${Date.now()}_${i}_${Math.random().toString(36).slice(2, 6)}`,
+        userId: String(userId),
+        couponId: coupon.id,
+        name: coupon.name,
+        type: userCouponType,
+        value: coupon.value,
+        minOrder: coupon.minAmount,
+        status: 'unused',
+        claimedAt: now,
+        expireAt: coupon.endTime,
+        desc: ''
+      });
+    }
+    writeJSON(USER_COUPON_STORAGE_KEY, userCoupons);
+
+    const rawIndex = rawCoupons.findIndex(item => String(item.id) === String(couponId));
+    if (rawIndex !== -1) {
+      const previousUsed = Number(rawCoupons[rawIndex].used ?? rawCoupons[rawIndex].usedCount ?? 0) || 0;
+      const nextUsed = previousUsed + count;
+      rawCoupons[rawIndex].used = nextUsed;
+      rawCoupons[rawIndex].usedCount = nextUsed;
+      saveRawCoupons();
+    }
+
+    showToast(`已向用户发送 ${count} 张优惠券`, 'success');
+    document.querySelector('.modal.active')?.remove();
+    loadCoupons();
+  }
+
+  function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<i class="fa fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'times-circle' : 'info-circle'}"></i> ${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof fillAdminName === 'function') {
+      fillAdminName('.user-name');
+    }
+    loadCoupons();
+    onTypeChange();
+  });
+</script>
+  
+  <style>
+    .content-wrapper {
+      padding: 22px 24px 28px;
+    }
+
+    .stats-row {
+      margin-bottom: 20px;
+    }
+
+    .filter-bar {
+      margin-bottom: 18px;
+    }
+
+    .data-table th,
+    .data-table td {
+      vertical-align: middle;
+    }
+
+    .data-table td {
+      padding-top: 12px;
+      padding-bottom: 12px;
+    }
+
+    #couponTableBody tr td:first-child > div {
+      min-height: 42px;
+    }
+
+    #couponTableBody tr td:nth-child(5) {
+      line-height: 1.45;
+    }
+
+    #couponTableBody tr td:nth-child(5) > div + div {
+      margin-top: 2px;
+    }
+
+    #couponTableBody td.coupon-metric,
+    #couponTableBody td.coupon-status,
+    #couponTableBody td.coupon-actions {
+      text-align: center;
+    }
+
+    #couponTableBody td.coupon-metric {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    #couponTableBody td.metric-used {
+      color: #c7d2fe;
+    }
+
+    #couponTableBody td.metric-stock {
+      color: #e2e8f0;
+      font-size: 13px;
+    }
+
+    #couponTableBody td.coupon-actions {
+      white-space: nowrap;
+    }
+
+    .coupon-action-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .type-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .type-badge.discount {
+      background: rgba(99, 102, 241, 0.15);
+      color: var(--primary);
+    }
+    
+    .type-badge.cash {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+    }
+    
+    .type-badge.full {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.1px;
+    }
+
+    .status-badge::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-badge.active {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+    }
+
+    .status-badge.active::before {
+      background: #10b981;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.18), 0 0 8px rgba(16, 185, 129, 0.4);
+    }
+
+    .status-badge.expired {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+    }
+
+    .status-badge.expired::before {
+      background: #ef4444;
+    }
+
+    .status-badge.upcoming {
+      background: rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
+    }
+
+    .status-badge.upcoming::before {
+      background: #f59e0b;
+    }
+
+    #couponTableBody .btn-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 6px;
+      background: rgba(148, 163, 184, 0.08);
+      border: 1px solid transparent;
+    }
+
+    #couponTableBody .btn-icon:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      background: rgba(99, 102, 241, 0.12);
+      color: #a5b4fc;
+    }
+
+    #couponTableBody .btn-icon.danger {
+      background: rgba(239, 68, 68, 0.08);
+    }
+
+    #couponTableBody .btn-icon.danger:hover {
+      border-color: rgba(239, 68, 68, 0.45);
+      background: rgba(239, 68, 68, 0.14);
+      color: #f87171;
+    }
+
+    #couponTableBody .btn-icon:last-child {
+      margin-right: 0;
+    }
+
+    #couponTableBody .coupon-action-group .btn-icon {
+      margin-right: 0;
+    }
+  </style>
+</body>
+</html>
+
+
+

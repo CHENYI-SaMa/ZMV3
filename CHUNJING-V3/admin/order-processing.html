@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>处理中订单 - 织麦电竞后台</title>
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <div class="admin-container">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <header class="top-header">
+        <div class="header-left">
+          <button class="sidebar-toggle" id="sidebarToggle"><i class="fa fa-bars"></i></button>
+          <span class="page-title">处理中订单</span>
+        </div>
+        <div class="header-right">
+          <div class="header-actions">
+            <div class="user-dropdown" id="userDropdown">
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin" alt="avatar" class="user-avatar">
+              <div class="header-user-info"><span class="user-name" id="adminName">管理员</span><span class="header-user-role">超管</span></div>
+              <i class="fa fa-chevron-down" style="font-size:12px;color:var(--text-muted);"></i>
+              <div class="dropdown-menu" id="dropdownMenu">
+                <a href="#"><i class="fa fa-user"></i> 个人中心</a>
+                <div style="border-top:1px solid var(--border-color);margin:8px 0;"></div>
+                <a href="#" id="logoutBtn"><i class="fa fa-sign-out-alt"></i> 退出登录</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="content-wrapper">
+        <div style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+          <i class="fa fa-cog fa-spin" style="color:var(--primary);font-size:18px;"></i>
+          <div>
+            <strong style="color:var(--primary-light);">处理中订单</strong>
+            <span style="color:var(--text-secondary);margin-left:8px;">这些订单正在处理中，请跟进进度并及时完成</span>
+          </div>
+          <span id="processingCount" style="margin-left:auto;background:var(--primary);color:#fff;padding:2px 10px;border-radius:12px;font-weight:600;">0</span>
+        </div>
+
+        <div class="filter-bar">
+          <div class="filter-left">
+            <input type="text" class="filter-input" id="filterSearch" placeholder="搜索订单号、用户">
+            <button class="btn btn-primary" onclick="applyFilter()"><i class="fa fa-search"></i> 搜索</button>
+            <button class="btn btn-outline" onclick="resetFilter()"><i class="fa fa-undo"></i> 重置</button>
+          </div>
+          <div class="filter-right">
+            <button class="btn btn-success" onclick="batchComplete()">
+              <i class="fa fa-check"></i> 批量完成
+            </button>
+          </div>
+        </div>
+
+        <div class="data-card">
+          <div class="table-header">
+            <span class="table-title">处理中订单列表</span>
+            <label style="display:flex;align-items:center;gap:6px;color:var(--text-secondary);cursor:pointer;">
+              <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"> 全选
+            </label>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th width="40"><input type="checkbox" id="selectAllHeader" onchange="toggleSelectAll(this)"></th>
+                  <th>订单号</th>
+                  <th>用户</th>
+                  <th>商品</th>
+                  <th>金额</th>
+                  <th>开始时间</th>
+                  <th>处理时长</th>
+                  <th width="160">操作</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="pagination"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal" id="progressModal">
+    <div class="modal-overlay" onclick="closeModal('progressModal')"></div>
+    <div class="modal-content" style="max-width:500px;">
+      <div class="modal-header">
+        <h3 class="modal-title">更新处理进度</h3>
+        <button class="modal-close" onclick="closeModal('progressModal')"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--text-secondary);margin-bottom:16px;">订单号：<strong id="progressOrderId"></strong></p>
+        <div class="form-group">
+          <label class="form-label">进度描述</label>
+          <textarea class="form-input" id="progressNote" rows="3" placeholder="如：已完成 50%，预计明天完成..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">截图/凭证（URL）</label>
+          <input type="text" class="form-input" id="progressProof" placeholder="进度截图地址（可选）">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('progressModal')">取消</button>
+        <button class="btn btn-success" onclick="markComplete()">标记为已完成</button>
+        <button class="btn btn-primary" onclick="saveProgress()">保存进度</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    if (localStorage.getItem('zhimai_admin_logged_in') !== 'true') {
+      window.location.href = 'login.html';
+    }
+    document.getElementById('logoutBtn').addEventListener('click', e => {
+      e.preventDefault();
+      localStorage.removeItem('zhimai_admin_logged_in');
+      window.location.href = 'login.html';
+    });
+    document.getElementById('userDropdown').addEventListener('click', e => {
+      e.stopPropagation();
+      document.getElementById('dropdownMenu').classList.toggle('show');
+    });
+    document.addEventListener('click', () => document.getElementById('dropdownMenu').classList.remove('show'));
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    });
+
+    const adminInfo = JSON.parse(localStorage.getItem('zhimai_admin_user') || '{}');
+    if (adminInfo.username) document.getElementById('adminName').textContent = adminInfo.username;
+
+    let allOrders = [];
+    let filteredOrders = [];
+    let currentPage = 1;
+    const pageSize = 10;
+    let currentOrderId = null;
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function escapeJsSingleQuote(value) {
+      return String(value ?? '')
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'");
+    }
+
+    function sanitizeImageUrl(value, fallback) {
+      const raw = String(value || '').trim();
+      if (!raw) return fallback;
+      if (/^(https?:\/\/|data:image\/|\/|\.{1,2}\/)/i.test(raw)) {
+        return raw;
+      }
+      return fallback;
+    }
+
+    function loadOrders() {
+      const orders = dataManager.getOrders();
+      allOrders = orders.filter(o => o.status === 'processing');
+      document.getElementById('processingCount').textContent = allOrders.length;
+      applyFilter();
+    }
+
+    function applyFilter() {
+      const search = document.getElementById('filterSearch').value.trim().toLowerCase();
+      filteredOrders = allOrders.filter(o =>
+        !search || o.id.toLowerCase().includes(search) || o.username.toLowerCase().includes(search)
+      );
+      currentPage = 1;
+      renderTable();
+    }
+
+    function resetFilter() {
+      document.getElementById('filterSearch').value = '';
+      applyFilter();
+    }
+
+    function getDuration(startTime) {
+      if (!startTime) return '--';
+      const ms = Date.now() - new Date(startTime).getTime();
+      const h = Math.floor(ms / 3600000);
+      const m = Math.floor((ms % 3600000) / 60000);
+      if (h > 24) return `${Math.floor(h / 24)}天${h % 24}小时`;
+      if (h > 0) return `${h}小时${m}分钟`;
+      return `${m}分钟`;
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      const start = (currentPage - 1) * pageSize;
+      const pageData = filteredOrders.slice(start, start + pageSize);
+      tbody.textContent = '';
+
+      if (!pageData.length) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 8;
+        td.style.textAlign = 'center';
+        td.style.padding = '48px';
+        td.style.color = 'var(--text-muted)';
+        const icon = document.createElement('i');
+        icon.className = 'fa fa-inbox';
+        icon.style.cssText = 'font-size:32px;display:block;margin-bottom:8px;';
+        td.appendChild(icon);
+        td.appendChild(document.createTextNode('暂无处理中订单'));
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        document.getElementById('pagination').textContent = '';
+        return;
+      }
+
+      pageData.forEach((o) => {
+        const tr = document.createElement('tr');
+
+        const tdCheck = document.createElement('td');
+        const rowCheck = document.createElement('input');
+        rowCheck.type = 'checkbox';
+        rowCheck.className = 'row-check';
+        rowCheck.value = String(o.id || '--');
+        tdCheck.appendChild(rowCheck);
+        tr.appendChild(tdCheck);
+
+        const tdOrderId = document.createElement('td');
+        const orderStrong = document.createElement('strong');
+        orderStrong.style.color = 'var(--primary)';
+        orderStrong.textContent = o.id || '--';
+        tdOrderId.appendChild(orderStrong);
+        tr.appendChild(tdOrderId);
+
+        const tdUser = document.createElement('td');
+        const userName = document.createElement('div');
+        userName.textContent = o.username || '--';
+        const userId = document.createElement('small');
+        userId.style.color = 'var(--text-muted)';
+        userId.textContent = o.userId || '--';
+        tdUser.appendChild(userName);
+        tdUser.appendChild(userId);
+        tr.appendChild(tdUser);
+
+        const tdProduct = document.createElement('td');
+        const productWrap = document.createElement('div');
+        productWrap.style.cssText = 'display:flex;align-items:center;gap:8px;';
+        const productImage = document.createElement('img');
+        productImage.src = sanitizeImageUrl(
+          o.productImage,
+          'https://via.placeholder.com/36x28/333/999?text=%E5%95%86%E5%93%81'
+        );
+        productImage.style.cssText = 'width:36px;height:28px;object-fit:cover;border-radius:4px;';
+        const productText = document.createElement('span');
+        const rawProductName = String(o.productName || '--');
+        productText.textContent = rawProductName.length > 18 ? `${rawProductName.substring(0, 18)}...` : rawProductName;
+        productWrap.appendChild(productImage);
+        productWrap.appendChild(productText);
+        tdProduct.appendChild(productWrap);
+        tr.appendChild(tdProduct);
+
+        const tdAmount = document.createElement('td');
+        tdAmount.className = 'price';
+        tdAmount.textContent = `¥${Number(o.totalAmount || 0).toFixed(2)}`;
+        tr.appendChild(tdAmount);
+
+        const tdStarted = document.createElement('td');
+        tdStarted.textContent = o.startedAt
+          ? new Date(o.startedAt).toLocaleString('zh-CN')
+          : new Date(o.createdAt).toLocaleString('zh-CN');
+        tr.appendChild(tdStarted);
+
+        const tdDuration = document.createElement('td');
+        const durationSpan = document.createElement('span');
+        durationSpan.style.color = getDurationColor(o.startedAt || o.createdAt);
+        const durationIcon = document.createElement('i');
+        durationIcon.className = 'fa fa-clock';
+        durationSpan.appendChild(durationIcon);
+        durationSpan.appendChild(document.createTextNode(` ${getDuration(o.startedAt || o.createdAt)}`));
+        tdDuration.appendChild(durationSpan);
+        tr.appendChild(tdDuration);
+
+        const tdActions = document.createElement('td');
+
+        const progressBtn = document.createElement('button');
+        progressBtn.type = 'button';
+        progressBtn.className = 'btn-icon btn-success';
+        progressBtn.title = '更新进度';
+        progressBtn.addEventListener('click', () => openProgress(o.id));
+        const progressIcon = document.createElement('i');
+        progressIcon.className = 'fa fa-edit';
+        progressBtn.appendChild(progressIcon);
+        tdActions.appendChild(progressBtn);
+
+        const completeBtn = document.createElement('button');
+        completeBtn.type = 'button';
+        completeBtn.className = 'btn-icon btn-primary';
+        completeBtn.title = '完成订单';
+        completeBtn.addEventListener('click', () => completeOrder(o.id));
+        const completeIcon = document.createElement('i');
+        completeIcon.className = 'fa fa-check';
+        completeBtn.appendChild(completeIcon);
+        tdActions.appendChild(completeBtn);
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.className = 'btn-icon danger';
+        cancelBtn.title = '取消订单';
+        cancelBtn.addEventListener('click', () => cancelOrd(o.id));
+        const cancelIcon = document.createElement('i');
+        cancelIcon.className = 'fa fa-times';
+        cancelBtn.appendChild(cancelIcon);
+        tdActions.appendChild(cancelBtn);
+
+        tr.appendChild(tdActions);
+        tbody.appendChild(tr);
+      });
+
+      renderPagination(filteredOrders.length);
+    }
+
+    function getDurationColor(startTime) {
+      if (!startTime) return 'var(--text-muted)';
+      const h = (Date.now() - new Date(startTime).getTime()) / 3600000;
+      if (h > 48) return '#ef4444';
+      if (h > 24) return '#f59e0b';
+      return '#10b981';
+    }
+
+    function renderPagination(total) {
+      const pages = Math.ceil(total / pageSize);
+      const pagination = document.getElementById('pagination');
+      pagination.textContent = '';
+      if (pages <= 1) return;
+
+      const totalSpan = document.createElement('span');
+      totalSpan.style.color = 'var(--text-secondary)';
+      totalSpan.textContent = `共 ${total} 条`;
+      pagination.appendChild(totalSpan);
+
+      for (let i = 1; i <= pages; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.type = 'button';
+        pageBtn.className = `page-btn${i === currentPage ? ' active' : ''}`;
+        pageBtn.textContent = String(i);
+        pageBtn.addEventListener('click', () => gotoPage(i));
+        pagination.appendChild(pageBtn);
+      }
+    }
+
+    function gotoPage(p) { currentPage = p; renderTable(); }
+    function toggleSelectAll(el) {
+      document.querySelectorAll('.row-check').forEach(c => c.checked = el.checked);
+      const header = document.getElementById('selectAllHeader');
+      const main = document.getElementById('selectAll');
+      if (header && header !== el) header.checked = el.checked;
+      if (main && main !== el) main.checked = el.checked;
+    }
+
+    function openProgress(orderId) {
+      currentOrderId = orderId;
+      document.getElementById('progressOrderId').textContent = orderId;
+      document.getElementById('progressNote').value = '';
+      document.getElementById('progressProof').value = '';
+      document.getElementById('progressModal').classList.add('show');
+    }
+
+    function saveProgress() {
+      showToast('进度已更新', 'success');
+      closeModal('progressModal');
+    }
+
+    function markComplete() {
+      completeOrder(currentOrderId);
+      closeModal('progressModal');
+    }
+
+    function completeOrder(orderId) {
+      const orders = dataManager.getOrders();
+      const idx = orders.findIndex(o => o.id === orderId);
+      if (idx !== -1) {
+        orders[idx].status = 'completed';
+        orders[idx].statusText = '已完成';
+        orders[idx].completedAt = new Date().toISOString();
+        dataManager.saveOrders(orders);
+        showToast('订单已完成', 'success');
+        loadOrders();
+      }
+    }
+
+    function cancelOrd(orderId) {
+      if (!confirm(`确认取消订单 ${orderId} 吗？`)) return;
+      const orders = dataManager.getOrders();
+      const idx = orders.findIndex(o => o.id === orderId);
+      if (idx !== -1) {
+        orders[idx].status = 'cancelled';
+        orders[idx].statusText = '已取消';
+        dataManager.saveOrders(orders);
+        showToast('订单已取消', 'warning');
+        loadOrders();
+      }
+    }
+
+    function batchComplete() {
+      const ids = [...document.querySelectorAll('.row-check:checked')].map(c => c.value);
+      if (!ids.length) { showToast('请先选择订单', 'warning'); return; }
+      if (!confirm(`确认批量完成 ${ids.length} 个订单吗？`)) return;
+      const orders = dataManager.getOrders();
+      ids.forEach(id => {
+        const idx = orders.findIndex(o => o.id === id);
+        if (idx !== -1) {
+          orders[idx].status = 'completed';
+          orders[idx].statusText = '已完成';
+          orders[idx].completedAt = new Date().toISOString();
+        }
+      });
+      dataManager.saveOrders(orders);
+      showToast(`已批量完成 ${ids.length} 个订单`, 'success');
+      loadOrders();
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+    function showToast(msg, type = 'info') {
+      const existing = document.querySelector('.zm-toast');
+      if (existing) existing.remove();
+      const colors = { success: '#10b981', warning: '#f59e0b', error: '#ef4444', info: '#3b82f6' };
+      const toast = document.createElement('div');
+      toast.className = 'zm-toast';
+      toast.style.cssText = `position:fixed;top:20px;right:20px;background:${colors[type]};color:#fff;padding:12px 20px;border-radius:8px;z-index:9999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.3);`;
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    loadOrders();
+  </script>
+</body>
+</html>

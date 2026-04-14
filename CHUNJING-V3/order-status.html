@@ -1,0 +1,230 @@
+<!-- 
+  文件名: order-status.html
+  页面名称: 订单状态查询
+  功能说明: 订单状态查询页面，用户可通过订单号查询订单处理进度
+  展示订单当前状态和预计完成时间
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const directOrderId = params.get('id') || params.get('order');
+
+      if (directOrderId) {
+        window.location.replace(`order-detail.html?id=${encodeURIComponent(directOrderId)}`);
+        return;
+      }
+
+      try {
+        const currentUser = JSON.parse(localStorage.getItem('zhimai_user') || sessionStorage.getItem('zhimai_user') || 'null');
+        const orders = JSON.parse(localStorage.getItem('zhimai_orders') || '[]');
+
+        if (currentUser && Array.isArray(orders)) {
+          const latestOrder = orders.find((order) => order.userId === currentUser.id && order.id);
+          if (latestOrder) {
+            window.location.replace(`order-detail.html?id=${encodeURIComponent(latestOrder.id)}`);
+            return;
+          }
+        }
+      } catch (error) {}
+
+      window.location.replace('order-detail.html');
+    })();
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>订单状态 - 织麦电竞</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/games.css" />
+  <link rel="stylesheet" href="css/auth.css" />
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- 腾讯云 CloudBase SDK -->
+</head>
+<body class="auth-page">
+
+<!-- 返回按钮 -->
+<a href="javascript:history.back()" class="auth-back">
+  <i class="fa fa-arrow-left"></i>
+</a>
+
+<!-- 页面内容 -->
+<div class="auth-container" style="max-width: 800px;">
+  <div class="auth-card" style="padding: 40px;">
+    <!-- 标题 -->
+    <div style="text-align: center; margin-bottom: 40px;">
+      <h2 style="font-size: 1.8rem; font-weight: 800;">
+        <i class="fa fa-clock" style="color: var(--primary); margin-right: 12px;"></i>订单状态
+      </h2>
+      <p style="color: var(--text-secondary); margin-top: 8px;">实时追踪您的订单进度</p>
+    </div>
+
+    <!-- 进行中的订单 -->
+    <div id="activeOrders">
+      <!-- 动态生成 -->
+    </div>
+
+    <!-- 无进行中的订单 -->
+    <div id="noActiveOrders" style="text-align: center; padding: 60px 20px; display: none;">
+      <div style="width: 100px; height: 100px; background: var(--bg-dark); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+        <i class="fa fa-check-circle" style="font-size: 3rem; color: var(--success);"></i>
+      </div>
+      <h3 style="margin-bottom: 8px;">暂无进行中的订单</h3>
+      <p style="color: var(--text-secondary);">您的所有订单都已完成或暂无订单</p>
+      <a href="games.html" class="btn btn-primary" style="margin-top: 24px; display: inline-block;">去下单</a>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <i class="fa fa-info-circle"></i>
+  <span id="toastMsg">提示信息</span>
+</div>
+
+<script>
+function rememberCurrentPageForLogin() {
+  const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  sessionStorage.setItem('redirect_after_login', currentPath || 'order-status.html');
+}
+
+// 检查登录
+const currentUser = JSON.parse(localStorage.getItem('zhimai_user') || sessionStorage.getItem('zhimai_user') || 'null');
+if (!currentUser) {
+  rememberCurrentPageForLogin();
+  window.location.href = 'auth.html';
+}
+
+// Toast
+function showToast(msg, type = 'info') {
+  const toast = document.getElementById('toast');
+  const toastMsg = document.getElementById('toastMsg');
+  const icon = toast.querySelector('i');
+  toastMsg.textContent = msg;
+  icon.className = type === 'success' ? 'fa fa-check-circle' : type === 'error' ? 'fa fa-times-circle' : 'fa fa-info-circle';
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// 模拟进行中的订单
+const mockActiveOrders = [
+  {
+    id: 'DD20260328001',
+    game: '三角洲行动',
+    service: '哈弗币代肝 100万',
+    amount: 50,
+    progress: 65,
+    status: '打手正在游戏中',
+    startTime: '2026-03-28 10:00',
+    estimatedEnd: '2026-03-28 16:00',
+    booster: '专业打手-AK47'
+  }
+];
+
+// 渲染进行中的订单
+function renderActiveOrders() {
+  const container = document.getElementById('activeOrders');
+  const empty = document.getElementById('noActiveOrders');
+  
+  const processingOrders = mockActiveOrders.filter(o => o.progress < 100);
+  
+  if (processingOrders.length === 0) {
+    container.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  
+  empty.style.display = 'none';
+  container.innerHTML = processingOrders.map(order => `
+    <div style="background: var(--bg-dark); border: 1px solid var(--border); border-radius: 16px; padding: 28px; margin-bottom: 20px;">
+      <!-- 订单头部 -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
+        <div>
+          <span style="font-size: 0.85rem; color: var(--text-secondary);">${order.id}</span>
+          <h3 style="font-size: 1.3rem; margin-top: 4px;">${order.service}</h3>
+          <p style="color: var(--text-secondary); margin-top: 4px;"><i class="fa fa-gamepad" style="margin-right: 6px;"></i>${order.game}</p>
+        </div>
+        <div style="text-align: right;">
+          <span style="font-size: 1.4rem; font-weight: 700; color: var(--primary);">¥${order.amount}</span>
+          <span style="display: block; margin-top: 4px; padding: 4px 12px; background: rgba(255,193,7,0.15); color: #ffc107; border-radius: 20px; font-size: 0.8rem;">进行中</span>
+        </div>
+      </div>
+
+      <!-- 进度条 -->
+      <div style="margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="font-size: 0.9rem; color: var(--text-secondary);">当前进度</span>
+          <span style="font-weight: 700; color: var(--primary);">${order.progress}%</span>
+        </div>
+        <div style="height: 8px; background: var(--bg-card); border-radius: 4px; overflow: hidden;">
+          <div style="width: ${order.progress}%; height: 100%; background: var(--gradient); border-radius: 4px; transition: width 0.5s ease;"></div>
+        </div>
+      </div>
+
+      <!-- 状态信息 -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; padding: 20px; background: var(--bg-card); border-radius: 12px; margin-bottom: 20px;">
+        <div>
+          <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px;">当前状态</p>
+          <p style="font-weight: 600;"><i class="fa fa-circle" style="color: #28a745; font-size: 0.6rem; margin-right: 6px;"></i>${order.status}</p>
+        </div>
+        <div>
+          <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px;">打手</p>
+          <p style="font-weight: 600;"><i class="fa fa-user" style="margin-right: 6px;"></i>${order.booster}</p>
+        </div>
+        <div>
+          <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px;">开始时间</p>
+          <p style="font-weight: 600;">${order.startTime}</p>
+        </div>
+        <div>
+          <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px;">预计完成</p>
+          <p style="font-weight: 600;">${order.estimatedEnd}</p>
+        </div>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div style="display: flex; gap: 12px;">
+        <button class="btn btn-primary" style="flex: 1;">
+          <i class="fa fa-comment" style="margin-right: 8px;"></i>联系打手
+        </button>
+        <button class="btn btn-outline" style="flex: 1;">
+          <i class="fa fa-eye" style="margin-right: 8px;"></i>查看详情
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+renderActiveOrders();
+</script>
+
+<script>
+// 移动端「我的」未登录时跳登录页
+const currentUser = JSON.parse(localStorage.getItem('zhimai_user') || sessionStorage.getItem('zhimai_user') || 'null');
+const mobileProfileLink = document.getElementById('mobileProfileLink');
+if (mobileProfileLink && !currentUser) {
+  mobileProfileLink.href = 'auth.html';
+  mobileProfileLink.addEventListener('click', rememberCurrentPageForLogin);
+}
+</script>
+
+<!-- 手机端底部导航 -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-list">
+    <a href="index.html" class="mobile-nav-item">
+      <i class="fa fa-home"></i>
+      <span>首页</span>
+    </a>
+    <a href="services.html" class="mobile-nav-item">
+      <i class="fa fa-cart-shopping"></i>
+      <span>下单</span>
+    </a>
+    <a href="profile.html" class="mobile-nav-item active" id="mobileProfileLink">
+      <i class="fa fa-user"></i>
+      <span>我的</span>
+    </a>
+  </div>
+</nav>
+
+</body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>扫码登录 - 织麦电竞</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <link rel="stylesheet" href="css/social-auth.css">
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="auth-page">
+<div class="auth-header">
+  <a href="index.html" class="logo-large" title="返回首页">
+    <span class="logo-icon">⚡</span>
+    <span class="logo-text">织麦<em>电竞</em></span>
+  </a>
+  <h2>三角洲行动专业服务平台</h2>
+  <p>安全 · 专业 · 高效</p>
+</div>
+
+<div class="auth-container">
+  <section class="social-scan-card">
+    <h3 id="scanTitle">微信扫码登录</h3>
+    <p class="form-subtitle" id="scanDesc">请使用微信扫一扫确认登录。</p>
+
+    <div class="scan-provider-switch">
+      <a class="scan-provider-btn" id="providerWechatBtn" href="#">
+        <i class="fa-brands fa-weixin"></i>
+        <span>微信</span>
+      </a>
+      <a class="scan-provider-btn" id="providerQqBtn" href="#">
+        <i class="fa-brands fa-qq"></i>
+        <span>QQ</span>
+      </a>
+    </div>
+
+    <div class="scan-qr-wrap">
+      <img class="scan-qr-image" id="scanQrImage" alt="扫码登录二维码">
+      <div class="scan-qr-mask" id="scanQrMask" hidden>二维码已失效，请刷新后重试</div>
+    </div>
+
+    <p class="scan-status" id="scanStatus">正在准备二维码...</p>
+
+    <div class="scan-actions">
+      <button class="btn btn-primary" type="button" id="refreshQrBtn">
+        <i class="fa fa-rotate-right"></i>
+        刷新二维码
+      </button>
+      <button class="btn btn-outline" type="button" id="backAuthActionBtn">
+        <i class="fa fa-user"></i>
+        返回账号登录
+      </button>
+    </div>
+
+    <section class="scan-api-guide">
+      <h4>后续上线接口配置</h4>
+      <p>当前页面已接入扫码登录接口壳。上线时请在 <code>js/social-auth-config.js</code> 填写接口地址并启用对应渠道。</p>
+      <ul class="scan-api-list">
+        <li><code>createSessionUrl</code>：创建扫码会话接口（POST）</li>
+        <li><code>queryStatusUrl</code>：查询扫码状态接口（POST）</li>
+        <li>状态建议：<code>pending</code>、<code>scanned</code>、<code>confirmed</code>、<code>expired</code></li>
+      </ul>
+      <div class="scan-api-values">
+        <code id="providerCreateEndpoint">createSessionUrl: 未配置</code>
+        <code id="providerQueryEndpoint">queryStatusUrl: 未配置</code>
+      </div>
+    </section>
+  </section>
+</div>
+
+<script src="js/social-auth-config.js"></script>
+<script src="js/social-auth-api.js"></script>
+<script>
+  const SOCIAL_PROVIDER_META = {
+    wechat: {
+      label: "微信",
+      title: "微信扫码登录",
+      desc: "请使用微信扫一扫确认登录。"
+    },
+    qq: {
+      label: "QQ",
+      title: "QQ扫码登录",
+      desc: "请使用QQ扫一扫确认登录。"
+    }
+  };
+
+  const scanState = {
+    provider: "wechat",
+    returnTo: "auth.html",
+    sessionId: "",
+    pollTimer: null,
+    pollStartedAt: 0
+  };
+
+  function normalizeTarget(target, fallback) {
+    const value = String(target || "").trim();
+    if (!value) return fallback;
+    if (value.includes("\n") || value.includes("\r")) return fallback;
+    if (/^(javascript:|data:|vbscript:)/i.test(value)) return fallback;
+
+    try {
+      const parsed = new URL(value, window.location.origin);
+      if (parsed.origin !== window.location.origin) return fallback;
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return fallback;
+      return `${parsed.pathname}${parsed.search}${parsed.hash}` || fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  function getSuccessTarget() {
+    const redirect = sessionStorage.getItem("redirect_after_login");
+    sessionStorage.removeItem("redirect_after_login");
+    return normalizeTarget(redirect, "index.html");
+  }
+
+  function buildPageUrl(provider) {
+    const params = new URLSearchParams({
+      provider,
+      returnTo: scanState.returnTo
+    });
+    return `social-scan-login.html?${params.toString()}`;
+  }
+
+  function setStatus(message, type) {
+    const statusEl = document.getElementById("scanStatus");
+    statusEl.textContent = message || "";
+    statusEl.className = type ? `scan-status ${type}` : "scan-status";
+  }
+
+  function setQrImage(url) {
+    const qrImage = document.getElementById("scanQrImage");
+    qrImage.src = url || "";
+  }
+
+  function setQrMask(visible) {
+    document.getElementById("scanQrMask").hidden = !visible;
+  }
+
+  function clearPolling() {
+    if (scanState.pollTimer) {
+      window.clearInterval(scanState.pollTimer);
+      scanState.pollTimer = null;
+    }
+  }
+
+  function updateProviderUi() {
+    const meta = SOCIAL_PROVIDER_META[scanState.provider] || SOCIAL_PROVIDER_META.wechat;
+    document.title = `${meta.title} - 织麦电竞`;
+    document.getElementById("scanTitle").textContent = meta.title;
+    document.getElementById("scanDesc").textContent = meta.desc;
+
+    const wechatBtn = document.getElementById("providerWechatBtn");
+    const qqBtn = document.getElementById("providerQqBtn");
+    wechatBtn.href = buildPageUrl("wechat");
+    qqBtn.href = buildPageUrl("qq");
+    wechatBtn.classList.toggle("active", scanState.provider === "wechat");
+    qqBtn.classList.toggle("active", scanState.provider === "qq");
+
+    const config = window.socialAuthApi.getConfig();
+    const providerConfig = (config.providers && config.providers[scanState.provider]) || {};
+    document.getElementById("providerCreateEndpoint").textContent =
+      `createSessionUrl: ${providerConfig.createSessionUrl || "未配置"}`;
+    document.getElementById("providerQueryEndpoint").textContent =
+      `queryStatusUrl: ${providerConfig.queryStatusUrl || "未配置"}`;
+  }
+
+  function backToAuth() {
+    window.location.href = scanState.returnTo;
+  }
+
+  function applySocialLoginResult(result) {
+    if (result.token) {
+      sessionStorage.setItem("zhimai_token", String(result.token));
+    }
+
+    if (result.user && typeof result.user === "object") {
+      localStorage.setItem("zhimai_user", JSON.stringify(result.user));
+      sessionStorage.setItem("zhimai_user", JSON.stringify(result.user));
+    }
+  }
+
+  async function pollScanStatus() {
+    if (!scanState.sessionId) {
+      return;
+    }
+
+    const config = window.socialAuthApi.getConfig();
+    const timeoutMs = Number(config.pollTimeoutMs || 120000);
+    if (Date.now() - scanState.pollStartedAt > timeoutMs) {
+      clearPolling();
+      setQrMask(true);
+      setStatus("二维码已超时，请刷新后重试", "warning");
+      return;
+    }
+
+    const result = await window.socialAuthApi.queryQrStatus(scanState.provider, scanState.sessionId);
+    if (!result.ok) {
+      setStatus(`状态查询异常：${result.message || "请稍后重试"}`, "warning");
+      return;
+    }
+
+    const status = String(result.status || "").toLowerCase();
+    if (status === "pending") {
+      setStatus("等待扫码中...", "");
+      return;
+    }
+
+    if (status === "scanned") {
+      setStatus("已扫码，请在手机端确认登录", "");
+      return;
+    }
+
+    if (status === "confirmed" || status === "success") {
+      clearPolling();
+      applySocialLoginResult(result);
+      setStatus("登录确认成功，正在跳转...", "success");
+      window.setTimeout(() => {
+        window.location.href = getSuccessTarget();
+      }, 600);
+      return;
+    }
+
+    if (status === "expired") {
+      clearPolling();
+      setQrMask(true);
+      setStatus("二维码已失效，请刷新后重试", "warning");
+      return;
+    }
+
+    setStatus(`当前状态：${status || "unknown"}`, "");
+  }
+
+  function startPolling() {
+    clearPolling();
+    const config = window.socialAuthApi.getConfig();
+    const intervalMs = Number(config.pollIntervalMs || 2500);
+    scanState.pollTimer = window.setInterval(pollScanStatus, intervalMs);
+  }
+
+  async function refreshQrSession() {
+    clearPolling();
+    setQrMask(false);
+    setStatus("正在生成二维码...", "");
+
+    const result = await window.socialAuthApi.createQrSession(scanState.provider, {
+      returnTo: getSuccessTarget()
+    });
+
+    if (!result.ok) {
+      scanState.sessionId = "";
+      const placeholder = result.placeholder || window.socialAuthApi.makePlaceholderQr(scanState.provider);
+      setQrImage(placeholder.qrCodeUrl);
+      setStatus(placeholder.message || result.message || "扫码接口未配置", "warning");
+      return;
+    }
+
+    scanState.sessionId = result.sessionId;
+    scanState.pollStartedAt = Date.now();
+    setQrImage(result.qrCodeUrl);
+    setStatus("二维码已生成，请使用手机扫码", "");
+    startPolling();
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const params = new URLSearchParams(window.location.search);
+    scanState.provider = window.socialAuthApi.normalizeProvider(params.get("provider"));
+    scanState.returnTo = normalizeTarget(params.get("returnTo"), "auth.html");
+
+    updateProviderUi();
+    document.getElementById("refreshQrBtn").addEventListener("click", refreshQrSession);
+    document.getElementById("backAuthActionBtn").addEventListener("click", backToAuth);
+
+    refreshQrSession();
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,1393 @@
+<!-- 
+  文件名: payment.html
+  页面名称: 订单支付
+  功能说明: 支付页面，支持微信支付/支付宝支付
+  集成微信JS-SDK和支付宝SDK，支持扫码支付和H5支付
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>订单支付 - 织麦电竞</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- 演示模式：不接入真实支付SDK，避免误导为真实支付链路 -->
+  <style>
+    .payment-page {
+      padding-top: 100px;
+      min-height: 100vh;
+      background: var(--bg-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .payment-container {
+      max-width: 500px;
+      width: 100%;
+      padding: 24px;
+    }
+    #backBtn {
+      display: none;
+    }
+    .payment-card {
+      background: rgba(255,255,255,0.03);
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .payment-notice {
+      margin-bottom: 16px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(250, 173, 20, 0.45);
+      background: rgba(250, 173, 20, 0.16);
+      color: #f0c25a;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .payment-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+    }
+    .payment-icon.wechat {
+      background: rgba(7, 193, 96, 0.1);
+      color: #07c160;
+    }
+    .payment-icon.alipay {
+      background: rgba(22, 119, 255, 0.1);
+      color: #1677ff;
+    }
+    .payment-icon.balance {
+      background: rgba(250, 173, 20, 0.12);
+      color: #faad14;
+    }
+    .payment-title {
+      font-size: 24px;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .payment-desc {
+      color: var(--text-gray);
+      margin-bottom: 32px;
+    }
+    .payment-amount {
+      background: rgba(255,255,255,0.02);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+    .payment-amount .label {
+      font-size: 14px;
+      color: var(--text-gray);
+      margin-bottom: 8px;
+    }
+    .payment-amount .amount {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .payment-amount .amount span {
+      font-size: 24px;
+    }
+    .payment-order-info {
+      text-align: left;
+      background: rgba(255,255,255,0.02);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 32px;
+    }
+    .payment-order-info .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .payment-order-info .info-row:last-child {
+      border-bottom: none;
+    }
+    .payment-order-info .label {
+      color: var(--text-gray);
+      font-size: 14px;
+    }
+    .payment-order-info .value {
+      color: #fff;
+      font-size: 14px;
+    }
+    .payment-actions {
+      display: flex;
+      gap: 16px;
+    }
+    .payment-actions .btn {
+      flex: 1;
+      padding: 16px;
+      font-size: 16px;
+    }
+    
+    /* 二维码区域 */
+    .qrcode-section {
+      margin-bottom: 32px;
+    }
+    .qrcode-box {
+      width: 200px;
+      height: 200px;
+      margin: 0 auto 16px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .qrcode-box i {
+      font-size: 80px;
+      color: #333;
+    }
+    .qrcode-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .qrcode-loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #999;
+    }
+    .qrcode-tip {
+      color: var(--text-gray);
+      font-size: 14px;
+    }
+    
+    /* 支付方式选择 */
+    .payment-methods {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      justify-content: center;
+    }
+    .payment-method {
+      flex: 1;
+      max-width: 140px;
+      padding: 16px;
+      background: rgba(255,255,255,0.03);
+      border: 2px solid transparent;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+    }
+    .payment-method:hover {
+      background: rgba(255,255,255,0.05);
+    }
+    .payment-method.active {
+      border-color: var(--primary);
+      background: rgba(108, 99, 255, 0.1);
+    }
+    .payment-method i {
+      font-size: 32px;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .payment-method.wechat i {
+      color: #07c160;
+    }
+    .payment-method.alipay i {
+      color: #1677ff;
+    }
+    .payment-method.balance i {
+      color: #faad14;
+    }
+    .payment-method span {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    .payment-method.active span {
+      color: #fff;
+    }
+    .wallet-panel {
+      display: none;
+      margin-bottom: 24px;
+      padding: 20px;
+      border-radius: 16px;
+      background: rgba(250, 173, 20, 0.08);
+      border: 1px solid rgba(250, 173, 20, 0.18);
+      text-align: left;
+    }
+    .wallet-panel.active {
+      display: block;
+    }
+    .wallet-balance {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+    .wallet-balance .label,
+    .wallet-status {
+      color: var(--text-gray);
+      font-size: 14px;
+    }
+    .wallet-balance .value {
+      color: #faad14;
+      font-size: 28px;
+      font-weight: 700;
+    }
+    .wallet-status {
+      line-height: 1.7;
+    }
+    .payment-password-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 9999;
+    }
+    .payment-password-modal.active {
+      display: flex;
+    }
+    .payment-password-dialog {
+      width: 100%;
+      max-width: 420px;
+      padding: 28px 24px;
+      border-radius: 20px;
+      background: #121212;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+    }
+    .payment-password-dialog h3 {
+      margin-bottom: 8px;
+      color: #fff;
+      font-size: 22px;
+    }
+    .payment-password-desc {
+      margin-bottom: 20px;
+      color: var(--text-gray);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .payment-password-field {
+      margin-bottom: 14px;
+      text-align: left;
+    }
+    .payment-password-field label {
+      display: block;
+      margin-bottom: 8px;
+      color: #fff;
+      font-size: 14px;
+    }
+    .payment-password-field input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+      color: #fff;
+      font-size: 16px;
+      letter-spacing: 0.2em;
+    }
+    .payment-password-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .payment-password-actions .btn {
+      flex: 1;
+      padding: 14px 16px;
+    }
+    
+    /* 倒计时 */
+    .countdown {
+      margin-bottom: 24px;
+    }
+    .countdown-text {
+      color: #ff4d4f;
+      font-size: 14px;
+    }
+    
+    /* 支付成功动画 */
+    .success-animation {
+      display: none;
+    }
+    .success-animation.active {
+      display: block;
+    }
+    .success-icon {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 24px;
+      background: #52c41a;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: scaleIn 0.5s ease;
+    }
+    .success-icon i {
+      font-size: 50px;
+      color: #fff;
+    }
+    @keyframes scaleIn {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    
+    @media (max-width: 768px) {
+      .payment-card {
+        padding: 24px;
+      }
+      .payment-amount .amount {
+        font-size: 36px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 导航栏 -->
+<header class="navbar" id="navbar">
+  <div class="nav-inner container">
+    <a href="index.html" class="logo">
+      <span class="logo-icon">⚡</span>
+      <span class="logo-text">织麦<em>电竞</em></span>
+    </a>
+    <button class="btn-back" id="backBtn" onclick="goBack()" title="返回上一页">
+      <i class="fa fa-arrow-left"></i>
+    </button>
+  </div>
+</header>
+
+<!-- 支付页面 -->
+<main class="payment-page">
+  <div class="payment-container">
+    <div class="payment-card">
+      <!-- 支付中状态 -->
+      <div id="paymentPending">
+        <div class="payment-notice">
+          当前支付功能未开放，请勿进行真实转账。
+        </div>
+        <!-- 支付方式选择 -->
+        <div class="payment-methods">
+          <div class="payment-method wechat active" onclick="switchPaymentMethod('wechat')">
+            <i class="fa-brands fa-weixin"></i>
+            <span>微信支付</span>
+          </div>
+          <div class="payment-method alipay" onclick="switchPaymentMethod('alipay')">
+            <i class="fa-brands fa-alipay"></i>
+            <span>支付宝</span>
+          </div>
+        </div>
+        
+        <div class="payment-icon wechat" id="paymentIcon">
+          <i class="fa-brands fa-weixin"></i>
+        </div>
+        <h1 class="payment-title" id="paymentTitle">微信支付</h1>
+        <p class="payment-desc" id="paymentDesc">请使用微信扫一扫完成支付</p>
+        
+        <div class="qrcode-section">
+          <div class="qrcode-box" id="qrcodeBox">
+            <i class="fa fa-qrcode" id="qrcodeIcon"></i>
+            <div class="qrcode-loading" id="qrcodeLoading" style="display: none;">
+              <i class="fa fa-spinner fa-spin"></i>
+            </div>
+          </div>
+          <p class="qrcode-tip" id="qrcodeTip">扫描二维码完成支付</p>
+        </div>
+        
+        <div class="countdown">
+          <p class="countdown-text">支付剩余时间：<span id="countdown">05:00</span></p>
+        </div>
+        
+        <div class="payment-amount">
+          <div class="label">支付金额</div>
+          <div class="amount"><span>¥</span><span id="payAmount">0.00</span></div>
+        </div>
+        
+        <div class="payment-order-info">
+          <div class="info-row">
+            <span class="label">订单编号</span>
+            <span class="value" id="orderId">--</span>
+          </div>
+          <div class="info-row">
+            <span class="label">商品名称</span>
+            <span class="value" id="productName">--</span>
+          </div>
+        </div>
+        
+        <div class="payment-actions">
+          <button class="btn btn-outline" onclick="cancelPayment()">取消支付</button>
+          <button class="btn btn-primary" onclick="confirmPayment()">
+            <i class="fa fa-check"></i> 我已完成支付（演示）
+          </button>
+        </div>
+      </div>
+      
+      <!-- 支付成功状态 -->
+      <div id="paymentSuccess" class="success-animation">
+        <div class="success-icon">
+          <i class="fa fa-check"></i>
+        </div>
+        <h1 class="payment-title">支付成功！</h1>
+        <p class="payment-desc">您的订单已支付成功，我们将尽快为您安排服务</p>
+        
+        <div class="payment-amount" style="margin-top: 32px;">
+          <div class="label">支付金额</div>
+          <div class="amount" style="color: #52c41a;"><span>¥</span><span id="successAmount">0.00</span></div>
+        </div>
+        
+        <div class="payment-actions" style="margin-top: 32px;">
+          <a href="profile.html?tab=orders" class="btn btn-primary">
+            <i class="fa fa-list"></i> 查看订单
+          </a>
+          <a href="index.html" class="btn btn-outline">
+            <i class="fa fa-home"></i> 返回首页
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="js/data.js"></script>
+<script>
+let currentOrder = null;
+let countdownInterval = null;
+let timeLeft = 300; // 5分钟
+let currentPaymentMethod = 'wechat';
+
+function normalizeInternalTarget(target, fallback = 'index.html') {
+  const value = String(target || '').trim();
+  if (!value) return fallback;
+  if (value.includes('\n') || value.includes('\r')) return fallback;
+  if (/^(javascript:|data:|vbscript:)/i.test(value)) return fallback;
+
+  try {
+    const parsed = new URL(value, window.location.origin);
+    if (parsed.origin !== window.location.origin) return fallback;
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return fallback;
+    return `${parsed.pathname}${parsed.search}${parsed.hash}` || fallback;
+  } catch (_) {
+    return fallback;
+  }
+}
+
+function rememberCurrentPageForLogin() {
+  const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  const safeTarget = normalizeInternalTarget(currentPath, 'index.html');
+  sessionStorage.setItem('redirect_after_login', safeTarget);
+}
+
+function redirectToAuthWithContext() {
+  rememberCurrentPageForLogin();
+  window.location.href = 'auth.html';
+}
+
+function goBack() {
+  if (document.referrer && document.referrer !== window.location.href) {
+    history.back();
+    return;
+  }
+
+  window.location.href = 'services.html';
+}
+
+function updateMobileProfileLink() {
+  const currentUser = JSON.parse(localStorage.getItem('zhimai_user') || sessionStorage.getItem('zhimai_user') || 'null');
+  const mobileProfileLink = document.getElementById('mobileProfileLink');
+
+  if (mobileProfileLink && !currentUser) {
+    mobileProfileLink.href = 'auth.html';
+    mobileProfileLink.addEventListener('click', rememberCurrentPageForLogin);
+  }
+}
+
+// 获取URL参数
+function getUrlParam(name) {
+  const params = new URLSearchParams(window.location.search);
+  return params.get(name);
+}
+
+// 切换支付方式
+function switchPaymentMethod(method) {
+  currentPaymentMethod = method;
+  
+  // 更新选中状态
+  document.querySelectorAll('.payment-method').forEach(el => {
+    el.classList.remove('active');
+  });
+  document.querySelector(`.payment-method.${method}`).classList.add('active');
+  
+  // 更新支付图标和标题
+  const iconEl = document.getElementById('paymentIcon');
+  const titleEl = document.getElementById('paymentTitle');
+  const descEl = document.getElementById('paymentDesc');
+  const tipEl = document.getElementById('qrcodeTip');
+  
+  if (method === 'wechat') {
+    iconEl.className = 'payment-icon wechat';
+    iconEl.innerHTML = '<i class="fa-brands fa-weixin"></i>';
+    titleEl.textContent = '微信支付';
+    descEl.textContent = '请使用微信扫一扫完成支付';
+    tipEl.textContent = '打开微信扫一扫完成支付';
+    
+    // 调用微信支付SDK
+    initWechatPay();
+  } else {
+    iconEl.className = 'payment-icon alipay';
+    iconEl.innerHTML = '<i class="fa-brands fa-alipay"></i>';
+    titleEl.textContent = '支付宝';
+    descEl.textContent = '请使用支付宝扫一扫完成支付';
+    tipEl.textContent = '打开支付宝扫一扫完成支付';
+    
+    // 调用支付宝SDK
+    initAlipay();
+  }
+}
+
+// 初始化微信支付
+function initWechatPay() {
+  // 显示加载状态
+  document.getElementById('qrcodeLoading').style.display = 'block';
+  document.getElementById('qrcodeIcon').style.display = 'none';
+  
+  // 模拟生成支付二维码（实际项目中这里调用后端接口生成）
+  setTimeout(() => {
+    generateQRCode('wechat');
+  }, 500);
+  
+  // 如果是微信浏览器内，尝试调起微信支付
+  if (isWechatBrowser()) {
+    // 调用微信JS-SDK
+    callWechatJSBridge();
+  }
+}
+
+// 初始化支付宝
+function initAlipay() {
+  // 显示加载状态
+  document.getElementById('qrcodeLoading').style.display = 'block';
+  document.getElementById('qrcodeIcon').style.display = 'none';
+  
+  // 模拟生成支付二维码
+  setTimeout(() => {
+    generateQRCode('alipay');
+  }, 500);
+  
+  // 如果是支付宝浏览器内，尝试调起支付宝支付
+  if (isAlipayBrowser()) {
+    callAlipayJSBridge();
+  }
+}
+
+// 生成二维码
+function generateQRCode(type) {
+  const qrcodeBox = document.getElementById('qrcodeBox');
+  const loading = document.getElementById('qrcodeLoading');
+  
+  // 这里应该调用后端接口生成真实的支付二维码
+  // 现在使用占位符显示
+  loading.style.display = 'none';
+  
+  // 创建二维码图片（使用二维码生成API或Canvas）
+  const qrData = `https://zhimai-esports.com/pay/${type}/${currentOrder.id}`;
+  
+  // 使用 QRCode.js 或类似库生成二维码
+  // 这里简化处理，显示一个模拟的二维码区域
+  qrcodeBox.innerHTML = `
+    <div style="text-align: center; color: #333;">
+      <i class="fa fa-qrcode" style="font-size: 60px; color: #333;"></i>
+      <p style="font-size: 12px; margin-top: 8px; color: #666;">模拟二维码</p>
+      <p style="font-size: 10px; color: #999;">${qrData.substring(0, 30)}...</p>
+    </div>
+  `;
+}
+
+// 判断是否在微信浏览器
+function isWechatBrowser() {
+  return /MicroMessenger/i.test(navigator.userAgent);
+}
+
+// 判断是否在支付宝浏览器
+function isAlipayBrowser() {
+  return /AlipayClient/i.test(navigator.userAgent);
+}
+
+// 调用微信JS-SDK支付
+function callWechatJSBridge() {
+  // 实际项目中需要先从后端获取支付参数
+  // 这里仅作演示结构
+  if (typeof WeixinJSBridge !== 'undefined') {
+    // 微信内置浏览器支付
+    console.log('调用微信支付JSBridge');
+  }
+}
+
+// 调用支付宝JSBridge支付
+function callAlipayJSBridge() {
+  // 实际项目中需要先从后端获取支付参数
+  if (typeof AlipayJSBridge !== 'undefined') {
+    // 支付宝内置浏览器支付
+    console.log('调用支付宝JSBridge');
+  }
+}
+
+function resolveCurrentPaymentUser() {
+  return JSON.parse(localStorage.getItem('zhimai_user') || sessionStorage.getItem('zhimai_user') || 'null');
+}
+
+function isOrderOwnedByCurrentUser(order, user) {
+  if (!order || !user || order.userId == null || user.id == null) return false;
+  return String(order.userId) === String(user.id);
+}
+
+// 加载订单
+function loadOrder() {
+  const orderId = getUrlParam('order');
+  const currentUser = resolveCurrentPaymentUser();
+  
+  if (!orderId) {
+    alert('订单不存在');
+    window.location.href = 'services.html';
+    return;
+  }
+
+  if (!currentUser) {
+    alert('请先登录');
+    redirectToAuthWithContext();
+    return;
+  }
+  
+  const orders = dataManager.getOrders();
+  currentOrder = orders.find(o => o.id === orderId);
+  
+  if (!currentOrder) {
+    alert('订单不存在');
+    window.location.href = 'services.html';
+    return;
+  }
+
+  if (!isOrderOwnedByCurrentUser(currentOrder, currentUser)) {
+    alert('无权支付该订单，请从我的订单重新进入');
+    window.location.href = 'profile.html?tab=orders';
+    return;
+  }
+  
+  if (currentOrder.status !== 'pending') {
+    alert('该订单已支付或已取消');
+    window.location.href = 'profile.html?tab=orders';
+    return;
+  }
+  
+  // 更新支付页面信息
+  document.getElementById('orderId').textContent = currentOrder.id;
+  document.getElementById('productName').textContent = currentOrder.productName;
+  document.getElementById('payAmount').textContent = currentOrder.totalAmount.toFixed(2);
+  document.getElementById('successAmount').textContent = currentOrder.totalAmount.toFixed(2);
+  
+  // 根据订单支付方式设置默认支付方式
+  if (currentOrder.paymentMethod === 'alipay') {
+    switchPaymentMethod('alipay');
+  } else {
+    switchPaymentMethod('wechat');
+  }
+  
+  // 开始倒计时
+  startCountdown();
+}
+
+// 倒计时
+function startCountdown() {
+  updateCountdownDisplay();
+  countdownInterval = setInterval(() => {
+    timeLeft--;
+    updateCountdownDisplay();
+    
+    if (timeLeft <= 0) {
+      clearInterval(countdownInterval);
+      alert('支付超时，订单已取消');
+      dataManager.cancelOrder(currentOrder.id, '支付超时');
+      window.location.href = 'profile.html?tab=orders';
+    }
+  }, 1000);
+}
+
+function updateCountdownDisplay() {
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
+  document.getElementById('countdown').textContent = 
+    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+// 确认支付（模拟）
+function confirmPayment() {
+  if (!currentOrder) return;
+  const currentUser = resolveCurrentPaymentUser();
+  if (!isOrderOwnedByCurrentUser(currentOrder, currentUser)) {
+    alert('订单归属校验失败，请从我的订单重新进入');
+    if (!currentUser) {
+      redirectToAuthWithContext();
+      return;
+    }
+    window.location.href = 'profile.html?tab=orders';
+    return;
+  }
+  
+  // 更新订单状态（同步）
+  const allOrders = dataManager.getOrders();
+  const orderIdx = allOrders.findIndex(o => o.id === currentOrder.id && String(o.userId) === String(currentUser.id));
+  if (orderIdx !== -1) {
+    allOrders[orderIdx].status = 'paid';
+    allOrders[orderIdx].statusText = '已支付';
+    allOrders[orderIdx].paidAt = new Date().toISOString();
+    dataManager.saveOrders(allOrders);
+  } else {
+    alert('订单不存在或无权限操作');
+    window.location.href = 'profile.html?tab=orders';
+    return;
+  }
+  
+  // 更新商品销量和库存
+  const allProducts = dataManager.getProducts();
+  const product = allProducts.find(p => p.id === parseInt(currentOrder.productId));
+  if (product) {
+    const updatedProducts = allProducts.map(p => {
+      if (p.id === product.id) {
+        return { ...p, sales: (p.sales || 0) + currentOrder.quantity, stock: Math.max(0, p.stock - currentOrder.quantity) };
+      }
+      return p;
+    });
+    dataManager.saveProducts(updatedProducts);
+  }
+  
+  // 停止倒计时
+  clearInterval(countdownInterval);
+  
+  // 显示成功动画
+  document.getElementById('paymentPending').style.display = 'none';
+  document.getElementById('paymentSuccess').classList.add('active');
+}
+
+// 取消支付
+function cancelPayment() {
+  leavePaymentStepKeepingOrderPending();
+}
+
+// 页面加载
+document.addEventListener('DOMContentLoaded', loadOrder);
+document.addEventListener('DOMContentLoaded', updateMobileProfileLink);
+</script>
+<script src="js/payment-password.js"></script>
+
+<script>
+let paymentPasswordModalMode = 'verify';
+
+function getLoggedInUser() {
+  return JSON.parse(localStorage.getItem('zhimai_user') || sessionStorage.getItem('zhimai_user') || 'null');
+}
+
+function persistLoggedInUser(user) {
+  if (!user || !user.id) return;
+
+  const users = dataManager.getUsers();
+  const index = users.findIndex(item => item.id === user.id);
+
+  if (index !== -1) {
+    users[index] = { ...users[index], ...user };
+  } else {
+    users.push(user);
+  }
+
+  dataManager.saveUsers(users);
+
+  if (localStorage.getItem('zhimai_user')) {
+    localStorage.setItem('zhimai_user', JSON.stringify(user));
+  }
+
+  if (sessionStorage.getItem('zhimai_user')) {
+    sessionStorage.setItem('zhimai_user', JSON.stringify(user));
+  }
+}
+
+function getWalletStore() {
+  return JSON.parse(localStorage.getItem('zhimai_wallets') || '{}');
+}
+
+function getWalletBalance(user = getLoggedInUser()) {
+  if (!user) return 0;
+
+  const wallets = getWalletStore();
+  const walletBalance = wallets[user.id]?.balance;
+
+  if (typeof walletBalance === 'number' && !Number.isNaN(walletBalance)) {
+    return walletBalance;
+  }
+
+  return Number(user.balance || 0);
+}
+
+function updateWalletBalance(user, nextBalance, transaction = null) {
+  const wallets = getWalletStore();
+  const wallet = wallets[user.id] || {
+    balance: Number(user.balance || 0),
+    transactions: []
+  };
+
+  wallet.balance = Number(nextBalance.toFixed(2));
+  wallet.transactions = Array.isArray(wallet.transactions) ? wallet.transactions : [];
+
+  if (transaction) {
+    wallet.transactions.unshift(transaction);
+  }
+
+  wallets[user.id] = wallet;
+  localStorage.setItem('zhimai_wallets', JSON.stringify(wallets));
+
+  const updatedUser = { ...user, balance: wallet.balance };
+  persistLoggedInUser(updatedUser);
+  return updatedUser;
+}
+
+function getConfirmPaymentButton() {
+  return document.querySelector('.payment-actions .btn-primary');
+}
+
+function showPaymentToast(message, type = 'success') {
+  const colorMap = {
+    success: '#52c41a',
+    error: '#ff4d4f',
+    info: '#1890ff'
+  };
+  const iconMap = {
+    success: 'check-circle',
+    error: 'times-circle',
+    info: 'info-circle'
+  };
+
+  const toast = document.createElement('div');
+  toast.innerHTML = `<i class="fa fa-${iconMap[type] || iconMap.info}"></i> ${message}`;
+  toast.style.cssText = `
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: ${colorMap[type] || colorMap.info};
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    z-index: 10000;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.22);
+  `;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 2200);
+}
+
+function ensureWalletPaymentUI() {
+  const methodsContainer = document.querySelector('.payment-methods');
+  if (methodsContainer && !methodsContainer.querySelector('.payment-method.balance')) {
+    const balanceMethod = document.createElement('div');
+    balanceMethod.className = 'payment-method balance';
+    balanceMethod.onclick = () => switchPaymentMethod('balance');
+    balanceMethod.innerHTML = `
+      <i class="fa fa-wallet"></i>
+      <span>余额支付</span>
+    `;
+    methodsContainer.appendChild(balanceMethod);
+  }
+
+  const qrcodeSection = document.querySelector('.qrcode-section');
+  if (qrcodeSection && !document.getElementById('walletPanel')) {
+    const walletPanel = document.createElement('div');
+    walletPanel.id = 'walletPanel';
+    walletPanel.className = 'wallet-panel';
+    walletPanel.innerHTML = `
+      <div class="wallet-balance">
+        <span class="label">钱包可用余额</span>
+        <span class="value">¥<span id="walletBalance">0.00</span></span>
+      </div>
+      <p class="wallet-status" id="walletStatus">余额支付需要先验证支付密码。</p>
+    `;
+    qrcodeSection.insertAdjacentElement('afterend', walletPanel);
+  }
+
+  if (!document.getElementById('paymentPasswordModal')) {
+    const modal = document.createElement('div');
+    modal.id = 'paymentPasswordModal';
+    modal.className = 'payment-password-modal';
+    modal.innerHTML = `
+      <div class="payment-password-dialog">
+        <h3 id="paymentPasswordTitle">验证支付密码</h3>
+        <p class="payment-password-desc" id="paymentPasswordDesc">请输入支付密码后完成余额支付。</p>
+        <div class="payment-password-field">
+          <label for="paymentPasswordInput" id="paymentPasswordLabel">支付密码</label>
+          <input type="password" id="paymentPasswordInput" inputmode="numeric" maxlength="6" placeholder="请输入6位支付密码">
+        </div>
+        <div class="payment-password-field" id="paymentPasswordConfirmField" style="display: none;">
+          <label for="paymentPasswordConfirmInput">确认支付密码</label>
+          <input type="password" id="paymentPasswordConfirmInput" inputmode="numeric" maxlength="6" placeholder="请再次输入6位支付密码">
+        </div>
+        <div class="payment-password-actions">
+          <button class="btn btn-outline" type="button" onclick="closePaymentPasswordModal()">取消</button>
+          <button class="btn btn-primary" type="button" id="paymentPasswordSubmitBtn" onclick="submitPaymentPassword()">确认</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+}
+
+function updateWalletPaymentUI() {
+  const walletBalanceEl = document.getElementById('walletBalance');
+  const walletStatusEl = document.getElementById('walletStatus');
+  const user = getLoggedInUser();
+
+  if (!walletBalanceEl || !walletStatusEl || !currentOrder) {
+    return;
+  }
+
+  const balance = getWalletBalance(user);
+  const hasPaymentPassword = Boolean(user?.paymentPassword);
+  const hasEnoughBalance = balance >= currentOrder.totalAmount;
+
+  walletBalanceEl.textContent = balance.toFixed(2);
+
+  if (!hasEnoughBalance) {
+    walletStatusEl.textContent = '当前余额不足，请更换其他支付方式或先充值。';
+    return;
+  }
+
+  walletStatusEl.textContent = hasPaymentPassword
+    ? '已设置支付密码，验证通过后才会扣除余额并完成支付。'
+    : '您还未设置支付密码，请先设置支付密码后再完成余额支付。';
+}
+
+function updateConfirmButtonLabel(method) {
+  const confirmButton = getConfirmPaymentButton();
+  if (!confirmButton) return;
+
+  if (method === 'balance') {
+    confirmButton.innerHTML = '<i class="fa fa-shield-alt"></i> 验证并支付';
+    return;
+  }
+
+  confirmButton.innerHTML = '<i class="fa fa-check"></i> 我已完成支付（演示）';
+}
+
+function resetQRCodeBox() {
+  const qrcodeBox = document.getElementById('qrcodeBox');
+  if (!qrcodeBox) return;
+
+  qrcodeBox.innerHTML = `
+    <i class="fa fa-qrcode" id="qrcodeIcon"></i>
+    <div class="qrcode-loading" id="qrcodeLoading" style="display: none;">
+      <i class="fa fa-spinner fa-spin"></i>
+    </div>
+  `;
+}
+
+initWechatPay = function initWechatPayOverride() {
+  resetQRCodeBox();
+
+  const loading = document.getElementById('qrcodeLoading');
+  const icon = document.getElementById('qrcodeIcon');
+
+  if (loading) loading.style.display = 'block';
+  if (icon) icon.style.display = 'none';
+
+  setTimeout(() => {
+    generateQRCode('wechat');
+  }, 500);
+
+  if (isWechatBrowser()) {
+    callWechatJSBridge();
+  }
+};
+
+initAlipay = function initAlipayOverride() {
+  resetQRCodeBox();
+
+  const loading = document.getElementById('qrcodeLoading');
+  const icon = document.getElementById('qrcodeIcon');
+
+  if (loading) loading.style.display = 'block';
+  if (icon) icon.style.display = 'none';
+
+  setTimeout(() => {
+    generateQRCode('alipay');
+  }, 500);
+
+  if (isAlipayBrowser()) {
+    callAlipayJSBridge();
+  }
+};
+
+generateQRCode = function generateQRCodeOverride(type) {
+  const qrcodeBox = document.getElementById('qrcodeBox');
+  if (!qrcodeBox || !currentOrder) return;
+
+  const qrData = `https://zhimai-esports.com/pay/${type}/${currentOrder.id}`;
+  qrcodeBox.innerHTML = `
+    <div style="text-align: center; color: #333;">
+      <i class="fa fa-qrcode" style="font-size: 60px; color: #333;"></i>
+      <p style="font-size: 12px; margin-top: 8px; color: #666;">模拟二维码</p>
+      <p style="font-size: 10px; color: #999;">${qrData.substring(0, 30)}...</p>
+    </div>
+  `;
+};
+
+switchPaymentMethod = function switchPaymentMethodOverride(method) {
+  currentPaymentMethod = method;
+
+  document.querySelectorAll('.payment-method').forEach(el => {
+    el.classList.remove('active');
+  });
+
+  const activeMethod = document.querySelector(`.payment-method.${method}`);
+  if (activeMethod) {
+    activeMethod.classList.add('active');
+  }
+
+  const iconEl = document.getElementById('paymentIcon');
+  const titleEl = document.getElementById('paymentTitle');
+  const descEl = document.getElementById('paymentDesc');
+  const tipEl = document.getElementById('qrcodeTip');
+  const qrcodeSection = document.querySelector('.qrcode-section');
+  const walletPanel = document.getElementById('walletPanel');
+
+  if (!iconEl || !titleEl || !descEl || !tipEl || !qrcodeSection || !walletPanel) {
+    return;
+  }
+
+  qrcodeSection.style.display = method === 'balance' ? 'none' : 'block';
+  walletPanel.classList.toggle('active', method === 'balance');
+  updateConfirmButtonLabel(method);
+
+  if (method === 'wechat') {
+    iconEl.className = 'payment-icon wechat';
+    iconEl.innerHTML = '<i class="fa-brands fa-weixin"></i>';
+    titleEl.textContent = '微信支付';
+    descEl.textContent = '请使用微信扫码完成支付';
+    tipEl.textContent = '打开微信扫一扫完成支付';
+    initWechatPay();
+    return;
+  }
+
+  if (method === 'alipay') {
+    iconEl.className = 'payment-icon alipay';
+    iconEl.innerHTML = '<i class="fa-brands fa-alipay"></i>';
+    titleEl.textContent = '支付宝支付';
+    descEl.textContent = '请使用支付宝扫码完成支付';
+    tipEl.textContent = '打开支付宝扫一扫完成支付';
+    initAlipay();
+    return;
+  }
+
+  iconEl.className = 'payment-icon balance';
+  iconEl.innerHTML = '<i class="fa fa-wallet"></i>';
+  titleEl.textContent = '余额支付';
+  descEl.textContent = '将使用钱包余额支付，支付前需要完成支付密码验证。';
+  tipEl.textContent = '';
+  updateWalletPaymentUI();
+};
+
+function openPaymentPasswordModal(mode) {
+  paymentPasswordModalMode = mode;
+
+  const modal = document.getElementById('paymentPasswordModal');
+  const title = document.getElementById('paymentPasswordTitle');
+  const desc = document.getElementById('paymentPasswordDesc');
+  const label = document.getElementById('paymentPasswordLabel');
+  const confirmField = document.getElementById('paymentPasswordConfirmField');
+  const submitBtn = document.getElementById('paymentPasswordSubmitBtn');
+  const passwordInput = document.getElementById('paymentPasswordInput');
+  const confirmInput = document.getElementById('paymentPasswordConfirmInput');
+
+  if (!modal || !title || !desc || !label || !confirmField || !submitBtn || !passwordInput || !confirmInput) {
+    return;
+  }
+
+  passwordInput.value = '';
+  confirmInput.value = '';
+
+  if (mode === 'setup') {
+    title.textContent = '设置支付密码';
+    desc.textContent = '首次使用余额支付前，请先设置6位支付密码。';
+    label.textContent = '设置支付密码';
+    confirmField.style.display = 'block';
+    submitBtn.textContent = '设置并继续';
+  } else {
+    title.textContent = '验证支付密码';
+    desc.textContent = '请输入已设置的支付密码，验证通过后才会完成余额支付。';
+    label.textContent = '支付密码';
+    confirmField.style.display = 'none';
+    submitBtn.textContent = '验证并支付';
+  }
+
+  modal.classList.add('active');
+  passwordInput.focus();
+}
+
+function closePaymentPasswordModal() {
+  const modal = document.getElementById('paymentPasswordModal');
+  if (modal) {
+    modal.classList.remove('active');
+  }
+}
+
+function finalizeOrderPaymentWithMethod(method) {
+  const currentUser = getLoggedInUser();
+  if (!currentUser) {
+    redirectToAuthWithContext();
+    return false;
+  }
+
+  const allOrders = dataManager.getOrders();
+  const orderIdx = allOrders.findIndex(order => (
+    order.id === currentOrder.id
+    && String(order.userId) === String(currentUser.id)
+  ));
+
+  if (orderIdx === -1) {
+    showPaymentToast('订单不存在或无权限支付，请返回我的订单重试', 'error');
+    setTimeout(() => {
+      window.location.href = 'profile.html?tab=orders';
+    }, 800);
+    return false;
+  }
+
+  const paidAt = new Date().toISOString();
+  allOrders[orderIdx] = {
+    ...allOrders[orderIdx],
+    status: 'paid',
+    statusText: '已支付',
+    paymentMethod: method,
+    paidAt,
+    updatedAt: paidAt
+  };
+  dataManager.saveOrders(allOrders);
+  currentOrder = allOrders[orderIdx];
+
+  const allProducts = dataManager.getProducts();
+  const product = allProducts.find(item => item.id === parseInt(currentOrder.productId, 10));
+
+  if (product) {
+    const updatedProducts = allProducts.map(item => {
+      if (item.id === product.id) {
+        return {
+          ...item,
+          sales: (item.sales || 0) + currentOrder.quantity,
+          stock: Math.max(0, item.stock - currentOrder.quantity)
+        };
+      }
+
+      return item;
+    });
+    dataManager.saveProducts(updatedProducts);
+  }
+
+  clearInterval(countdownInterval);
+  document.getElementById('paymentPending').style.display = 'none';
+  document.getElementById('paymentSuccess').classList.add('active');
+  return true;
+}
+
+function startBalancePaymentFlow() {
+  const currentUser = getLoggedInUser();
+
+  if (!currentUser) {
+    redirectToAuthWithContext();
+    return;
+  }
+
+  const balance = getWalletBalance(currentUser);
+  if (balance < currentOrder.totalAmount) {
+    showPaymentToast('钱包余额不足，请选择其他支付方式', 'error');
+    return;
+  }
+
+  updateWalletPaymentUI();
+
+  if (!window.paymentPasswordMock.hasPaymentPassword(currentUser)) {
+    openPaymentPasswordModal('setup');
+    return;
+  }
+
+  openPaymentPasswordModal('verify');
+}
+
+function completeBalancePayment(currentUser) {
+  const balance = getWalletBalance(currentUser);
+
+  if (balance < currentOrder.totalAmount) {
+    showPaymentToast('钱包余额不足，请选择其他支付方式', 'error');
+    return;
+  }
+
+  updateWalletBalance(currentUser, balance - currentOrder.totalAmount, {
+    id: `WT${Date.now().toString(36).toUpperCase()}`,
+    type: 'payment',
+    amount: currentOrder.totalAmount,
+    orderId: currentOrder.id,
+    createdAt: new Date().toISOString()
+  });
+
+  finalizeOrderPaymentWithMethod('balance');
+}
+
+function submitPaymentPassword() {
+  const passwordInput = document.getElementById('paymentPasswordInput');
+  const confirmInput = document.getElementById('paymentPasswordConfirmInput');
+  const password = passwordInput?.value.trim() || '';
+  const confirmPassword = confirmInput?.value.trim() || '';
+  const currentUser = getLoggedInUser();
+
+  if (!currentUser) {
+    redirectToAuthWithContext();
+    return;
+  }
+
+  if (!/^\d{6}$/.test(password)) {
+    showPaymentToast('请输入6位数字支付密码', 'error');
+    passwordInput?.focus();
+    return;
+  }
+
+  if (paymentPasswordModalMode === 'setup') {
+    if (password !== confirmPassword) {
+      showPaymentToast('两次输入的支付密码不一致', 'error');
+      confirmInput?.focus();
+      return;
+    }
+
+    window.paymentPasswordMock.setPaymentPassword(password);
+
+    updateWalletPaymentUI();
+    closePaymentPasswordModal();
+    showPaymentToast('支付密码设置成功，请再次输入支付密码完成支付', 'success');
+    openPaymentPasswordModal('verify');
+    return;
+  }
+
+  if (!window.paymentPasswordMock.verifyPaymentPassword(password, currentUser)) {
+    showPaymentToast('支付密码错误，请重新输入', 'error');
+    passwordInput?.focus();
+    return;
+  }
+
+  closePaymentPasswordModal();
+  completeBalancePayment(currentUser);
+}
+
+confirmPayment = function confirmPaymentOverride() {
+  if (!currentOrder) return;
+
+  if (currentPaymentMethod === 'balance') {
+    startBalancePaymentFlow();
+    return;
+  }
+
+  finalizeOrderPaymentWithMethod(currentPaymentMethod);
+};
+
+function leavePaymentStepKeepingOrderPending() {
+  clearInterval(countdownInterval);
+  closePaymentPasswordModal();
+
+  if (currentOrder?.id) {
+    const allOrders = dataManager.getOrders();
+    const targetIndex = allOrders.findIndex(item => item.id === currentOrder.id);
+    if (targetIndex !== -1) {
+      const targetOrder = { ...allOrders[targetIndex] };
+      targetOrder.status = 'pending';
+      targetOrder.statusText = '待支付';
+      targetOrder.updatedAt = new Date().toISOString();
+      delete targetOrder.paidAt;
+      allOrders[targetIndex] = targetOrder;
+      dataManager.saveOrders(allOrders);
+    }
+  }
+
+  const productId = String(currentOrder?.productId || '').trim();
+  if (productId) {
+    let gameCode = String(currentOrder?.game || '').trim().toLowerCase();
+    if (!/^[a-z0-9_-]+$/.test(gameCode)) {
+      const products = dataManager.getProducts();
+      const currentProduct = products.find(item => String(item?.id) === productId);
+      gameCode = String(currentProduct?.game || '').trim().toLowerCase();
+    }
+    const params = new URLSearchParams();
+    params.set('id', productId);
+    if (/^[a-z0-9_-]+$/.test(gameCode)) {
+      params.set('game', gameCode);
+    }
+    params.set('focusProduct', productId);
+    window.location.href = `product-detail.html?${params.toString()}`;
+    return;
+  }
+
+  if (currentOrder && currentOrder.id) {
+    window.location.href = 'services.html';
+    return;
+  }
+
+  window.location.href = 'services.html';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('backBtn')?.remove();
+  ensureWalletPaymentUI();
+
+  if (currentOrder && currentOrder.paymentMethod === 'balance') {
+    switchPaymentMethod('balance');
+  }
+
+  updateWalletPaymentUI();
+});
+</script>
+
+<script>
+// 移动端「我的」未登录时跳登录页
+const currentUser = JSON.parse(localStorage.getItem('zhimai_user') || sessionStorage.getItem('zhimai_user') || 'null');
+const mobileProfileLink = document.getElementById('mobileProfileLink');
+if (mobileProfileLink && !currentUser) {
+  mobileProfileLink.href = 'auth.html';
+  mobileProfileLink.addEventListener('click', rememberCurrentPageForLogin);
+}
+</script>
+
+<!-- 手机端底部导航 -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-list">
+    <a href="index.html" class="mobile-nav-item">
+      <i class="fa fa-home"></i>
+      <span>首页</span>
+    </a>
+    <a href="services.html" class="mobile-nav-item active">
+      <i class="fa fa-cart-shopping"></i>
+      <span>下单</span>
+    </a>
+    <a href="profile.html" class="mobile-nav-item" id="mobileProfileLink">
+      <i class="fa fa-user"></i>
+      <span>我的</span>
+    </a>
+  </div>
+</nav>
+
+</body>
+</html>

@@ -1,0 +1,388 @@
+<!--
+  File: admin/login.html
+  Page: Admin Login
+  Description: Admin login entry -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>后台登录 - 织麦电竞</title>
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+      padding: 20px;
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 420px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 40px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-logo {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 16px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      box-shadow: 0 12px 30px rgba(99, 102, 241, 0.35);
+    }
+
+    .login-logo i {
+      font-size: 1.8rem;
+    }
+
+    .login-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .login-subtitle {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.9rem;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.9rem;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary, #6c63ff);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .form-input::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #6c63ff 0%, #5b54d6 100%);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 8px;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(108, 99, 255, 0.3);
+    }
+
+    .login-footer {
+      text-align: center;
+      margin-top: 24px;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 0.85rem;
+    }
+
+    .login-footer a {
+      color: var(--primary, #6c63ff);
+      text-decoration: none;
+    }
+
+    .error-msg {
+      color: #ff4d4f;
+      font-size: 0.85rem;
+      margin-top: 8px;
+      display: none;
+      white-space: pre-wrap;
+    }
+
+    .error-msg.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-box">
+      <div class="login-header">
+        <div class="login-logo"><i class="fa fa-bolt"></i></div>
+        <h1 class="login-title">织麦电竞后台</h1>
+        <p class="login-subtitle">管理员登录</p>
+      </div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label">用户名</label>
+          <input type="text" class="form-input" id="username" placeholder="请输入管理员账号" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">密码</label>
+          <input type="password" class="form-input" id="password" placeholder="请输入密码" required>
+        </div>
+
+        <div class="error-msg" id="errorMsg">用户名或密码错误</div>
+
+        <button type="submit" class="login-btn">登录</button>
+      </form>
+
+      <div class="login-footer">
+        <p><a href="../index.html">← 返回前台首页</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function createSecureRandomHex(bytes = 16) {
+      if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.getRandomValues === 'function') {
+        const randomBytes = new Uint8Array(Math.max(1, Number(bytes) || 16));
+        window.crypto.getRandomValues(randomBytes);
+        return Array.from(randomBytes, (item) => item.toString(16).padStart(2, '0')).join('');
+      }
+
+      return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+    }
+
+    function createPasswordSalt() {
+      return createSecureRandomHex(16);
+    }
+
+    function derivePasswordHashLegacy(password, salt) {
+      const text = `${String(password || '')}::${String(salt || '')}`;
+      let hash = 2166136261;
+      for (let i = 0; i < text.length; i++) {
+        hash ^= text.charCodeAt(i);
+        hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+      }
+      return (`00000000${(hash >>> 0).toString(16)}`).slice(-8);
+    }
+
+    function isLegacyPasswordHash(hash) {
+      return /^[0-9a-f]{8}$/i.test(String(hash || ''));
+    }
+
+    function derivePasswordHash(password, salt) {
+      const text = `${String(password || '')}::${String(salt || '')}`;
+      let h1 = 0xdeadbeef ^ text.length;
+      let h2 = 0x41c6ce57 ^ text.length;
+      let h3 = 0xc0decafe ^ text.length;
+      let h4 = 0x9e3779b9 ^ text.length;
+
+      for (let i = 0; i < text.length; i++) {
+        const code = text.charCodeAt(i);
+        h1 = Math.imul(h1 ^ code, 2654435761);
+        h2 = Math.imul(h2 ^ code, 1597334677);
+        h3 = Math.imul(h3 ^ code, 2246822507);
+        h4 = Math.imul(h4 ^ code, 3266489909);
+      }
+
+      h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+      h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h3 ^ (h3 >>> 13), 3266489909);
+      h3 = Math.imul(h3 ^ (h3 >>> 16), 2246822507) ^ Math.imul(h4 ^ (h4 >>> 13), 3266489909);
+      h4 = Math.imul(h4 ^ (h4 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+
+      return [h1, h2, h3, h4]
+        .map((item) => (`00000000${(item >>> 0).toString(16)}`).slice(-8))
+        .join('');
+    }
+
+    function createSessionToken(prefix = 'admin_token') {
+      const normalizedPrefix = String(prefix || 'admin_token').replace(/[^a-z0-9_-]/gi, '').toLowerCase() || 'admin_token';
+
+      if (typeof window !== 'undefined' && window.crypto) {
+        if (typeof window.crypto.randomUUID === 'function') {
+          return `${normalizedPrefix}_${window.crypto.randomUUID()}`;
+        }
+        if (typeof window.crypto.getRandomValues === 'function') {
+          const bytes = new Uint8Array(16);
+          window.crypto.getRandomValues(bytes);
+          const tokenBody = Array.from(bytes, (item) => item.toString(16).padStart(2, '0')).join('');
+          return `${normalizedPrefix}_${tokenBody}`;
+        }
+      }
+
+      return `${normalizedPrefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
+    }
+
+    function verifyPasswordRecord(user, password) {
+      if (user && user.passwordHash && user.passwordSalt) {
+        const currentHash = String(user.passwordHash || '');
+        const normalizedSalt = String(user.passwordSalt || '');
+        const nextHash = derivePasswordHash(password, normalizedSalt);
+        if (nextHash === currentHash) return true;
+        if (isLegacyPasswordHash(currentHash)) {
+          return derivePasswordHashLegacy(password, normalizedSalt) === currentHash;
+        }
+        return false;
+      }
+      return String(user?.password || '') === String(password || '');
+    }
+
+    function migrateLegacyAdminRecord(user, password) {
+      if (!user) return user;
+      const hasHashRecord = Boolean(user.passwordHash && user.passwordSalt);
+      const needUpgrade = !hasHashRecord || isLegacyPasswordHash(user.passwordHash);
+      if (!needUpgrade) return user;
+      const passwordSalt = createPasswordSalt();
+      return {
+        ...user,
+        passwordHash: derivePasswordHash(password, passwordSalt),
+        passwordSalt,
+        password: ''
+      };
+    }
+
+    function getAdminUsers() {
+      let admins = [];
+      const raw = localStorage.getItem('zhimai_admin_users');
+
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            admins = parsed;
+          }
+        } catch (err) {
+          admins = [];
+        }
+      }
+
+      return admins;
+    }
+
+    function isAdminLoggedIn() {
+      return localStorage.getItem('zhimai_admin_logged_in') === 'true';
+    }
+
+    function getCurrentAdmin() {
+      try {
+        return JSON.parse(localStorage.getItem('zhimai_admin_user') || 'null');
+      } catch (err) {
+        return null;
+      }
+    }
+
+    if (isAdminLoggedIn() && getCurrentAdmin()) {
+      window.location.href = 'index.html';
+    }
+
+ document.getElementById('loginForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const errorMsg = document.getElementById('errorMsg');
+  const loginBtn = document.querySelector('.login-btn');
+
+  if (!username || !password) {
+    errorMsg.textContent = '请输入用户名和密码';
+    errorMsg.classList.add('show');
+    return;
+  }
+
+  loginBtn.disabled = true;
+  loginBtn.textContent = '登录中...';
+  errorMsg.classList.remove('show');
+
+  try {
+    const initRes = await fetch('http://localhost:3000/admin/check-init');
+
+    if (!initRes.ok) {
+      throw new Error('服务器连接失败');
+    }
+
+    const initData = await initRes.json();
+
+    if (!initData.initialized) {
+      throw new Error('后台账号未初始化，请先在服务端创建管理员账号');
+    }
+
+    const loginRes = await fetch('http://localhost:3000/admin/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        username,
+        password
+      })
+    });
+
+    if (!loginRes.ok) {
+      throw new Error('登录请求失败');
+    }
+
+    const data = await loginRes.json();
+
+    if (!data.success) {
+      throw new Error(data.message || '用户名或密码错误');
+    }
+
+    const now = new Date().toISOString();
+    const admin = {
+      id: data.admin?.id || 'admin_001',
+      username: data.admin?.username || username,
+      role: data.admin?.role || 'admin',
+      name: data.admin?.name || username,
+      nickname: data.admin?.nickname || username,
+      avatar: data.admin?.avatar || '',
+      loginTime: now
+    };
+
+    localStorage.setItem('zhimai_admin_logged_in', 'true');
+    localStorage.setItem('zhimai_admin_user', JSON.stringify(admin));
+    localStorage.setItem('zhimai_admin_token', data.token || createSessionToken('admin_token'));
+
+    window.location.href = 'index.html';
+  } catch (err) {
+    errorMsg.textContent = err.message || '登录失败';
+    errorMsg.classList.add('show');
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.textContent = '登录';
+  }
+});
+  </script>
+</body>
+</html>

@@ -1,0 +1,757 @@
+<!-- 
+  文件名: services.html
+  页面名称: 服务列表/下单页
+  功能说明: 展示所有可购买的服务商品，支持按分类筛选
+  用户可查看商品详情并进入下单流程
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>三角洲行动服务 · 织麦电竞</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/games.css" />
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- 腾讯云 CloudBase SDK -->
+  <style>
+    .service-card.return-focus {
+      box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.92), 0 14px 30px rgba(108, 99, 255, 0.22);
+      transform: translateY(-2px);
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ========== 导航栏 ========== -->
+<header class="navbar" id="navbar">
+  <div class="nav-inner container">
+    <a href="index.html" class="logo">
+      <span class="logo-icon">⚡</span>
+      <span class="logo-text">织麦<em>电竞</em></span>
+    </a>
+    <nav class="nav-links" id="navLinks">
+      <a href="index.html#home" class="nav-item">首页</a>
+      <a href="index.html#about" class="nav-item">关于我们</a>
+      <a href="index.html#services" class="nav-item">产品服务</a>
+      <a href="index.html#join" class="nav-item">合作加入</a>
+      <a href="index.html#contact" class="nav-item">联系我们</a>
+    </nav>
+    <a href="auth.html" class="btn-nav" id="navAuthBtn">登录 / 注册</a>
+  </div>
+</header>
+
+<!-- ========== 服务列表页 ========== -->
+<main class="games-page">
+  <div class="container">
+    
+    <!-- 游戏选择区域（原游戏页面内容） -->
+    <div class="page-header">
+      <a href="index.html" class="back-link"><i class="fa fa-arrow-left"></i> 返回</a>
+      <h1 class="page-title">选择游戏</h1>
+      <p class="page-subtitle">请选择您需要服务的游戏</p>
+    </div>
+
+    <!-- 游戏列表 -->
+    <div class="games-list" id="gamesList" style="margin-bottom: 40px;">
+      <div class="game-row active" data-game="delta" data-name="三角洲行动" data-icon="fa-crosshairs" onclick="selectGame('delta')">
+        <div class="game-row-logo">
+          <i class="fa fa-crosshairs"></i>
+        </div>
+        <div class="game-row-gradient"></div>
+        <div class="game-row-name">三角洲行动</div>
+        <div class="game-row-arrow"><i class="fa fa-chevron-right"></i></div>
+      </div>
+      
+      <div class="game-row" data-game="valorant" data-name="无畏契约" data-icon="fa-bullseye" onclick="selectGame('valorant')">
+        <div class="game-row-logo">
+          <i class="fa fa-bullseye"></i>
+        </div>
+        <div class="game-row-gradient"></div>
+        <div class="game-row-name">无畏契约</div>
+        <div class="game-row-arrow"><i class="fa fa-chevron-right"></i></div>
+      </div>
+    </div>
+
+    <!-- 服务类型筛选 -->
+    <div class="service-filter">
+      <div class="filter-dropdown" id="filterDropdown">
+        <span class="filter-label" id="filterLabel">全部服务</span>
+        <i class="fa fa-chevron-down"></i>
+        <div class="filter-options" id="filterOptions">
+          <div class="filter-option active" data-filter="all">全部服务</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 服务列表 -->
+    <div class="services-grid" id="servicesGrid">
+      <!-- 商品将从本地存储/CloudBase 动态加载 -->
+      <div class="loading-state" style="text-align: center; padding: 60px 20px; color: var(--text-secondary);">
+        <i class="fa fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 16px; display: block;"></i>
+        <p>正在加载服务列表...</p>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ========== 页脚 ========== -->
+<footer class="footer">
+  <div class="footer-bottom">
+    <div class="container">
+      <p>© 2026 织麦电竞 · 版权所有 | 三角洲行动专业代练服务平台</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+// 筛选下拉
+const filterDropdown = document.getElementById('filterDropdown');
+const filterLabel = filterDropdown.querySelector('.filter-label');
+const filterOptionsContainer = document.getElementById('filterOptions');
+let currentServiceFilter = 'all';
+let currentFilterLabelMap = { all: '全部服务' };
+let currentCategoryFilterMap = {};
+
+function escapeHTMLText(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function buildCategoryFilterKey(categoryName, index, usedKeys = new Set()) {
+  const base = String(categoryName || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  const rawKey = base ? `cat-${base}` : `cat-${index + 1}`;
+  let key = rawKey;
+  let suffix = 1;
+  while (usedKeys.has(key)) {
+    key = `${rawKey}-${suffix++}`;
+  }
+  usedKeys.add(key);
+  return key;
+}
+
+function updateFilterLabel(filter = currentServiceFilter) {
+  const gameName = gameNames[selectedGame] || '全部服务';
+  const label = currentFilterLabelMap[filter] || currentFilterLabelMap.all || '全部服务';
+  filterLabel.textContent = `${gameName}${label}`;
+}
+
+function setActiveFilterOption(filter) {
+  filterOptionsContainer.querySelectorAll('.filter-option').forEach(option => {
+    option.classList.toggle('active', option.dataset.filter === filter);
+  });
+  currentServiceFilter = filter;
+  updateFilterLabel(filter);
+}
+
+function buildServiceFilterOptions(categoryNames) {
+  const dedupedNames = [];
+  categoryNames.forEach(name => {
+    const normalized = String(name || '').trim();
+    if (!normalized || dedupedNames.includes(normalized)) return;
+    dedupedNames.push(normalized);
+  });
+
+  currentFilterLabelMap = { all: '全部服务' };
+  currentCategoryFilterMap = {};
+
+  const usedKeys = new Set(['all']);
+  const optionHtml = ['<div class="filter-option active" data-filter="all">全部服务</div>'];
+
+  dedupedNames.forEach((name, index) => {
+    const key = buildCategoryFilterKey(name, index, usedKeys);
+    currentCategoryFilterMap[name] = key;
+    currentFilterLabelMap[key] = name;
+    optionHtml.push(`<div class="filter-option" data-filter="${key}">${escapeHTMLText(name)}</div>`);
+  });
+
+  filterOptionsContainer.innerHTML = optionHtml.join('');
+  if (!currentFilterLabelMap[currentServiceFilter]) {
+    currentServiceFilter = 'all';
+  }
+  setActiveFilterOption(currentServiceFilter);
+}
+
+function applyServiceFilter(filter = currentServiceFilter) {
+  const serviceCards = document.querySelectorAll('.service-card');
+  const sectionTitles = document.querySelectorAll('.services-section-title');
+
+  currentServiceFilter = filter;
+
+  serviceCards.forEach(card => {
+    const isVisible = filter === 'all' || card.dataset.type === filter;
+    card.style.display = isVisible ? 'flex' : 'none';
+    if (isVisible) {
+      card.style.animation = 'fadeInUp 0.4s ease';
+    }
+  });
+
+  sectionTitles.forEach(title => {
+    const headerType = title.dataset.typeHeader;
+    const hasVisibleCards = [...document.querySelectorAll(`.service-card[data-type="${headerType}"]`)]
+      .some(card => card.style.display !== 'none');
+    title.style.display = hasVisibleCards ? 'flex' : 'none';
+  });
+}
+
+filterDropdown.addEventListener('click', (e) => {
+  e.stopPropagation();
+  filterDropdown.classList.toggle('open');
+});
+
+filterOptionsContainer.addEventListener('click', (e) => {
+  const option = e.target.closest('.filter-option');
+  if (!option) return;
+
+  e.stopPropagation();
+  const filter = option.dataset.filter || 'all';
+  setActiveFilterOption(filter);
+  filterDropdown.classList.remove('open');
+  applyServiceFilter(filter);
+});
+
+// 点击外部关闭下拉
+document.addEventListener('click', (e) => {
+  if (!filterDropdown.contains(e.target)) {
+    filterDropdown.classList.remove('open');
+  }
+});
+
+// 导航栏滚动效果
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 60) navbar?.classList.add('scrolled');
+  else navbar?.classList.remove('scrolled');
+});
+
+// 汉堡菜单
+const hamburger = document.getElementById('hamburger');
+const navLinks = document.getElementById('navLinks');
+hamburger?.addEventListener('click', () => navLinks?.classList.toggle('open'));
+document.addEventListener('click', (e) => {
+  if (!navbar?.contains(e.target)) navLinks?.classList.remove('open');
+});
+
+// 游戏选择功能
+const gamesListContainer = document.getElementById('gamesList');
+const DEFAULT_GAME_ROWS = [
+  { code: 'delta', name: '三角洲行动', icon: 'fa-crosshairs', sort: 0 },
+  { code: 'valorant', name: '无畏契约', icon: 'fa-bullseye', sort: 1 }
+];
+let selectedGame = 'delta';
+let gameNames = {};
+let availableGames = [];
+
+function sanitizeGameIconClass(icon) {
+  const iconText = String(icon || '').trim();
+  return /^fa-[a-z0-9-]+$/i.test(iconText) ? iconText : 'fa-gamepad';
+}
+
+function sanitizeGameIconUrl(value, fallback = '') {
+  const raw = String(value == null ? '' : value).trim();
+  if (!raw) return fallback;
+  if (/^(https?:\/\/|data:image\/|\.{0,2}\/|\/)/i.test(raw)) return raw;
+  return fallback;
+}
+
+function normalizeGameRows(rawGames) {
+  const source = Array.isArray(rawGames) ? rawGames : [];
+  const parsed = source
+    .filter(item => item && typeof item === 'object')
+    .map(item => {
+      const rawIcon = String(item.icon || item.iconClass || '').trim();
+      const iconUrl = sanitizeGameIconUrl(
+        item.iconUrl || item.iconURL || item.logo || item.image || (/^(https?:\/\/|data:image\/|\.{0,2}\/|\/)/i.test(rawIcon) ? rawIcon : ''),
+        ''
+      );
+      return {
+        code: String(item.code || '').trim().toLowerCase(),
+        name: String(item.name || '').trim(),
+        icon: sanitizeGameIconClass(rawIcon),
+        iconUrl,
+        sort: Number(item.sort)
+      };
+    })
+    .filter(item => item.code && item.name);
+
+  const deduped = [];
+  const seen = new Set();
+  parsed
+    .sort((a, b) => {
+      const sortA = Number.isFinite(a.sort) ? a.sort : Number.MAX_SAFE_INTEGER;
+      const sortB = Number.isFinite(b.sort) ? b.sort : Number.MAX_SAFE_INTEGER;
+      if (sortA !== sortB) return sortA - sortB;
+      return a.name.localeCompare(b.name, 'zh-CN');
+    })
+    .forEach((item) => {
+      if (seen.has(item.code)) return;
+      seen.add(item.code);
+      deduped.push(item);
+    });
+
+  if (deduped.length > 0) return deduped;
+  return DEFAULT_GAME_ROWS.slice();
+}
+
+async function fetchAvailableGames() {
+  try {
+    if (typeof CloudBaseAPI !== 'undefined' && CloudBaseAPI.callFunction) {
+      const result = await CloudBaseAPI.callFunction('product', { action: 'getGames' });
+      const fromApi = normalizeGameRows(result?.data || []);
+      if (fromApi.length > 0) return fromApi;
+    }
+  } catch (error) {}
+
+  try {
+    const fromStorage = JSON.parse(localStorage.getItem('zhimai_games') || '[]');
+    const parsed = normalizeGameRows(fromStorage);
+    if (parsed.length > 0) return parsed;
+  } catch (error) {}
+
+  return DEFAULT_GAME_ROWS.slice();
+}
+
+function setActiveGameRow(gameCode) {
+  document.querySelectorAll('.game-row').forEach(row => row.classList.remove('active'));
+  const row = document.querySelector(`.game-row[data-game="${gameCode}"]`);
+  if (row) row.classList.add('active');
+}
+
+async function renderGameRows() {
+  if (!gamesListContainer) return;
+
+  availableGames = await fetchAvailableGames();
+  gameNames = {};
+  availableGames.forEach((game) => {
+    gameNames[game.code] = game.name;
+  });
+
+  if (!availableGames.some(game => game.code === selectedGame)) {
+    selectedGame = availableGames[0]?.code || DEFAULT_GAME_ROWS[0].code;
+  }
+
+  const gameRowsHtml = availableGames.map((game) => {
+    const safeIconUrl = escapeHTMLText(sanitizeGameIconUrl(game.iconUrl || '', ''));
+    return `
+      <div class="game-row ${game.code === selectedGame ? 'active' : ''}" data-game="${escapeHTMLText(game.code)}" onclick="selectGame('${escapeHTMLText(game.code)}')">
+        <div class="game-row-logo">
+          ${safeIconUrl ? `<img src="${safeIconUrl}" alt="${escapeHTMLText(game.name)}图标" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block;">` : `<i class="fa ${escapeHTMLText(sanitizeGameIconClass(game.icon))}"></i>`}
+        </div>
+        <div class="game-row-gradient"></div>
+        <div class="game-row-name">${escapeHTMLText(game.name)}</div>
+        <div class="game-row-arrow"><i class="fa fa-chevron-right"></i></div>
+      </div>
+    `;
+  }).join('');
+
+  gamesListContainer.innerHTML = gameRowsHtml;
+}
+
+async function selectGame(game) {
+  if (!availableGames.some(item => item.code === game)) {
+    return;
+  }
+
+  selectedGame = game;
+  currentServiceFilter = 'all';
+  setActiveGameRow(game);
+  
+  // 重新加载商品
+  await loadProductsFromData();
+  
+  // 滚动到服务列表
+  document.querySelector('.service-filter').scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+
+<!-- 手机端底部导航 -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-list">
+    <a href="index.html" class="mobile-nav-item">
+      <i class="fa fa-home"></i>
+      <span>首页</span>
+    </a>
+    <a href="services.html" class="mobile-nav-item active">
+      <i class="fa fa-cart-shopping"></i>
+      <span>下单</span>
+    </a>
+    <a href="profile.html" class="mobile-nav-item" id="mobileProfileLink">
+      <i class="fa fa-user"></i>
+      <span>我的</span>
+    </a>
+  </div>
+</nav>
+
+<script>
+// 检查登录状态，更新导航栏
+const currentUser = JSON.parse(localStorage.getItem('zhimai_user') || sessionStorage.getItem('zhimai_user') || 'null');
+const navAuthBtn = document.getElementById('navAuthBtn');
+const mobileProfileLink = document.getElementById('mobileProfileLink');
+
+// 头像已隐藏，保持登录/注册按钮显示
+// if (currentUser && navAuthBtn) {
+//   navAuthBtn.outerHTML = `
+//     <a href="profile.html" class="nav-user">
+//       <div class="nav-avatar">${currentUser.username.charAt(0).toUpperCase()}</div>
+//     </a>
+//   `;
+// }
+if (mobileProfileLink && !currentUser) {
+  mobileProfileLink.href = 'auth.html';
+}
+</script>
+<script src="js/cloudbase.js"></script>
+<script src="js/main.js"></script>
+<script>
+function isActiveStatus(status) {
+  return status === 1 || status === '1' || status === 'active';
+}
+
+async function fetchProductsForServices() {
+  try {
+    if (typeof CloudBaseAPI !== 'undefined' && CloudBaseAPI.Product && typeof CloudBaseAPI.Product.list === 'function') {
+      const result = await CloudBaseAPI.Product.list('', 1, 1000);
+      const list = Array.isArray(result?.data?.list) ? result.data.list : [];
+      return list.filter(item => item && item.game === selectedGame && isActiveStatus(item.status));
+    }
+  } catch (error) {}
+
+  let fallback = [];
+  try {
+    fallback = Array.isArray(window.dataManager?.getProducts?.()) ? window.dataManager.getProducts() : [];
+  } catch (error) {
+    fallback = [];
+  }
+  if (fallback.length === 0) {
+    try {
+      fallback = JSON.parse(localStorage.getItem('zhimai_products') || '[]');
+      if (!Array.isArray(fallback)) fallback = [];
+    } catch (error) {
+      fallback = [];
+    }
+  }
+  return fallback.filter(item => item && item.game === selectedGame && isActiveStatus(item.status));
+}
+
+async function fetchCategoriesForServices() {
+  try {
+    if (typeof CloudBaseAPI !== 'undefined' && CloudBaseAPI.Product && typeof CloudBaseAPI.Product.getCategories === 'function') {
+      const result = await CloudBaseAPI.Product.getCategories();
+      const list = Array.isArray(result?.data) ? result.data : [];
+      return list
+        .filter(item => item && item.game === selectedGame && String(item.name || '').trim())
+        .sort((a, b) => (Number(a.sort) || 0) - (Number(b.sort) || 0));
+    }
+  } catch (error) {}
+
+  try {
+    const parsed = JSON.parse(localStorage.getItem('zhimai_categories') || '[]');
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter(item => item && item.game === selectedGame && String(item.name || '').trim())
+      .sort((a, b) => (Number(a.sort) || 0) - (Number(b.sort) || 0));
+  } catch (error) {
+    return [];
+  }
+}
+
+// 从数据管理器加载商品
+async function loadProductsFromData() {
+  const container = document.querySelector('.services-grid');
+  if (!container) return;
+  if (!selectedGame) return;
+
+  const [products, gameCategories] = await Promise.all([
+    fetchProductsForServices(),
+    fetchCategoriesForServices()
+  ]);
+
+  const categoryNamesFromStore = Array.from(
+    new Set(gameCategories.map(item => String(item.name || '').trim()).filter(Boolean))
+  );
+  const hasManagedCategories = categoryNamesFromStore.length > 0;
+
+  const categoryNameById = {};
+  const categoryNameSet = new Set(categoryNamesFromStore);
+  gameCategories.forEach(item => {
+    const id = String(item._id || item.id || '').trim();
+    const name = String(item.name || '').trim();
+    if (id && name) categoryNameById[id] = name;
+  });
+
+  const normalizedProducts = products.map((product) => {
+    const rawCategory = String(product.category || '').trim();
+    let resolvedCategoryName = categoryNameById[rawCategory] || '';
+
+    if (!resolvedCategoryName && categoryNameSet.has(rawCategory)) {
+      resolvedCategoryName = rawCategory;
+    }
+    if (!resolvedCategoryName) {
+      resolvedCategoryName = hasManagedCategories ? '未分类' : (rawCategory || '其他服务');
+    }
+
+    return {
+      ...product,
+      _categoryName: resolvedCategoryName
+    };
+  });
+
+  const fallbackCategoryNames = Array.from(
+    new Set(normalizedProducts.map(item => String(item._categoryName || '').trim()).filter(Boolean))
+  );
+  buildServiceFilterOptions(hasManagedCategories ? categoryNamesFromStore : fallbackCategoryNames);
+  
+  if (normalizedProducts.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state" style="text-align: center; padding: 60px 20px; color: var(--text-secondary); grid-column: 1 / -1;">
+        <i class="fa fa-box-open" style="font-size: 3rem; margin-bottom: 16px; display: block; opacity: 0.5;"></i>
+        <p>暂无商品数据</p>
+      </div>
+    `;
+    applyServiceFilter(currentServiceFilter);
+    return;
+  }
+  
+  // 清空现有内容
+  container.innerHTML = '';
+  
+  // 按分类分组
+  const categories = {};
+  normalizedProducts.sort((a, b) => (Number(a.sort) || 0) - (Number(b.sort) || 0));
+  normalizedProducts.forEach((product) => {
+    const categoryName = String(product._categoryName || '其他服务').trim() || '其他服务';
+    if (!categories[categoryName]) categories[categoryName] = [];
+    categories[categoryName].push(product);
+  });
+  
+  // 分类图标映射
+  const categoryIcons = {
+    '代练服务': 'fa-crosshairs',
+    '3x3任务': 'fa-vault',
+    '账号租赁': 'fa-key',
+    '撞车开房': 'fa-car-burst',
+    '账号交易': 'fa-user-shield',
+    '陪玩服务': 'fa-headset'
+  };
+  
+  // 分类徽章
+  const categoryBadges = {
+    '账号租赁': '<span class="sst-badge sst-badge-rental">NEW</span>',
+    '撞车开房': '<span class="sst-badge sst-badge-crash">HOT</span>',
+    '3x3任务': '<span class="sst-badge sst-badge-crash">热门</span>'
+  };
+
+  const visibleFilterNames = hasManagedCategories ? categoryNamesFromStore : fallbackCategoryNames;
+  const categoryOrder = new Map(visibleFilterNames.map((name, index) => [name, index]));
+  const orderedCategories = Object.keys(categories).sort((a, b) => {
+    const orderA = categoryOrder.has(a) ? categoryOrder.get(a) : Number.MAX_SAFE_INTEGER;
+    const orderB = categoryOrder.has(b) ? categoryOrder.get(b) : Number.MAX_SAFE_INTEGER;
+    if (orderA !== orderB) return orderA - orderB;
+    return a.localeCompare(b, 'zh-CN');
+  });
+
+  orderedCategories.forEach((category) => {
+    const items = categories[category] || [];
+    const filterType = currentCategoryFilterMap[category] || 'other';
+    const safeFilterType = escapeHTMLText(filterType);
+    const safeCategoryName = escapeHTMLText(category);
+
+    // 添加分类标题
+    const categoryIcon = categoryIcons[category] || 'fa-box';
+    const safeCategoryIcon = escapeHTMLText(categoryIcon);
+    const badge = categoryBadges[category] || '';
+    
+    container.innerHTML += `
+      <div class="services-section-title" data-type-header="${safeFilterType}">
+        <i class="fa ${safeCategoryIcon}"></i>
+        ${safeCategoryName}
+        ${badge}
+      </div>
+    `;
+    
+    // 添加商品卡片
+    items.forEach((product) => {
+      const cardFilterType = currentCategoryFilterMap[product._categoryName] || filterType;
+      const isHot = Number(product.sales || 0) > 50;
+      const isRecommend = Number(product.sales || 0) > 20 && Number(product.sales || 0) <= 50;
+      const productId = product.id || product._id || '';
+      const descText = String(product.desc || '');
+      const safeCardFilterType = escapeHTMLText(cardFilterType);
+      const safeProductId = escapeHTMLText(productId);
+      const safeProductName = escapeHTMLText(product.name || '');
+      const safeDescText = escapeHTMLText(descText);
+      const safePrice = escapeHTMLText(product.price);
+      const safePriceUnit = escapeHTMLText(product.priceUnit || '');
+      const safeStock = escapeHTMLText(product.stock);
+      const safeSales = escapeHTMLText(product.sales);
+      const safeDescPreview = escapeHTMLText(descText.substring(0, 30));
+      
+      let tagHtml = '';
+      if (isHot) tagHtml = '<span class="service-tag hot">热门</span>';
+      else if (isRecommend) tagHtml = '<span class="service-tag recommend">推荐</span>';
+      
+      container.innerHTML += `
+        <div class="service-card" data-type="${safeCardFilterType}" data-product-id="${safeProductId}" aria-disabled="true" style="cursor: default; opacity: 0.88;">
+          <div class="service-card-header">
+            ${tagHtml}
+            <h3>${safeProductName}</h3>
+            <p class="service-desc">${safeDescText}</p>
+          </div>
+          <div class="service-card-body">
+            <div class="service-price">
+              <span class="price-label">价格</span>
+              <span class="price-value">¥<span class="price-num">${safePrice}</span>${safePriceUnit}</span>
+            </div>
+            <ul class="service-features">
+              ${product.showStock !== false ? `<li><i class="fa fa-check"></i> 库存: ${safeStock} 件</li>` : ''}
+              <li><i class="fa fa-check"></i> 已售: ${safeSales} 件</li>
+              <li><i class="fa fa-check"></i> ${safeDescPreview}...</li>
+            </ul>
+          </div>
+          <div class="service-card-footer">
+            <span class="btn btn-primary btn-full" aria-disabled="true" style="cursor: default;">暂未开放</span>
+          </div>
+        </div>
+      `;
+    });
+  });
+
+  activateProductCards(container);
+  applyServiceFilter(currentServiceFilter);
+}
+
+// 卡片点击处理 - 检查登录状态
+function activateProductCards(container) {
+  container.querySelectorAll('.service-card[data-product-id]').forEach(card => {
+    const productId = card.dataset.productId;
+    const productDetailUrl = buildProductDetailUrl(productId);
+    const footer = card.querySelector('.service-card-footer');
+    const cta = footer?.querySelector('.btn');
+
+    card.removeAttribute('aria-disabled');
+    card.style.removeProperty('cursor');
+    card.style.removeProperty('opacity');
+    card.onclick = () => handleCardClick(productId);
+
+    if (cta) {
+      const activeCta = document.createElement('a');
+      activeCta.href = productDetailUrl;
+      activeCta.className = cta.className;
+      activeCta.textContent = '查看详情';
+      activeCta.onclick = (event) => {
+        event.stopPropagation();
+      };
+      cta.replaceWith(activeCta);
+    }
+  });
+}
+
+function handleCardClick(productId) {
+  window.location.href = buildProductDetailUrl(productId);
+}
+
+function buildProductDetailUrl(productId) {
+  const params = new URLSearchParams();
+  params.set('id', String(productId || '').trim());
+  if (selectedGame) {
+    params.set('game', selectedGame);
+  }
+  if (productId != null && String(productId).trim()) {
+    params.set('focusProduct', String(productId).trim());
+  }
+  return `product-detail.html?${params.toString()}`;
+}
+
+function findServiceCardByProductId(productId) {
+  const targetId = String(productId || '').trim();
+  if (!targetId) return null;
+  const cards = Array.from(document.querySelectorAll('.service-card[data-product-id]'));
+  return cards.find(card => String(card.dataset.productId || '').trim() === targetId) || null;
+}
+
+function applyFocusFromQuery() {
+  const params = new URLSearchParams(window.location.search);
+  const focusProductId = String(params.get('focusProduct') || '').trim();
+  if (!focusProductId) return;
+
+  const targetCard = findServiceCardByProductId(focusProductId);
+  if (!targetCard) return;
+
+  targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  targetCard.classList.add('return-focus');
+  window.setTimeout(() => {
+    targetCard.classList.remove('return-focus');
+  }, 2200);
+}
+
+// 页面加载时执行
+let servicesRefreshTimer = null;
+function scheduleServicesRefresh(rebuildGames = false) {
+  if (servicesRefreshTimer) {
+    clearTimeout(servicesRefreshTimer);
+  }
+
+  servicesRefreshTimer = setTimeout(async () => {
+    if (rebuildGames) {
+      const previousGame = selectedGame;
+      await renderGameRows();
+      if (!availableGames.some(game => game.code === previousGame)) {
+        selectedGame = availableGames[0]?.code || DEFAULT_GAME_ROWS[0].code;
+      } else {
+        selectedGame = previousGame;
+      }
+      setActiveGameRow(selectedGame);
+    }
+
+    await loadProductsFromData();
+  }, 120);
+}
+
+window.addEventListener('storage', (event) => {
+  if (!event || !event.key) return;
+  if (event.key === 'zhimai_games' || event.key === 'zhimai_categories' || event.key === 'zhimai_products') {
+    scheduleServicesRefresh(event.key === 'zhimai_games');
+  }
+});
+
+window.addEventListener('focus', () => {
+  scheduleServicesRefresh(true);
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    scheduleServicesRefresh(true);
+  }
+});
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await renderGameRows();
+
+  // 检查 URL 参数是否有指定游戏
+  const urlParams = new URLSearchParams(window.location.search);
+  const gameFromUrl = String(urlParams.get('game') || '').trim().toLowerCase();
+  if (gameFromUrl && availableGames.some(game => game.code === gameFromUrl)) {
+    selectedGame = gameFromUrl;
+  } else if (!availableGames.some(game => game.code === selectedGame)) {
+    selectedGame = availableGames[0]?.code || DEFAULT_GAME_ROWS[0].code;
+  }
+
+  setActiveGameRow(selectedGame);
+
+  await loadProductsFromData();
+  applyFocusFromQuery();
+});
+</script>
+</body>
+</html>

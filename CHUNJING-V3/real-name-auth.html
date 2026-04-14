@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>实名认证 - 织麦电竞</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root {
+      --section-gap: 24px;
+      --block-gap: 16px;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top, rgba(64, 169, 255, 0.18), transparent 36%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 28%),
+        var(--bg-dark);
+    }
+
+    .realname-page {
+      min-height: 100vh;
+      padding: 48px 20px;
+    }
+
+    .realname-shell {
+      width: min(100%, 680px);
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--section-gap);
+    }
+
+    .realname-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      opacity: 0.8;
+      transition: opacity 0.2s ease;
+    }
+
+    .realname-back:hover {
+      opacity: 1;
+    }
+
+    .realname-card {
+      background: rgba(12, 16, 30, 0.86);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+      display: flex;
+      flex-direction: column;
+      gap: var(--section-gap);
+    }
+
+    .realname-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(64, 169, 255, 0.14);
+      color: #91d5ff;
+      font-size: 12px;
+    }
+
+    .realname-title {
+      margin: 0;
+      font-size: 28px;
+      color: #fff;
+    }
+
+    .realname-desc {
+      margin: 0;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .realname-panel {
+      display: flex;
+      flex-direction: column;
+      gap: var(--block-gap);
+      padding: 20px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .realname-panel h2 {
+      margin: 0;
+      color: #fff;
+      font-size: 16px;
+    }
+
+    .realname-panel p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .realname-api-list {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .realname-api-values {
+      display: grid;
+      gap: 8px;
+    }
+
+    .realname-api-values code {
+      display: block;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: #c9d7ff;
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .realname-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    @media (max-width: 640px) {
+      .realname-page {
+        padding: 24px 16px;
+      }
+
+      .realname-card {
+        padding: 22px;
+      }
+
+      .realname-actions {
+        flex-direction: column;
+      }
+
+      .realname-actions .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="realname-page">
+    <div class="realname-shell">
+      <section class="realname-card">
+        <span class="realname-badge">
+          <i class="fa fa-hammer"></i>
+          正在开发中
+        </span>
+
+        <div>
+          <h1 class="realname-title">实名认证</h1>
+          <p class="realname-desc">实名认证功能正在开发中。页面与接口壳已预留，后续可直接接入实名校验服务并完成上线联调。</p>
+        </div>
+
+        <div class="realname-panel">
+          <h2>后续接口预留</h2>
+          <p>当前仅保留前端占位结构，不会发起真实请求。上线时请在脚本配置中填入正式地址。</p>
+          <ul class="realname-api-list">
+            <li><code>createSessionUrl</code>：创建实名会话接口</li>
+            <li><code>submitIdentityUrl</code>：提交实名信息接口</li>
+            <li><code>queryStatusUrl</code>：查询实名状态接口</li>
+          </ul>
+          <div class="realname-api-values">
+            <code id="realNameCreateEndpoint">createSessionUrl: 未配置</code>
+            <code id="realNameSubmitEndpoint">submitIdentityUrl: 未配置</code>
+            <code id="realNameStatusEndpoint">queryStatusUrl: 未配置</code>
+          </div>
+        </div>
+
+        <div class="realname-actions">
+          <button class="btn btn-outline" type="button" id="realNameTipBtn">
+            <i class="fa fa-info-circle"></i> 查看提示
+          </button>
+          <a class="btn btn-primary" id="realNameReturnBtn" href="profile.html?tab=security">
+            <i class="fa fa-arrow-left"></i> 返回安全中心
+          </a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const realNameState = {
+      returnTo: 'profile.html?tab=security'
+    };
+
+    window.realNameAuthApiConfig = {
+      createSessionUrl: '',
+      submitIdentityUrl: '',
+      queryStatusUrl: '',
+      provider: 'reserved'
+    };
+
+    function syncRealNameEndpointHints() {
+      const config = window.realNameAuthApiConfig || {};
+      const createNode = document.getElementById('realNameCreateEndpoint');
+      const submitNode = document.getElementById('realNameSubmitEndpoint');
+      const statusNode = document.getElementById('realNameStatusEndpoint');
+
+      if (createNode) createNode.textContent = `createSessionUrl: ${config.createSessionUrl || '未配置'}`;
+      if (submitNode) submitNode.textContent = `submitIdentityUrl: ${config.submitIdentityUrl || '未配置'}`;
+      if (statusNode) statusNode.textContent = `queryStatusUrl: ${config.queryStatusUrl || '未配置'}`;
+    }
+
+    function syncRealNameReturnLinks() {
+      const backLink = document.getElementById('realNameBackLink');
+      const returnBtn = document.getElementById('realNameReturnBtn');
+      if (backLink) backLink.href = realNameState.returnTo;
+      if (returnBtn) returnBtn.href = realNameState.returnTo;
+    }
+
+    function sanitizeRealNameReturnTarget(rawValue, fallback = 'profile.html?tab=security') {
+      const value = String(rawValue || '').trim();
+      if (!value || value.includes('\n') || value.includes('\r')) {
+        return fallback;
+      }
+
+      try {
+        const resolved = new URL(value, window.location.href);
+        if (!/^https?:$/i.test(resolved.protocol)) {
+          return fallback;
+        }
+        if (resolved.origin !== window.location.origin) {
+          return fallback;
+        }
+        return `${resolved.pathname}${resolved.search}${resolved.hash}` || fallback;
+      } catch (error) {
+        return fallback;
+      }
+    }
+
+    function readRealNameQuery() {
+      const params = new URLSearchParams(window.location.search);
+      const returnTo = String(params.get('returnTo') || '').trim();
+      realNameState.returnTo = sanitizeRealNameReturnTarget(returnTo, realNameState.returnTo);
+    }
+
+    function bindRealNameEvents() {
+      const tipButton = document.getElementById('realNameTipBtn');
+      if (!tipButton) return;
+      tipButton.addEventListener('click', () => {
+        window.alert('实名认证功能正在开发中，页面与接口已预留。');
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      readRealNameQuery();
+      syncRealNameReturnLinks();
+      syncRealNameEndpointHints();
+      bindRealNameEvents();
+    });
+  </script>
+</body>
+</html>

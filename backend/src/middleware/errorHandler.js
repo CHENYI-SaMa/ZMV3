@@ -6,7 +6,6 @@ const { serverError } = require('../utils/response');
 function errorHandler(err, req, res, next) {
   console.error('[ErrorHandler]', err);
   const message = err.message || '服务器内部错误';
-  const code = err.statusCode || err.status || 500;
   return serverError(res, message);
 }
 

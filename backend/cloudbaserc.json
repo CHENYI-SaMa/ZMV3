@@ -1,0 +1,14 @@
+{
+  "envId": "{{ENV_ID}}",
+  "functionRoot": ".",
+  "functions": [
+    {
+      "name": "zhimai-api",
+      "config": {
+        "timeout": 30,
+        "envVariables": {}
+      },
+      "handler": "src/index.main"
+    }
+  ]
+}
